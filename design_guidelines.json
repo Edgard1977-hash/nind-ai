@@ -1,0 +1,165 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "VidFlux AI",
+      "vibe": "Cyber-News Studio",
+      "archetype": "Electric & Neon",
+      "emotional_tone": "Fast, Viral, High-Energy, Creative"
+    },
+    "typography": {
+      "font_family": {
+        "heading": "Chivo, sans-serif",
+        "body": "Manrope, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "scale": {
+        "h1": "text-5xl md:text-7xl font-black tracking-tight leading-none",
+        "h2": "text-4xl md:text-5xl font-bold tracking-tight",
+        "h3": "text-2xl md:text-3xl font-bold",
+        "body_lg": "text-lg md:text-xl font-medium leading-relaxed",
+        "body": "text-base font-normal leading-relaxed",
+        "caption": "text-sm font-medium tracking-wide text-muted-foreground uppercase"
+      },
+      "usage": {
+        "headings": "Use 'Chivo' for all main headings. Don't be afraid of uppercase for short titles.",
+        "body": "Use 'Manrope' for all UI text, inputs, and long descriptions.",
+        "gradient_text": "Use bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent for key words in H1."
+      }
+    },
+    "colors": {
+      "palette": {
+        "background": "#0a0a0a",
+        "foreground": "#fafafa",
+        "card": "#121212",
+        "card_foreground": "#ffffff",
+        "popover": "#171717",
+        "popover_foreground": "#ffffff",
+        "primary": "#7c3aed",
+        "primary_foreground": "#ffffff",
+        "secondary": "#27272a",
+        "secondary_foreground": "#fafafa",
+        "muted": "#262626",
+        "muted_foreground": "#a3a3a3",
+        "accent": "#facc15",
+        "accent_foreground": "#000000",
+        "destructive": "#ef4444",
+        "destructive_foreground": "#ffffff",
+        "border": "#27272a",
+        "input": "#27272a",
+        "ring": "#7c3aed"
+      },
+      "usage_rules": {
+        "gradients": "Use 'bg-gradient-to-br from-violet-600/20 to-indigo-900/20' for card backgrounds to give depth.",
+        "glassmorphism": "Use 'bg-black/60 backdrop-blur-xl border border-white/10' for overlays and sticky headers.",
+        "glows": "Use 'shadow-[0_0_20px_rgba(124,58,237,0.5)]' for active states or primary buttons."
+      }
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-12",
+      "section_gap": "gap-8 md:gap-16",
+      "grid_gap": "gap-4 md:gap-6",
+      "radius": {
+        "default": "rounded-xl",
+        "card": "rounded-2xl",
+        "button": "rounded-full"
+      }
+    },
+    "visual_enhancers": {
+      "shadows": {
+        "card": "shadow-xl shadow-black/50",
+        "glow": "shadow-[0_0_30px_-5px_var(--primary)]",
+        "inner": "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]"
+      },
+      "borders": {
+        "default": "border border-border",
+        "highlight": "border border-primary/50",
+        "glass": "border border-white/10"
+      },
+      "textures": {
+        "noise": "Add a subtle fixed noise overlay to the body background opacity-5 pointer-events-none."
+      }
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow transition-all duration-300 hover:scale-105 active:scale-95 font-bold uppercase tracking-wider text-sm py-3 px-8",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-white/5 hover:border-white/20 transition-all duration-200 font-medium text-sm py-3 px-6",
+      "ghost": "hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors font-medium"
+    },
+    "inputs": {
+      "prominent": "bg-black/50 border-2 border-white/10 focus:border-primary/50 text-xl md:text-2xl p-6 md:p-8 rounded-2xl w-full transition-all placeholder:text-muted-foreground/50 shadow-inner focus:shadow-glow focus:outline-none"
+    },
+    "cards": {
+      "format_card": "group relative overflow-hidden rounded-3xl border border-white/10 bg-card/50 hover:bg-card/80 transition-all duration-300 hover:border-primary/50 hover:scale-[1.02] cursor-pointer h-64 md:h-80 flex flex-col justify-end p-6",
+      "glass_card": "bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-6"
+    },
+    "modals": {
+      "full_screen": "fixed inset-0 z-50 bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300"
+    }
+  },
+  "layout_strategies": {
+    "landing_page": {
+      "hero": "Flex column, centered content but asymmetrical background elements. Massive H1.",
+      "input_section": "Sticky bottom or central focus. The input is the 'hero' interaction."
+    },
+    "format_selector": {
+      "grid": "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 w-full max-w-6xl mx-auto",
+      "mobile": "On mobile, strictly 2 columns. Cards should be tall (aspect ratio 3:4 or 9:16) to preview the vertical video format."
+    },
+    "video_player": {
+      "container": "aspect-[9/16] max-h-[85vh] w-full max-w-sm mx-auto bg-black rounded-3xl overflow-hidden relative shadow-2xl border border-white/10",
+      "overlays": "Absolute positioning for subtitles (bottom), memes (slide-in from sides), and news tickers (bottom edge)."
+    }
+  },
+  "assets": {
+    "images": {
+      "news_format": "https://images.unsplash.com/photo-1742805382153-bb4be26d6031?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwxfHxuZXdzJTIwc3R1ZGlvfGVufDB8fHx8MTc3MjM4MzgzNHww&ixlib=rb-4.1.0&q=85",
+      "story_format": "https://images.unsplash.com/photo-1770893876530-68601a346202?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxjaW5lbWF0aWMlMjBjYW1wZmlyZXxlbnwwfHx8fDE3NzIzODM4MzV8MA&ixlib=rb-4.1.0&q=85",
+      "quiz_format": "https://images.unsplash.com/photo-1765213186469-727cd0f08c23?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwxfHxuZW9uJTIwZ2VvbWV0cmljJTIwbGlnaHRzfGVufDB8fHx8MTc3MjM4Mzg0M3ww&ixlib=rb-4.1.0&q=85",
+      "meme_format": "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwxfHxmdW5ueSUyMGNhdHxlbnwwfHx8fDE3NzIzODM4MzZ8MA&ixlib=rb-4.1.0&q=85",
+      "ad_format": "https://images.unsplash.com/photo-1613488329064-aafbeb1e4db1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxjeWJlcnB1bmslMjBjaXR5JTIwbmlnaHQlMjByYWlufGVufDB8fHx8MTc3MjM4Mzg0NHww&ixlib=rb-4.1.0&q=85",
+      "background_hero": "https://images.pexels.com/photos/31419072/pexels-photo-31419072.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px, crisp edges."
+    }
+  },
+  "animations": {
+    "micro_interactions": {
+      "hover_lift": "hover:-translate-y-1 transition-transform duration-300 ease-out",
+      "click_press": "active:scale-95 transition-transform duration-100",
+      "focus_ring": "focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+    },
+    "video_effects": {
+      "ken_burns": "animate-ken-burns (slow zoom/pan)",
+      "slide_in_left": "animate-in slide-in-from-left duration-500",
+      "slide_in_right": "animate-in slide-in-from-right duration-500",
+      "ticker": "animate-marquee infinite linear"
+    }
+  },
+  "instructions_to_main_agent": {
+    "critical": [
+      "IMPLEMENT DARK MODE ONLY. This is a creative tool, light mode will break the immersion.",
+      "The 'Format Selector' must be a full-screen modal that feels like entering a new dimension. Use heavy blur (backdrop-blur-2xl).",
+      "Do not use default Shadcn cards for the format selection. Make them image-heavy with text overlays.",
+      "Ensure the 9:16 aspect ratio is strictly enforced for the video preview area.",
+      "Use 'sonner' for all toast notifications.",
+      "The Input field should be the centerpiece of the home page. Make it huge."
+    ],
+    "file_structure_notes": [
+      "Use /app/frontend/src/components/ui for Shadcn components.",
+      "Create custom components in /app/frontend/src/components/custom for specific UI like VideoPlayer, FormatCard, etc."
+    ]
+  },
+  "universal_guidelines": [
+      "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+      "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+      "Create depth through layered design elements with z-index hierarchy",
+      "Use glass-morphism effects with backdrop filters (12-24px blur)",
+      "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+      "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+      "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+      "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮 for icons."
+  ]
+}
