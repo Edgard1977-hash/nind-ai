@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, ChevronDown, Wand2, Zap } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { FormatSelector } from "../components/custom/FormatSelector";
+import { Button } from "@/components/ui/button";
+import { FormatSelector } from "@/components/custom/FormatSelector";
 import { toast } from "sonner";
 import axios from "axios";
 
