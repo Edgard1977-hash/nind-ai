@@ -1,4 +1,4 @@
-import { Progress } from "../components/ui/progress";
+import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
 
 export const GenerationProgress = ({ progress, message }) => {
