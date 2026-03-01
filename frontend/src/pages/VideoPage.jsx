@@ -53,7 +53,7 @@ export const VideoPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" data-testid="video-page-loading">
+      <div className="min-h-screen flex items-center justify-center" data-testid="video-page">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
