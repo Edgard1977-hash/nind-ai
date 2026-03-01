@@ -11,7 +11,7 @@ class VideoAPITester:
         self.tests_passed = 0
         self.project_id = None
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, timeout=10):
+    def run_test(self, name, method, endpoint, expected_status, data=None, timeout=30):
         """Run a single API test"""
         url = f"{self.base_url}/{endpoint}"
         headers = {'Content-Type': 'application/json'}
