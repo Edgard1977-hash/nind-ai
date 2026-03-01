@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Search, X, Newspaper, BookOpen, HelpCircle, Smile, GraduationCap, ShoppingBag } from "lucide-react";
-import { Input } from "../components/ui/input";
-import { cn } from "../lib/utils";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const ICON_MAP = {
   Newspaper: Newspaper,
