@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Play, Pause, Volume2, VolumeX, RotateCcw } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 
 export const VideoPlayer = ({ scenes, audioUrl, title, onReplay }) => {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
