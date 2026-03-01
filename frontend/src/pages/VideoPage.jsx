@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Share2, RotateCcw, Home } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { VideoPlayer } from "../components/custom/VideoPlayer";
-import { GenerationProgress } from "../components/custom/GenerationProgress";
+import { Button } from "@/components/ui/button";
+import { VideoPlayer } from "@/components/custom/VideoPlayer";
+import { GenerationProgress } from "@/components/custom/GenerationProgress";
 import { toast } from "sonner";
 import axios from "axios";
 
