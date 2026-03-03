@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Search, X, Newspaper, BookOpen, HelpCircle, Smile, GraduationCap, ShoppingBag } from "lucide-react";
+import { Search, X, Newspaper, BookOpen, HelpCircle, Smile, GraduationCap, ShoppingBag, Gamepad2, Sparkles, Cat } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,9 @@ const ICON_MAP = {
   Smile: Smile,
   GraduationCap: GraduationCap,
   ShoppingBag: ShoppingBag,
+  Gamepad2: Gamepad2,
+  Sparkles: Sparkles,
+  Cat: Cat,
 };
 
 export const FormatSelector = ({ formats, categories, isOpen, onClose, onSelect, selectedFormat }) => {

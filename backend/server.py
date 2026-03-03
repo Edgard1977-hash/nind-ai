@@ -56,6 +56,9 @@ class VideoGenerateRequest(BaseModel):
     prompt: str
     format_id: str
     language: str = "auto"
+    youtube_url: Optional[str] = None
+    character_type: Optional[str] = None
+    gameplay_type: Optional[str] = None
 
 class VideoScene(BaseModel):
     text: str
@@ -70,6 +73,9 @@ class VideoProject(BaseModel):
     prompt: str
     format_id: str
     language: str
+    youtube_url: Optional[str] = None
+    character_type: Optional[str] = None
+    gameplay_type: Optional[str] = None
     status: str = "pending"
     progress: int = 0
     progress_message: str = "Инициализация..."
@@ -144,6 +150,56 @@ VIDEO_FORMATS = [
         category="commercial",
         image_url="https://images.unsplash.com/photo-1613488329064-aafbeb1e4db1?w=400"
     ),
+    VideoFormat(
+        id="gameplay_clip",
+        name="Gameplay + Clip",
+        name_ru="Геймплей + Клип",
+        description="YouTube clip on top, gameplay at bottom with subtitles",
+        description_ru="Интересный момент из YouTube сверху, геймплей снизу + субтитры",
+        icon="Gamepad2",
+        category="entertainment",
+        image_url="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400"
+    ),
+    VideoFormat(
+        id="ai_story",
+        name="AI Story",
+        name_ru="AI История",
+        description="AI-generated visual story with animations and narration",
+        description_ru="AI генерирует историю с картинками, анимациями и озвучкой",
+        icon="Sparkles",
+        category="entertainment",
+        image_url="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400"
+    ),
+    VideoFormat(
+        id="character_explainer",
+        name="Character Explainer",
+        name_ru="Персонаж-объяснитель",
+        description="Cute character explains topics with animated scenes",
+        description_ru="Милый персонаж объясняет темы с анимированными сценами",
+        icon="Cat",
+        category="educational",
+        image_url="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400"
+    ),
+]
+
+# Character types for character_explainer format
+CHARACTER_TYPES = [
+    {"id": "kitten", "name": "Котёнок", "name_en": "Kitten", "emoji": "🐱"},
+    {"id": "puppy", "name": "Щенок", "name_en": "Puppy", "emoji": "🐶"},
+    {"id": "skeleton", "name": "X-Ray Скелет", "name_en": "X-Ray Skeleton", "emoji": "💀"},
+    {"id": "robot", "name": "Робот", "name_en": "Robot", "emoji": "🤖"},
+    {"id": "alien", "name": "Инопланетянин", "name_en": "Alien", "emoji": "👽"},
+    {"id": "bear", "name": "Медвежонок", "name_en": "Bear Cub", "emoji": "🐻"},
+]
+
+# Gameplay types for gameplay_clip format
+GAMEPLAY_TYPES = [
+    {"id": "minecraft_parkour", "name": "Minecraft Паркур", "name_en": "Minecraft Parkour"},
+    {"id": "soap_cutting", "name": "Нарезка мыла ASMR", "name_en": "Soap Cutting ASMR"},
+    {"id": "subway_surfers", "name": "Subway Surfers", "name_en": "Subway Surfers"},
+    {"id": "satisfying", "name": "Satisfying видео", "name_en": "Satisfying Videos"},
+    {"id": "slime_asmr", "name": "Слайм ASMR", "name_en": "Slime ASMR"},
+    {"id": "cooking", "name": "Готовка", "name_en": "Cooking"},
 ]
 
 FORMAT_CATEGORIES = {
@@ -232,6 +288,191 @@ Topic: {prompt}"""
         "full_script": prompt
     }
 
+async def generate_ai_story_script(prompt: str, language: str) -> dict:
+    """Generate script for AI Story format"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    chat = LlmChat(
+        api_key=api_key,
+        session_id=f"story-{uuid.uuid4()}",
+        system_message="You are a creative storyteller who creates engaging visual stories for short-form video."
+    )
+    chat.with_model("openai", "gpt-5.2")
+    
+    lang_instruction = "Respond in Russian." if language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя')) else "Respond in English."
+    
+    system_prompt = f"""Create a captivating visual story based on this prompt.
+{lang_instruction}
+
+Story requirements:
+- The story should be 45-60 seconds when narrated
+- Create vivid, cinematic scenes that can be illustrated
+- Include emotional moments and a clear narrative arc
+- Each scene should have a distinct visual that can be AI-generated
+
+Return a JSON object:
+{{
+    "title": "Story title",
+    "genre": "horror/comedy/drama/mystery/adventure",
+    "scenes": [
+        {{
+            "text": "Narration text for this scene",
+            "image_prompt": "Detailed cinematic description for AI image generation. Include mood, lighting, style.",
+            "animation": "zoom_in" or "zoom_out" or "pan_left" or "pan_right",
+            "duration": 4.0,
+            "mood": "tense/happy/sad/mysterious/exciting"
+        }}
+    ],
+    "full_script": "Complete story narration"
+}}
+
+Create 5-8 scenes for a compelling story.
+User prompt: {prompt}"""
+
+    msg = UserMessage(text=system_prompt)
+    response = await chat.send_message(msg)
+    
+    try:
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except:
+        pass
+    
+    return {
+        "title": prompt[:50],
+        "genre": "adventure",
+        "scenes": [{"text": prompt, "image_prompt": prompt, "animation": "zoom_in", "duration": 4.0}],
+        "full_script": prompt
+    }
+
+async def generate_character_explainer_script(prompt: str, character_type: str, language: str) -> dict:
+    """Generate script for Character Explainer format"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    character_info = next((c for c in CHARACTER_TYPES if c["id"] == character_type), CHARACTER_TYPES[0])
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    chat = LlmChat(
+        api_key=api_key,
+        session_id=f"char-{uuid.uuid4()}",
+        system_message=f"You are a creative content writer who creates educational content featuring cute {character_info['name_en']} characters."
+    )
+    chat.with_model("openai", "gpt-5.2")
+    
+    lang_instruction = "Respond in Russian." if language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя')) else "Respond in English."
+    
+    system_prompt = f"""Create an educational/entertaining video script where a cute {character_info['name_en']} character explains the topic.
+{lang_instruction}
+
+Style: Fun, engaging, with the {character_info['name_en']} character in different situations related to the topic.
+Example: "How to earn money? Let {character_info['name_en']}s explain!" - then show the character trying different ways.
+
+Return a JSON object:
+{{
+    "title": "Video title featuring the character",
+    "character": "{character_info['name_en']}",
+    "scenes": [
+        {{
+            "text": "Narration text",
+            "image_prompt": "Cute {character_info['name_en']} in a specific situation. Cartoon/anime style, vibrant colors, expressive character.",
+            "animation": "zoom_in" or "zoom_out" or "pan_left" or "pan_right",
+            "duration": 3.5,
+            "action": "What the character is doing in this scene"
+        }}
+    ],
+    "full_script": "Complete narration"
+}}
+
+Create 5-7 scenes with the {character_info['name_en']} in different situations related to the topic.
+Topic: {prompt}"""
+
+    msg = UserMessage(text=system_prompt)
+    response = await chat.send_message(msg)
+    
+    try:
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except:
+        pass
+    
+    return {
+        "title": f"{character_info['name']} объясняют: {prompt[:30]}",
+        "character": character_info['name_en'],
+        "scenes": [{"text": prompt, "image_prompt": f"Cute {character_info['name_en']} explaining {prompt}", "animation": "zoom_in", "duration": 4.0}],
+        "full_script": prompt
+    }
+
+async def generate_gameplay_clip_script(prompt: str, youtube_url: str, gameplay_type: str, language: str) -> dict:
+    """Generate script for Gameplay + Clip format"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    gameplay_info = next((g for g in GAMEPLAY_TYPES if g["id"] == gameplay_type), GAMEPLAY_TYPES[0])
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    chat = LlmChat(
+        api_key=api_key,
+        session_id=f"gameplay-{uuid.uuid4()}",
+        system_message="You are a video editor who creates engaging split-screen content with gameplay at the bottom."
+    )
+    chat.with_model("openai", "gpt-5.2")
+    
+    lang_instruction = "Respond in Russian." if language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя')) else "Respond in English."
+    
+    system_prompt = f"""Create subtitles and scene breakdown for a split-screen video.
+{lang_instruction}
+
+Video format:
+- TOP (60%): Interesting clip from YouTube video
+- BOTTOM (40%): {gameplay_info['name_en']} gameplay
+- SUBTITLES: Engaging text overlay
+
+YouTube URL: {youtube_url}
+Additional context: {prompt}
+
+Return a JSON object:
+{{
+    "title": "Video title",
+    "youtube_url": "{youtube_url}",
+    "gameplay_type": "{gameplay_type}",
+    "scenes": [
+        {{
+            "text": "Subtitle text for this moment",
+            "timestamp_start": 0.0,
+            "timestamp_end": 3.0,
+            "highlight": true/false (is this a key moment?)
+        }}
+    ],
+    "suggested_clip_moments": ["0:15-0:45 interesting part", "1:20-1:50 funny moment"],
+    "full_script": "All subtitle text combined"
+}}
+
+Create 8-12 subtitle segments for a 30-60 second clip.
+Note: The actual YouTube clip extraction will be handled separately."""
+
+    msg = UserMessage(text=system_prompt)
+    response = await chat.send_message(msg)
+    
+    try:
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except:
+        pass
+    
+    return {
+        "title": prompt[:50],
+        "youtube_url": youtube_url,
+        "gameplay_type": gameplay_type,
+        "scenes": [{"text": prompt, "timestamp_start": 0, "timestamp_end": 5, "highlight": True}],
+        "full_script": prompt
+    }
+
 async def generate_image(prompt: str) -> Optional[str]:
     """Generate image using Gemini Nano Banana"""
     from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -296,18 +537,39 @@ async def process_video_generation(project_id: str):
         if not project:
             return
         
+        format_id = project["format_id"]
+        
         # Update status
         await db.video_projects.update_one(
             {"id": project_id},
             {"$set": {"status": "processing", "progress": 10, "progress_message": "Анализируем промт..."}}
         )
         
-        # Step 1: Generate script
-        script_data = await analyze_prompt_and_generate_script(
-            project["prompt"], 
-            project["format_id"],
-            project["language"]
-        )
+        # Step 1: Generate script based on format
+        if format_id == "ai_story":
+            script_data = await generate_ai_story_script(
+                project["prompt"],
+                project["language"]
+            )
+        elif format_id == "character_explainer":
+            script_data = await generate_character_explainer_script(
+                project["prompt"],
+                project.get("character_type", "kitten"),
+                project["language"]
+            )
+        elif format_id == "gameplay_clip":
+            script_data = await generate_gameplay_clip_script(
+                project["prompt"],
+                project.get("youtube_url", ""),
+                project.get("gameplay_type", "minecraft_parkour"),
+                project["language"]
+            )
+        else:
+            script_data = await analyze_prompt_and_generate_script(
+                project["prompt"], 
+                project["format_id"],
+                project["language"]
+            )
         
         await db.video_projects.update_one(
             {"id": project_id},
@@ -319,22 +581,29 @@ async def process_video_generation(project_id: str):
             }}
         )
         
-        # Step 2: Generate images for each scene
+        # Step 2: Generate images for each scene (except gameplay_clip which uses video)
         scenes = script_data.get("scenes", [])
         total_scenes = len(scenes)
         
-        for i, scene in enumerate(scenes):
-            progress = 20 + int((i / total_scenes) * 50)
+        if format_id != "gameplay_clip":
+            for i, scene in enumerate(scenes):
+                progress = 20 + int((i / total_scenes) * 50)
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": progress, "progress_message": f"Генерируем изображение {i+1}/{total_scenes}..."}}
+                )
+                
+                image_url = await generate_image(scene.get("image_prompt", scene.get("text", "")))
+                scene["image_url"] = image_url
+                
+                # Small delay to avoid rate limiting
+                await asyncio.sleep(1)
+        else:
+            # For gameplay_clip, we store the script data without generating images
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": progress, "progress_message": f"Генерируем изображение {i+1}/{total_scenes}..."}}
+                {"$set": {"progress": 70, "progress_message": "Подготавливаем субтитры..."}}
             )
-            
-            image_url = await generate_image(scene.get("image_prompt", scene.get("text", "")))
-            scene["image_url"] = image_url
-            
-            # Small delay to avoid rate limiting
-            await asyncio.sleep(1)
         
         # Step 3: Generate TTS
         await db.video_projects.update_one(
@@ -380,7 +649,9 @@ async def get_formats():
     """Get all video formats"""
     return {
         "formats": [f.model_dump() for f in VIDEO_FORMATS],
-        "categories": FORMAT_CATEGORIES
+        "categories": FORMAT_CATEGORIES,
+        "character_types": CHARACTER_TYPES,
+        "gameplay_types": GAMEPLAY_TYPES
     }
 
 @api_router.post("/video/generate")
@@ -389,7 +660,10 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
     project = VideoProject(
         prompt=request.prompt,
         format_id=request.format_id,
-        language=request.language
+        language=request.language,
+        youtube_url=request.youtube_url,
+        character_type=request.character_type,
+        gameplay_type=request.gameplay_type
     )
     
     # Save to DB

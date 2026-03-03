@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, ChevronDown, Wand2, Zap } from "lucide-react";
+import { Sparkles, ChevronDown, Wand2, Zap, Youtube, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { FormatSelector } from "@/components/custom/FormatSelector";
 import { toast } from "sonner";
 import axios from "axios";
+import { cn } from "@/lib/utils";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -16,7 +18,14 @@ export const HomePage = () => {
   const [isFormatSelectorOpen, setIsFormatSelectorOpen] = useState(false);
   const [formats, setFormats] = useState([]);
   const [categories, setCategories] = useState({});
+  const [characterTypes, setCharacterTypes] = useState([]);
+  const [gameplayTypes, setGameplayTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Additional fields for specific formats
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [selectedGameplay, setSelectedGameplay] = useState(null);
 
   useEffect(() => {
     fetchFormats();
@@ -27,9 +36,17 @@ export const HomePage = () => {
       const response = await axios.get(`${API}/formats`);
       setFormats(response.data.formats);
       setCategories(response.data.categories);
+      setCharacterTypes(response.data.character_types || []);
+      setGameplayTypes(response.data.gameplay_types || []);
       // Set default format
       if (response.data.formats.length > 0) {
         setSelectedFormat(response.data.formats[0]);
+      }
+      if (response.data.character_types?.length > 0) {
+        setSelectedCharacter(response.data.character_types[0]);
+      }
+      if (response.data.gameplay_types?.length > 0) {
+        setSelectedGameplay(response.data.gameplay_types[0]);
       }
     } catch (error) {
       console.error("Failed to fetch formats:", error);
@@ -46,14 +63,31 @@ export const HomePage = () => {
       toast.error("Выберите формат видео");
       return;
     }
+    
+    // Validate format-specific fields
+    if (selectedFormat.id === "gameplay_clip" && !youtubeUrl.trim()) {
+      toast.error("Вставьте ссылку на YouTube видео");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API}/video/generate`, {
+      const requestData = {
         prompt: prompt.trim(),
         format_id: selectedFormat.id,
         language: "auto"
-      });
+      };
+      
+      // Add format-specific fields
+      if (selectedFormat.id === "gameplay_clip") {
+        requestData.youtube_url = youtubeUrl.trim();
+        requestData.gameplay_type = selectedGameplay?.id || "minecraft_parkour";
+      }
+      if (selectedFormat.id === "character_explainer") {
+        requestData.character_type = selectedCharacter?.id || "kitten";
+      }
+      
+      const response = await axios.post(`${API}/video/generate`, requestData);
       
       toast.success("Генерация началась!");
       navigate(`/video/${response.data.id}`);
@@ -63,7 +97,7 @@ export const HomePage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [prompt, selectedFormat, navigate]);
+  }, [prompt, selectedFormat, youtubeUrl, selectedCharacter, selectedGameplay, navigate]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -71,6 +105,25 @@ export const HomePage = () => {
       handleGenerate();
     }
   };
+
+  const getPlaceholderText = () => {
+    if (!selectedFormat) return "Опишите ваше видео...";
+    
+    switch (selectedFormat.id) {
+      case "gameplay_clip":
+        return "Опишите контекст видео... Например: Смешные моменты из стрима";
+      case "ai_story":
+        return "Опишите историю... Например: Страшная история про заброшенный дом";
+      case "character_explainer":
+        return "Что должен объяснить персонаж? Например: Как заработать деньги";
+      default:
+        return "Опишите ваше видео... Например: Топ-5 самых дорогих машин 2024 года";
+    }
+  };
+
+  const showYoutubeInput = selectedFormat?.id === "gameplay_clip";
+  const showCharacterSelector = selectedFormat?.id === "character_explainer";
+  const showGameplaySelector = selectedFormat?.id === "gameplay_clip";
 
   return (
     <div className="min-h-screen flex flex-col" data-testid="home-page">
@@ -98,7 +151,7 @@ export const HomePage = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 md:px-8 pb-8">
         {/* Hero Section */}
-        <div className="text-center mb-8 md:mb-12 max-w-3xl mx-auto">
+        <div className="text-center mb-6 md:mb-10 max-w-3xl mx-auto">
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black font-['Chivo'] tracking-tight leading-none mb-4">
             Создавайте{" "}
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
@@ -114,13 +167,81 @@ export const HomePage = () => {
 
         {/* Input Section */}
         <div className="w-full max-w-2xl mx-auto space-y-4">
+          {/* YouTube URL Input (for gameplay_clip format) */}
+          {showYoutubeInput && (
+            <div className="relative animate-fade-in-up">
+              <Youtube className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500" />
+              <Input
+                type="url"
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                placeholder="Вставьте ссылку на YouTube видео..."
+                className="pl-12 bg-black/50 border-2 border-white/10 focus:border-red-500/50 h-14 text-base"
+                data-testid="youtube-url-input"
+              />
+            </div>
+          )}
+
+          {/* Character Selector (for character_explainer format) */}
+          {showCharacterSelector && characterTypes.length > 0 && (
+            <div className="animate-fade-in-up">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Выберите персонажа
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {characterTypes.map((char) => (
+                  <button
+                    key={char.id}
+                    onClick={() => setSelectedCharacter(char)}
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200",
+                      selectedCharacter?.id === char.id
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary/50 text-secondary-foreground border-white/10 hover:border-primary/50"
+                    )}
+                    data-testid={`character-${char.id}`}
+                  >
+                    <span className="mr-2">{char.emoji}</span>
+                    {char.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Gameplay Selector (for gameplay_clip format) */}
+          {showGameplaySelector && gameplayTypes.length > 0 && (
+            <div className="animate-fade-in-up">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                Выберите тип геймплея снизу
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {gameplayTypes.map((gameplay) => (
+                  <button
+                    key={gameplay.id}
+                    onClick={() => setSelectedGameplay(gameplay)}
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200",
+                      selectedGameplay?.id === gameplay.id
+                        ? "bg-accent text-accent-foreground border-accent"
+                        : "bg-secondary/50 text-secondary-foreground border-white/10 hover:border-accent/50"
+                    )}
+                    data-testid={`gameplay-${gameplay.id}`}
+                  >
+                    {gameplay.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Main Input */}
           <div className="relative input-glow rounded-2xl transition-shadow duration-300">
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Опишите ваше видео... Например: Топ-5 самых дорогих машин 2024 года"
+              placeholder={getPlaceholderText()}
               className="w-full bg-black/50 border-2 border-white/10 focus:border-primary/50 text-lg md:text-xl p-5 md:p-6 pr-32 rounded-2xl resize-none h-32 md:h-36 placeholder:text-muted-foreground/50 focus:outline-none transition-colors"
               data-testid="prompt-input"
             />
@@ -133,8 +254,8 @@ export const HomePage = () => {
             >
               {selectedFormat ? (
                 <>
-                  <span className="text-primary">{selectedFormat.name_ru}</span>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-primary truncate max-w-[100px]">{selectedFormat.name_ru}</span>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 </>
               ) : (
                 <>
@@ -167,16 +288,37 @@ export const HomePage = () => {
 
           {/* Quick hints */}
           <div className="flex flex-wrap justify-center gap-2 pt-4">
-            {["Новости технологий", "Топ-5 фактов", "Обзор продукта", "Интересная история"].map((hint) => (
-              <button
-                key={hint}
-                onClick={() => setPrompt(hint)}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary/50 hover:bg-secondary border border-white/5 hover:border-white/20 transition-colors text-muted-foreground hover:text-foreground"
-                data-testid={`hint-${hint}`}
-              >
-                {hint}
-              </button>
-            ))}
+            {selectedFormat?.id === "ai_story" ? (
+              ["Страшная история", "Романтическая история", "Приключенческая история", "Мистическая история"].map((hint) => (
+                <button
+                  key={hint}
+                  onClick={() => setPrompt(hint)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary/50 hover:bg-secondary border border-white/5 hover:border-white/20 transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  {hint}
+                </button>
+              ))
+            ) : selectedFormat?.id === "character_explainer" ? (
+              ["Как заработать деньги", "Как стать умнее", "Секреты успеха", "Интересные факты"].map((hint) => (
+                <button
+                  key={hint}
+                  onClick={() => setPrompt(hint)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary/50 hover:bg-secondary border border-white/5 hover:border-white/20 transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  {hint}
+                </button>
+              ))
+            ) : (
+              ["Новости технологий", "Топ-5 фактов", "Обзор продукта", "Интересная история"].map((hint) => (
+                <button
+                  key={hint}
+                  onClick={() => setPrompt(hint)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary/50 hover:bg-secondary border border-white/5 hover:border-white/20 transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  {hint}
+                </button>
+              ))
+            )}
           </div>
         </div>
       </main>
