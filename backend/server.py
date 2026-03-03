@@ -409,21 +409,27 @@ Topic: {prompt}"""
 
 async def generate_gameplay_clip_script(prompt: str, youtube_url: str, gameplay_type: str, language: str) -> dict:
     """Generate script for Gameplay + Clip format"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    gameplay_info = next((g for g in GAMEPLAY_TYPES if g["id"] == gameplay_type), GAMEPLAY_TYPES[0])
+    # Detect language
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
-    chat = LlmChat(
-        api_key=api_key,
-        session_id=f"gameplay-{uuid.uuid4()}",
-        system_message="You are a video editor who creates engaging split-screen content with gameplay at the bottom."
-    )
-    chat.with_model("openai", "gpt-5.2")
-    
-    lang_instruction = "Respond in Russian." if language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя')) else "Respond in English."
-    
-    system_prompt = f"""Create subtitles and scene breakdown for a split-screen video.
+    # Try to use LLM, but have a good fallback
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        gameplay_info = next((g for g in GAMEPLAY_TYPES if g["id"] == gameplay_type), GAMEPLAY_TYPES[0])
+        
+        api_key = os.getenv("EMERGENT_LLM_KEY")
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"gameplay-{uuid.uuid4()}",
+            system_message="You are a video editor who creates engaging split-screen content with gameplay at the bottom."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
+        
+        system_prompt = f"""Create subtitles and scene breakdown for a split-screen video.
 {lang_instruction}
 
 Video format:
@@ -454,23 +460,43 @@ Return a JSON object:
 Create 8-12 subtitle segments for a 30-60 second clip.
 Note: The actual YouTube clip extraction will be handled separately."""
 
-    msg = UserMessage(text=system_prompt)
-    response = await chat.send_message(msg)
-    
-    try:
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
         if json_start != -1 and json_end > json_start:
             return json.loads(response[json_start:json_end])
-    except:
-        pass
+    except Exception as e:
+        logger.warning(f"LLM generation failed for gameplay_clip, using fallback: {e}")
+    
+    # Fallback: Generate basic subtitles without LLM
+    if is_russian:
+        title = f"Лучшие моменты: {prompt[:30]}"
+        scenes = [
+            {"text": "Смотрите что будет дальше! 👀", "timestamp_start": 0, "timestamp_end": 3, "highlight": True},
+            {"text": prompt[:50] if prompt else "Интересный момент", "timestamp_start": 3, "timestamp_end": 6, "highlight": False},
+            {"text": "Вы такого не ожидали! 😱", "timestamp_start": 6, "timestamp_end": 9, "highlight": True},
+            {"text": "Подписывайтесь!", "timestamp_start": 9, "timestamp_end": 12, "highlight": False},
+        ]
+        full_script = " ".join([s["text"] for s in scenes])
+    else:
+        title = f"Best moments: {prompt[:30]}"
+        scenes = [
+            {"text": "Watch what happens next! 👀", "timestamp_start": 0, "timestamp_end": 3, "highlight": True},
+            {"text": prompt[:50] if prompt else "Interesting moment", "timestamp_start": 3, "timestamp_end": 6, "highlight": False},
+            {"text": "You won't believe this! 😱", "timestamp_start": 6, "timestamp_end": 9, "highlight": True},
+            {"text": "Subscribe for more!", "timestamp_start": 9, "timestamp_end": 12, "highlight": False},
+        ]
+        full_script = " ".join([s["text"] for s in scenes])
     
     return {
-        "title": prompt[:50],
+        "title": title,
         "youtube_url": youtube_url,
         "gameplay_type": gameplay_type,
-        "scenes": [{"text": prompt, "timestamp_start": 0, "timestamp_end": 5, "highlight": True}],
-        "full_script": prompt
+        "scenes": scenes,
+        "suggested_clip_moments": ["0:00-0:30 intro", "0:30-1:00 main content"],
+        "full_script": full_script
     }
 
 async def generate_image(prompt: str) -> Optional[str]:
@@ -605,14 +631,21 @@ async def process_video_generation(project_id: str):
                 {"$set": {"progress": 70, "progress_message": "Подготавливаем субтитры..."}}
             )
         
-        # Step 3: Generate TTS
-        await db.video_projects.update_one(
-            {"id": project_id},
-            {"$set": {"progress": 80, "progress_message": "Генерируем озвучку..."}}
-        )
-        
-        full_script = script_data.get("full_script", " ".join([s.get("text", "") for s in scenes]))
-        audio_url = await generate_tts(full_script)
+        # Step 3: Generate TTS (skip for gameplay_clip - only subtitles)
+        audio_url = None
+        if format_id != "gameplay_clip":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 80, "progress_message": "Генерируем озвучку..."}}
+            )
+            
+            full_script = script_data.get("full_script", " ".join([s.get("text", "") for s in scenes]))
+            audio_url = await generate_tts(full_script)
+        else:
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 90, "progress_message": "Финализация..."}}
+            )
         
         # Final update
         await db.video_projects.update_one(

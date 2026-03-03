@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Download, Share2, RotateCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/custom/VideoPlayer";
+import { GameplayClipPlayer } from "@/components/custom/GameplayClipPlayer";
 import { GenerationProgress } from "@/components/custom/GenerationProgress";
 import { toast } from "sonner";
 import axios from "axios";
@@ -142,14 +143,22 @@ export const VideoPage = () => {
         {/* Completed State - Video Player */}
         {isCompleted && project?.scenes && (
           <div className="w-full max-w-md mx-auto space-y-6">
-            <VideoPlayer
-              scenes={project.scenes.map(s => ({
-                ...s,
-                image_url: s.image_url ? `${BACKEND_URL}${s.image_url}` : null
-              }))}
-              audioUrl={project.audio_url ? `${BACKEND_URL}${project.audio_url}` : null}
-              title={project.title}
-            />
+            {/* Use GameplayClipPlayer for gameplay_clip format */}
+            {project.format_id === "gameplay_clip" ? (
+              <GameplayClipPlayer
+                project={project}
+                audioUrl={project.audio_url ? `${BACKEND_URL}${project.audio_url}` : null}
+              />
+            ) : (
+              <VideoPlayer
+                scenes={project.scenes.map(s => ({
+                  ...s,
+                  image_url: s.image_url ? `${BACKEND_URL}${s.image_url}` : null
+                }))}
+                audioUrl={project.audio_url ? `${BACKEND_URL}${project.audio_url}` : null}
+                title={project.title}
+              />
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -163,11 +172,28 @@ export const VideoPage = () => {
               </Button>
             </div>
 
+            {/* YouTube URL for gameplay_clip */}
+            {project.format_id === "gameplay_clip" && project.youtube_url && (
+              <div className="glass-card rounded-2xl p-4">
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  YouTube видео
+                </h3>
+                <a 
+                  href={project.youtube_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline break-all"
+                >
+                  {project.youtube_url}
+                </a>
+              </div>
+            )}
+
             {/* Script Preview */}
             {project.script && (
               <div className="glass-card rounded-2xl p-4 mt-6">
                 <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                  Скрипт
+                  {project.format_id === "gameplay_clip" ? "Субтитры" : "Скрипт"}
                 </h3>
                 <p className="text-sm text-foreground/80 leading-relaxed">
                   {project.script}
