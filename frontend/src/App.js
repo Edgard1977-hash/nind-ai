@@ -1,8 +1,8 @@
 import "@/index.css";
-import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import HomePage from "@/pages/HomePage";
+import CreatePage from "@/pages/CreatePage";
 import VideoPage from "@/pages/VideoPage";
 
 function App() {
@@ -11,6 +11,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/create" element={<CreatePage />} />
           <Route path="/video/:id" element={<VideoPage />} />
         </Routes>
       </BrowserRouter>

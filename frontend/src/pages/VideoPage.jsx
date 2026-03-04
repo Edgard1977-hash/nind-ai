@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Share2, RotateCcw, Home } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { VideoPlayer } from "@/components/custom/VideoPlayer";
-import { GameplayClipPlayer } from "@/components/custom/GameplayClipPlayer";
-import { GenerationProgress } from "@/components/custom/GenerationProgress";
+import { ArrowLeft, Download, Share2, Home, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -24,7 +20,6 @@ export const VideoPage = () => {
       setProject(response.data);
       setIsLoading(false);
 
-      // Continue polling if still processing
       if (response.data.status === "pending" || response.data.status === "processing") {
         setTimeout(fetchProject, 2000);
       }
@@ -48,26 +43,35 @@ export const VideoPage = () => {
     }
   };
 
-  const handleNewVideo = () => {
-    navigate("/");
+  const handleDownload = () => {
+    if (project?.video_url) {
+      const link = document.createElement("a");
+      link.href = `${BACKEND_URL}${project.video_url}`;
+      link.download = `${project.title || "video"}.mp4`;
+      link.click();
+      toast.success("Скачивание началось!");
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" data-testid="video-page">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-black flex items-center justify-center" data-testid="video-page">
+        <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4" data-testid="video-page-error">
-        <p className="text-destructive text-lg">{error}</p>
-        <Button onClick={() => navigate("/")} variant="outline">
-          <Home className="w-4 h-4 mr-2" />
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4" data-testid="video-page">
+        <p className="text-red-400 text-lg">{error}</p>
+        <button 
+          onClick={() => navigate("/")} 
+          className="glass-button px-6 py-3 rounded-full flex items-center gap-2"
+        >
+          <Home className="w-4 h-4" />
           На главную
-        </Button>
+        </button>
       </div>
     );
   }
@@ -75,138 +79,139 @@ export const VideoPage = () => {
   const isProcessing = project?.status === "pending" || project?.status === "processing";
   const isCompleted = project?.status === "completed";
   const hasError = project?.status === "error";
+  const hasVideo = project?.video_url;
 
   return (
-    <div className="min-h-screen flex flex-col" data-testid="video-page">
-      {/* Background */}
-      <div className="fixed inset-0 hero-gradient pointer-events-none" />
-      <div className="noise-overlay" />
-
+    <div className="min-h-screen bg-black" data-testid="video-page">
       {/* Header */}
-      <header className="relative z-10 p-4 md:p-6 flex items-center justify-between">
+      <header className="flex items-center justify-between p-4">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-2 rounded-full glass-ios"
           data-testid="back-button"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span className="hidden sm:inline">Назад</span>
         </button>
-
-        {isCompleted && (
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleShare}
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              data-testid="share-button"
+        
+        <div className="flex gap-2">
+          {hasVideo && (
+            <button
+              onClick={handleDownload}
+              className="p-2 rounded-full glass-ios"
+              data-testid="download-button"
             >
-              <Share2 className="w-4 h-4 mr-2" />
-              Поделиться
-            </Button>
-          </div>
-        )}
+              <Download className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            onClick={handleShare}
+            className="p-2 rounded-full glass-ios"
+            data-testid="share-button"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 md:px-8 pb-8">
+      <main className="px-4 pb-8">
         {/* Title */}
-        <h1 className="text-2xl md:text-3xl font-bold font-['Chivo'] text-center mb-6 max-w-lg">
-          {project?.title || "Генерация видео..."}
+        <h1 className="text-xl font-bold text-center mb-6 px-4">
+          {project?.title || "Генерация..."}
         </h1>
 
         {/* Processing State */}
         {isProcessing && (
-          <div className="w-full max-w-md">
-            <GenerationProgress
-              progress={project?.progress || 0}
-              message={project?.progress_message || "Обработка..."}
-            />
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="relative w-24 h-24 mb-6">
+              <div className="absolute inset-0 border-4 border-white/10 rounded-full" />
+              <div 
+                className="absolute inset-0 border-4 border-transparent border-t-white rounded-full animate-spin"
+                style={{ animationDuration: "1s" }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold">{project?.progress || 0}%</span>
+              </div>
+            </div>
+            <p className="text-white/60 text-center">
+              {project?.progress_message || "Обработка..."}
+            </p>
           </div>
         )}
 
         {/* Error State */}
         {hasError && (
-          <div className="text-center space-y-4" data-testid="video-error-state">
-            <div className="p-6 rounded-2xl bg-destructive/10 border border-destructive/20 max-w-md">
-              <p className="text-destructive font-medium mb-2">Произошла ошибка</p>
-              <p className="text-sm text-muted-foreground">{project?.error}</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="glass-ios rounded-2xl p-6 mb-4 max-w-sm text-center">
+              <p className="text-red-400 font-medium mb-2">Ошибка</p>
+              <p className="text-white/60 text-sm">{project?.error}</p>
             </div>
-            <Button onClick={handleNewVideo} variant="outline" className="rounded-full">
-              <RotateCcw className="w-4 h-4 mr-2" />
+            <button
+              onClick={() => navigate("/create")}
+              className="glass-button px-6 py-3 rounded-full flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
               Попробовать снова
-            </Button>
+            </button>
           </div>
         )}
 
-        {/* Completed State - Video Player */}
-        {isCompleted && project?.scenes && (
-          <div className="w-full max-w-md mx-auto space-y-6">
-            {/* Use GameplayClipPlayer for gameplay_clip format */}
-            {project.format_id === "gameplay_clip" ? (
-              <GameplayClipPlayer
-                project={project}
-                audioUrl={project.audio_url ? `${BACKEND_URL}${project.audio_url}` : null}
-              />
+        {/* Completed State */}
+        {isCompleted && (
+          <div className="space-y-6">
+            {/* Video Player */}
+            {hasVideo ? (
+              <div className="aspect-[9/16] max-w-sm mx-auto bg-black rounded-3xl overflow-hidden border border-white/10">
+                <video
+                  src={`${BACKEND_URL}${project.video_url}`}
+                  controls
+                  playsInline
+                  preload="auto"
+                  className="w-full h-full object-contain"
+                  data-testid="video-element"
+                />
+              </div>
             ) : (
-              <VideoPlayer
-                scenes={project.scenes.map(s => ({
-                  ...s,
-                  image_url: s.image_url ? `${BACKEND_URL}${s.image_url}` : null
-                }))}
-                audioUrl={project.audio_url ? `${BACKEND_URL}${project.audio_url}` : null}
-                title={project.title}
-              />
+              <div className="aspect-[9/16] max-w-sm mx-auto bg-white/5 rounded-3xl flex items-center justify-center">
+                <p className="text-white/40">Видео недоступно</p>
+              </div>
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleNewVideo}
-                className="flex-1 bg-primary hover:bg-primary/90 rounded-full"
-                data-testid="new-video-button"
+            <div className="flex gap-3 max-w-sm mx-auto">
+              {hasVideo && (
+                <button
+                  onClick={handleDownload}
+                  className="flex-1 glass-button py-4 rounded-[40px] font-semibold flex items-center justify-center gap-2"
+                  data-testid="download-btn-main"
+                >
+                  <Download className="w-5 h-5" />
+                  Скачать
+                </button>
+              )}
+              <button
+                onClick={() => navigate("/create")}
+                className="flex-1 glass-button py-4 rounded-[40px] font-semibold flex items-center justify-center gap-2"
+                data-testid="new-video-btn"
               >
-                <Home className="w-4 h-4 mr-2" />
-                Создать новое
-              </Button>
+                Создать ещё
+              </button>
             </div>
 
-            {/* YouTube URL for gameplay_clip */}
-            {project.format_id === "gameplay_clip" && project.youtube_url && (
-              <div className="glass-card rounded-2xl p-4">
-                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                  YouTube видео
-                </h3>
-                <a 
-                  href={project.youtube_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline break-all"
-                >
-                  {project.youtube_url}
-                </a>
-              </div>
-            )}
-
-            {/* Script Preview */}
-            {project.script && (
-              <div className="glass-card rounded-2xl p-4 mt-6">
-                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                  {project.format_id === "gameplay_clip" ? "Субтитры" : "Скрипт"}
-                </h3>
-                <p className="text-sm text-foreground/80 leading-relaxed">
-                  {project.script}
-                </p>
+            {/* Info */}
+            {project?.script && (
+              <div className="glass-ios rounded-2xl p-4 max-w-sm mx-auto">
+                <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Скрипт</p>
+                <p className="text-white/80 text-sm line-clamp-4">{project.script}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Original Prompt */}
+        {/* Prompt */}
         <div className="mt-8 text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Промт</p>
-          <p className="text-sm text-foreground/60 max-w-md">{project?.prompt}</p>
+          <p className="text-xs text-white/30 uppercase tracking-wider mb-1">Промт</p>
+          <p className="text-white/50 text-sm max-w-md mx-auto">{project?.prompt}</p>
         </div>
       </main>
     </div>

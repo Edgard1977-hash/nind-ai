@@ -15,6 +15,13 @@ import base64
 import json
 import httpx
 
+# Import video service
+from video_service import (
+    create_gameplay_clip, create_split_screen_video, download_youtube_clip,
+    create_image_video, concatenate_videos, add_audio_to_video, 
+    add_subtitles_to_video, cleanup_work_dir, WORK_DIR
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -81,6 +88,7 @@ class VideoProject(BaseModel):
     progress_message: str = "Инициализация..."
     scenes: List[dict] = []
     audio_url: Optional[str] = None
+    video_url: Optional[str] = None  # Final video URL
     script: Optional[str] = None
     title: Optional[str] = None
     error: Optional[str] = None
@@ -556,7 +564,10 @@ async def generate_tts(text: str) -> Optional[str]:
     return None
 
 async def process_video_generation(project_id: str):
-    """Background task to process video generation"""
+    """Background task to process video generation with real video assembly"""
+    work_dir = WORK_DIR / project_id
+    work_dir.mkdir(exist_ok=True)
+    
     try:
         # Get project from DB
         project = await db.video_projects.find_one({"id": project_id}, {"_id": 0})
@@ -568,7 +579,7 @@ async def process_video_generation(project_id: str):
         # Update status
         await db.video_projects.update_one(
             {"id": project_id},
-            {"$set": {"status": "processing", "progress": 10, "progress_message": "Анализируем промт..."}}
+            {"$set": {"status": "processing", "progress": 5, "progress_message": "Анализируем промт..."}}
         )
         
         # Step 1: Generate script based on format
@@ -600,52 +611,157 @@ async def process_video_generation(project_id: str):
         await db.video_projects.update_one(
             {"id": project_id},
             {"$set": {
-                "progress": 20, 
-                "progress_message": "Генерируем изображения...",
+                "progress": 15, 
+                "progress_message": "Скрипт готов. Создаём видео...",
                 "script": script_data.get("full_script", ""),
                 "title": script_data.get("title", project["prompt"][:50])
             }}
         )
         
-        # Step 2: Generate images for each scene (except gameplay_clip which uses video)
         scenes = script_data.get("scenes", [])
-        total_scenes = len(scenes)
+        video_url = None
+        audio_url = None
         
-        if format_id != "gameplay_clip":
-            for i, scene in enumerate(scenes):
-                progress = 20 + int((i / total_scenes) * 50)
-                await db.video_projects.update_one(
-                    {"id": project_id},
-                    {"$set": {"progress": progress, "progress_message": f"Генерируем изображение {i+1}/{total_scenes}..."}}
+        # ============ GAMEPLAY_CLIP FORMAT ============
+        if format_id == "gameplay_clip":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 20, "progress_message": "Скачиваем YouTube видео..."}}
+            )
+            
+            # Download YouTube clip
+            youtube_url = project.get("youtube_url", "")
+            yt_clip = await download_youtube_clip(youtube_url, work_dir, duration=30)
+            
+            if not yt_clip:
+                # Create placeholder if YouTube download fails
+                logger.warning("YouTube download failed, creating placeholder")
+                yt_clip = work_dir / "yt_placeholder.mp4"
+                cmd = ["ffmpeg", "-y", "-f", "lavfi", "-i", "color=c=0x1a1a2e:s=720x768:d=30", 
+                       "-c:v", "libx264", "-preset", "ultrafast", str(yt_clip)]
+                proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                await proc.communicate()
+            
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 50, "progress_message": "Создаём геймплей..."}}
+            )
+            
+            # Create gameplay clip
+            gameplay_type = project.get("gameplay_type", "minecraft_parkour")
+            gameplay_clip = await create_gameplay_clip(gameplay_type, work_dir, duration=30)
+            
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 70, "progress_message": "Собираем split-screen видео..."}}
+            )
+            
+            # Create split screen video
+            if yt_clip and gameplay_clip:
+                final_video = await create_split_screen_video(
+                    yt_clip, gameplay_clip, work_dir, subtitles=scenes
                 )
                 
+                if final_video:
+                    # Move to uploads
+                    final_name = f"video_{project_id}.mp4"
+                    final_path = UPLOADS_DIR / final_name
+                    final_video.rename(final_path)
+                    video_url = f"/api/uploads/{final_name}"
+        
+        # ============ OTHER FORMATS (with images) ============
+        else:
+            # Generate images and create video scenes
+            scene_videos = []
+            total_scenes = len(scenes)
+            
+            for i, scene in enumerate(scenes):
+                progress = 20 + int((i / max(total_scenes, 1)) * 40)
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": progress, "progress_message": f"Генерируем сцену {i+1}/{total_scenes}..."}}
+                )
+                
+                # Generate image
                 image_url = await generate_image(scene.get("image_prompt", scene.get("text", "")))
                 scene["image_url"] = image_url
                 
-                # Small delay to avoid rate limiting
-                await asyncio.sleep(1)
-        else:
-            # For gameplay_clip, we store the script data without generating images
-            await db.video_projects.update_one(
-                {"id": project_id},
-                {"$set": {"progress": 70, "progress_message": "Подготавливаем субтитры..."}}
-            )
-        
-        # Step 3: Generate TTS (skip for gameplay_clip - only subtitles)
-        audio_url = None
-        if format_id != "gameplay_clip":
-            await db.video_projects.update_one(
-                {"id": project_id},
-                {"$set": {"progress": 80, "progress_message": "Генерируем озвучку..."}}
-            )
+                # Create video from image with Ken Burns effect
+                if image_url:
+                    full_image_url = f"http://localhost:8001{image_url}"
+                    scene_video = await create_image_video(
+                        full_image_url, 
+                        work_dir, 
+                        duration=scene.get("duration", 4.0),
+                        animation=scene.get("animation", "zoom_in")
+                    )
+                    if scene_video:
+                        scene_videos.append(scene_video)
+                
+                await asyncio.sleep(0.5)
             
-            full_script = script_data.get("full_script", " ".join([s.get("text", "") for s in scenes]))
-            audio_url = await generate_tts(full_script)
-        else:
-            await db.video_projects.update_one(
-                {"id": project_id},
-                {"$set": {"progress": 90, "progress_message": "Финализация..."}}
-            )
+            # Concatenate all scene videos
+            if scene_videos:
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 65, "progress_message": "Собираем видео..."}}
+                )
+                
+                concat_video = await concatenate_videos(scene_videos, work_dir)
+                
+                if concat_video:
+                    # Add subtitles
+                    await db.video_projects.update_one(
+                        {"id": project_id},
+                        {"$set": {"progress": 75, "progress_message": "Добавляем субтитры..."}}
+                    )
+                    
+                    # Create subtitle timing based on scenes
+                    subtitles = []
+                    current_time = 0
+                    for scene in scenes:
+                        duration = scene.get("duration", 4.0)
+                        subtitles.append({
+                            "text": scene.get("text", ""),
+                            "timestamp_start": current_time,
+                            "timestamp_end": current_time + duration,
+                            "highlight": scene.get("highlight", False)
+                        })
+                        current_time += duration
+                    
+                    subtitled_video = await add_subtitles_to_video(concat_video, subtitles, work_dir)
+                    final_video = subtitled_video or concat_video
+                    
+                    # Generate TTS
+                    await db.video_projects.update_one(
+                        {"id": project_id},
+                        {"$set": {"progress": 85, "progress_message": "Генерируем озвучку..."}}
+                    )
+                    
+                    full_script = script_data.get("full_script", " ".join([s.get("text", "") for s in scenes]))
+                    audio_url = await generate_tts(full_script)
+                    
+                    # Add audio to video
+                    if audio_url:
+                        await db.video_projects.update_one(
+                            {"id": project_id},
+                            {"$set": {"progress": 92, "progress_message": "Добавляем озвучку к видео..."}}
+                        )
+                        
+                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
+                        if audio_path.exists():
+                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
+                            if video_with_audio:
+                                final_video = video_with_audio
+                    
+                    # Move to uploads
+                    final_name = f"video_{project_id}.mp4"
+                    final_path = UPLOADS_DIR / final_name
+                    final_video.rename(final_path)
+                    video_url = f"/api/uploads/{final_name}"
+        
+        # Cleanup work directory
+        cleanup_work_dir(work_dir)
         
         # Final update
         await db.video_projects.update_one(
@@ -656,12 +772,15 @@ async def process_video_generation(project_id: str):
                 "progress_message": "Готово!",
                 "scenes": scenes,
                 "audio_url": audio_url,
+                "video_url": video_url,
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
         
     except Exception as e:
         logger.error(f"Video generation error: {e}")
+        import traceback
+        traceback.print_exc()
         await db.video_projects.update_one(
             {"id": project_id},
             {"$set": {
@@ -670,6 +789,8 @@ async def process_video_generation(project_id: str):
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
+        # Cleanup on error
+        cleanup_work_dir(work_dir)
 
 # ==================== API ROUTES ====================
 
@@ -731,7 +852,20 @@ async def get_upload(filename: str):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     
-    media_type = "image/png" if filename.endswith(".png") else "audio/mpeg"
+    # Determine media type based on extension
+    if filename.endswith(".png"):
+        media_type = "image/png"
+    elif filename.endswith(".jpg") or filename.endswith(".jpeg"):
+        media_type = "image/jpeg"
+    elif filename.endswith(".mp4"):
+        media_type = "video/mp4"
+    elif filename.endswith(".mp3"):
+        media_type = "audio/mpeg"
+    elif filename.endswith(".wav"):
+        media_type = "audio/wav"
+    else:
+        media_type = "application/octet-stream"
+    
     return FileResponse(file_path, media_type=media_type)
 
 # Include the router in the main app
