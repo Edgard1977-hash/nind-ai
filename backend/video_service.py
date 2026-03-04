@@ -374,3 +374,103 @@ def cleanup_work_dir(work_dir: Path, keep_final: Path = None):
                 f.unlink()
             except:
                 pass
+
+
+async def create_chat_animation_video(script_data: dict, output_path: Path) -> Optional[Path]:
+    """Create animated chat/message conversation video"""
+    output_file = output_path / f"chat_{uuid.uuid4().hex[:8]}.mp4"
+    
+    participants = script_data.get("participants", [
+        {"name": "User 1", "side": "left", "avatar_color": "#4a90d9"},
+        {"name": "User 2", "side": "right", "avatar_color": "#27ae60"}
+    ])
+    messages = script_data.get("messages", [])
+    bg_colors = script_data.get("background_colors", ["#1a1a2e", "#16213e"])
+    
+    # Calculate total duration based on messages
+    total_duration = 2.0  # Start delay
+    for msg in messages:
+        total_duration += msg.get("delay", 1.0) + msg.get("typing_duration", 0.5) + 1.0
+    total_duration = max(total_duration, 10.0)  # Minimum 10 seconds
+    
+    # Create complex filter for animated chat
+    # Generate drawtext filters for each message with appearance timing
+    
+    drawtext_filters = []
+    current_time = 1.0
+    y_position = 300  # Starting Y position
+    
+    for i, msg in enumerate(messages):
+        sender_idx = msg.get("sender", 0)
+        text = msg.get("text", "").replace("'", "'\\''").replace(":", r"\:")
+        delay = msg.get("delay", 1.0)
+        
+        current_time += delay
+        
+        # Determine position (left or right)
+        participant = participants[sender_idx] if sender_idx < len(participants) else participants[0]
+        is_left = participant.get("side", "left") == "left"
+        
+        # Message bubble colors
+        if is_left:
+            box_color = "#e5e5ea"  # Light gray for left (received)
+            text_color = "#000000"
+            x_pos = "50"
+        else:
+            box_color = "#0b93f6"  # Blue for right (sent)  
+            text_color = "#ffffff"
+            x_pos = "w-tw-70"
+        
+        # Add message with fade-in effect
+        appear_time = current_time
+        filter_str = f"drawtext=text='{text}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:fontsize=28:fontcolor={text_color}:x={x_pos}:y={y_position}:enable='gte(t,{appear_time})':box=1:boxcolor={box_color}@0.9:boxborderw=15"
+        drawtext_filters.append(filter_str)
+        
+        # Move to next line
+        y_position += 70
+        current_time += msg.get("typing_duration", 0.5) + 0.5
+        
+        # Reset position if too low
+        if y_position > 1100:
+            y_position = 300
+    
+    # Build filter complex
+    bg_color = bg_colors[0] if bg_colors else "#1a1a2e"
+    
+    # Create base video with gradient background
+    base_filter = f"color=c={bg_color}:s=720x1280:d={total_duration}"
+    
+    # Add header (phone top bar simulation)
+    header_filter = f"drawbox=x=0:y=0:w=720:h=100:color=#000000@0.3:t=fill,drawtext=text='{participants[0].get('name', 'Chat')}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=36:fontcolor=#ffffff:x=(w-tw)/2:y=40"
+    
+    # Combine all filters
+    all_filters = ",".join([header_filter] + drawtext_filters)
+    
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi",
+        "-i", base_filter,
+        "-f", "lavfi",
+        "-i", "anullsrc=r=44100:cl=stereo",
+        "-vf", all_filters,
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-pix_fmt", "yuv420p",
+        "-c:a", "aac",
+        "-t", str(total_duration),
+        str(output_file)
+    ]
+    
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
+    
+    if output_file.exists() and output_file.stat().st_size > 1000:
+        logger.info(f"Created chat animation video: {output_file}")
+        return output_file
+    
+    logger.error(f"Chat animation creation failed: {stderr.decode()}")
+    return None

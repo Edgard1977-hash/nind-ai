@@ -164,6 +164,7 @@ export const VideoPage = () => {
               <div className="aspect-[9/16] max-w-sm mx-auto bg-black rounded-3xl overflow-hidden border border-white/10">
                 <video
                   src={`${BACKEND_URL}${project.video_url}`}
+                  poster={project.poster_url ? `${BACKEND_URL}${project.poster_url}` : undefined}
                   controls
                   playsInline
                   preload="auto"

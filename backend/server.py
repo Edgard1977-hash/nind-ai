@@ -19,7 +19,7 @@ import httpx
 from video_service import (
     create_gameplay_clip, create_split_screen_video, download_youtube_clip,
     create_image_video, concatenate_videos, add_audio_to_video, 
-    add_subtitles_to_video, cleanup_work_dir, WORK_DIR
+    add_subtitles_to_video, cleanup_work_dir, create_chat_animation_video, WORK_DIR
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -61,7 +61,7 @@ class VideoFormat(BaseModel):
 
 class VideoGenerateRequest(BaseModel):
     prompt: str
-    format_id: str
+    format_id: str = "auto"  # Auto-detect by default
     language: str = "auto"
     youtube_url: Optional[str] = None
     character_type: Optional[str] = None
@@ -89,6 +89,7 @@ class VideoProject(BaseModel):
     scenes: List[dict] = []
     audio_url: Optional[str] = None
     video_url: Optional[str] = None  # Final video URL
+    poster_url: Optional[str] = None  # Poster image for preview
     script: Optional[str] = None
     title: Optional[str] = None
     error: Optional[str] = None
@@ -188,6 +189,16 @@ VIDEO_FORMATS = [
         category="educational",
         image_url="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400"
     ),
+    VideoFormat(
+        id="chat_animation",
+        name="Chat Animation",
+        name_ru="Анимация диалога",
+        description="Animated chat/message conversation video",
+        description_ru="Видео с анимированным диалогом сообщений",
+        icon="MessageSquare",
+        category="entertainment",
+        image_url="https://images.unsplash.com/photo-1611746872915-64382b5c76da?w=400"
+    ),
 ]
 
 # Character types for character_explainer format
@@ -218,6 +229,209 @@ FORMAT_CATEGORIES = {
 }
 
 # ==================== AI SERVICES ====================
+
+async def detect_video_type(prompt: str) -> dict:
+    """Smart AI engine - analyze prompt and auto-detect the best video type"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"detect-{uuid.uuid4()}",
+            system_message="You are a smart content classifier for video generation."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        detection_prompt = f"""Analyze this user prompt and determine the best video type to create.
+
+Available video types:
+1. "chat_animation" - For dialog/conversation/messages animations (e.g., "make animation of chat with client", "show dialog between...", "animate our conversation")
+2. "news" - For news reports, current events, breaking news
+3. "ai_story" - For stories, narratives, tales, fiction
+4. "character_explainer" - For educational explanations with cute characters (how-to, learn, explain)
+5. "gameplay_clip" - For gaming content with YouTube clips
+6. "educational" - For learning content, tutorials, facts
+7. "meme" - For funny/viral meme content
+8. "product" - For product reviews/showcases
+
+User prompt: "{prompt}"
+
+Respond ONLY with a JSON object:
+{{
+    "format_id": "the_best_matching_type",
+    "confidence": 0.0-1.0,
+    "reason": "brief explanation",
+    "detected_language": "ru" or "en",
+    "extracted_data": {{}}  // For chat_animation: extract messages array if present
+}}
+
+Important: If user mentions dialog, chat, conversation, messages, or provides a conversation in brackets [] or quotes, choose "chat_animation".
+"""
+        
+        msg = UserMessage(text=detection_prompt)
+        response = await chat.send_message(msg)
+        
+        # Parse JSON
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            result = json.loads(response[json_start:json_end])
+            return result
+    except Exception as e:
+        logger.warning(f"Auto-detection failed, using fallback: {e}")
+    
+    # Fallback detection based on keywords
+    prompt_lower = prompt.lower()
+    
+    # Check for chat/dialog keywords
+    chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation', 'беседа']
+    if any(kw in prompt_lower for kw in chat_keywords) or '[' in prompt or '«' in prompt:
+        return {"format_id": "chat_animation", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for news
+    news_keywords = ['новост', 'news', 'breaking', 'событи', 'сегодня', 'headline']
+    if any(kw in prompt_lower for kw in news_keywords):
+        return {"format_id": "news", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for story
+    story_keywords = ['истор', 'story', 'расскажи', 'tell', 'tale', 'сказк']
+    if any(kw in prompt_lower for kw in story_keywords):
+        return {"format_id": "ai_story", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Default to ai_story
+    return {"format_id": "ai_story", "confidence": 0.5, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+
+
+async def generate_chat_animation_script(prompt: str, language: str) -> dict:
+    """Generate script for Chat Animation format - animated message dialogs"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"chat-anim-{uuid.uuid4()}",
+            system_message="You are a creative content writer who creates engaging chat/message animations for viral videos."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
+        
+        system_prompt = f"""Create an animated chat/message conversation video script based on this prompt.
+{lang_instruction}
+
+The video will show an animated phone screen with messages appearing one by one.
+Style: Modern messenger app (like iMessage, WhatsApp, or Telegram)
+
+Requirements:
+- Extract or create the conversation from the user's prompt
+- Each message should have a sender (left/right side)
+- Add emojis where appropriate for engagement
+- Messages should build tension or humor
+- Total duration: 30-60 seconds
+
+Return a JSON object:
+{{
+    "title": "Catchy title for the video",
+    "theme": "dramatic/funny/romantic/business/mystery",
+    "participants": [
+        {{"name": "Person 1 name", "side": "left", "avatar_color": "#hex"}},
+        {{"name": "Person 2 name", "side": "right", "avatar_color": "#hex"}}
+    ],
+    "messages": [
+        {{
+            "sender": 0 or 1 (index in participants),
+            "text": "Message text",
+            "delay": 1.5 (seconds before this message appears),
+            "typing_duration": 0.8 (typing animation duration),
+            "reaction": "emoji or null"
+        }}
+    ],
+    "background_style": "gradient/solid/image",
+    "background_colors": ["#hex1", "#hex2"],
+    "full_script": "All messages combined for TTS narration"
+}}
+
+User prompt: {prompt}"""
+        
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except Exception as e:
+        logger.warning(f"Chat animation script generation failed: {e}")
+    
+    # Fallback: create simple dialog
+    if is_russian:
+        return {
+            "title": "Интересный диалог",
+            "theme": "dramatic",
+            "participants": [
+                {"name": "Клиент", "side": "left", "avatar_color": "#4a90d9"},
+                {"name": "Я", "side": "right", "avatar_color": "#27ae60"}
+            ],
+            "messages": [
+                {"sender": 0, "text": "Привет! 👋", "delay": 0.5, "typing_duration": 0.5},
+                {"sender": 1, "text": "Здравствуйте!", "delay": 1.0, "typing_duration": 0.6},
+                {"sender": 0, "text": "Как дела?", "delay": 1.2, "typing_duration": 0.5},
+                {"sender": 1, "text": "Отлично! А у вас?", "delay": 1.0, "typing_duration": 0.7},
+            ],
+            "background_style": "gradient",
+            "background_colors": ["#1a1a2e", "#16213e"],
+            "full_script": "Привет! Здравствуйте! Как дела? Отлично! А у вас?"
+        }
+    else:
+        return {
+            "title": "Interesting Dialog",
+            "theme": "dramatic",
+            "participants": [
+                {"name": "Client", "side": "left", "avatar_color": "#4a90d9"},
+                {"name": "Me", "side": "right", "avatar_color": "#27ae60"}
+            ],
+            "messages": [
+                {"sender": 0, "text": "Hey! 👋", "delay": 0.5, "typing_duration": 0.5},
+                {"sender": 1, "text": "Hello!", "delay": 1.0, "typing_duration": 0.6},
+                {"sender": 0, "text": "How are you?", "delay": 1.2, "typing_duration": 0.5},
+                {"sender": 1, "text": "Great! And you?", "delay": 1.0, "typing_duration": 0.7},
+            ],
+            "background_style": "gradient",
+            "background_colors": ["#1a1a2e", "#16213e"],
+            "full_script": "Hey! Hello! How are you? Great! And you?"
+        }
+
+
+async def generate_poster_image(video_path: Path, output_path: Path) -> Optional[str]:
+    """Extract first frame from video as poster image"""
+    poster_path = output_path / f"poster_{video_path.stem}.jpg"
+    
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(video_path),
+        "-vframes", "1",
+        "-q:v", "2",
+        str(poster_path)
+    ]
+    
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    await asyncio.wait_for(process.communicate(), timeout=30)
+    
+    if poster_path.exists():
+        # Move to uploads
+        final_poster = UPLOADS_DIR / poster_path.name
+        poster_path.rename(final_poster)
+        return f"/api/uploads/{final_poster.name}"
+    return None
 
 async def analyze_prompt_and_generate_script(prompt: str, format_id: str, language: str) -> dict:
     """Use LLM to analyze prompt and generate video script"""
@@ -582,8 +796,28 @@ async def process_video_generation(project_id: str):
             {"$set": {"status": "processing", "progress": 5, "progress_message": "Анализируем промт..."}}
         )
         
+        # ============ AUTO-DETECT FORMAT ============
+        if format_id == "auto":
+            detection_result = await detect_video_type(project["prompt"])
+            format_id = detection_result.get("format_id", "ai_story")
+            logger.info(f"Auto-detected format: {format_id} (confidence: {detection_result.get('confidence', 0)})")
+            
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {
+                    "format_id": format_id,
+                    "progress": 8,
+                    "progress_message": f"Определён тип: {format_id}"
+                }}
+            )
+        
         # Step 1: Generate script based on format
-        if format_id == "ai_story":
+        if format_id == "chat_animation":
+            script_data = await generate_chat_animation_script(
+                project["prompt"],
+                project["language"]
+            )
+        elif format_id == "ai_story":
             script_data = await generate_ai_story_script(
                 project["prompt"],
                 project["language"]
@@ -604,7 +838,7 @@ async def process_video_generation(project_id: str):
         else:
             script_data = await analyze_prompt_and_generate_script(
                 project["prompt"], 
-                project["format_id"],
+                format_id,
                 project["language"]
             )
         
@@ -621,9 +855,52 @@ async def process_video_generation(project_id: str):
         scenes = script_data.get("scenes", [])
         video_url = None
         audio_url = None
+        poster_url = None
+        
+        # ============ CHAT_ANIMATION FORMAT ============
+        if format_id == "chat_animation":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 30, "progress_message": "Создаём анимацию диалога..."}}
+            )
+            
+            # Create chat animation video
+            final_video = await create_chat_animation_video(script_data, work_dir)
+            
+            if final_video:
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 70, "progress_message": "Генерируем озвучку..."}}
+                )
+                
+                # Generate TTS for narration
+                full_script = script_data.get("full_script", "")
+                if full_script:
+                    audio_url = await generate_tts(full_script)
+                    
+                    if audio_url:
+                        await db.video_projects.update_one(
+                            {"id": project_id},
+                            {"$set": {"progress": 85, "progress_message": "Добавляем озвучку..."}}
+                        )
+                        
+                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
+                        if audio_path.exists():
+                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
+                            if video_with_audio:
+                                final_video = video_with_audio
+                
+                # Generate poster
+                poster_url = await generate_poster_image(final_video, work_dir)
+                
+                # Move to uploads
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
         
         # ============ GAMEPLAY_CLIP FORMAT ============
-        if format_id == "gameplay_clip":
+        elif format_id == "gameplay_clip":
             await db.video_projects.update_one(
                 {"id": project_id},
                 {"$set": {"progress": 20, "progress_message": "Скачиваем YouTube видео..."}}
@@ -663,6 +940,9 @@ async def process_video_generation(project_id: str):
                 )
                 
                 if final_video:
+                    # Generate poster
+                    poster_url = await generate_poster_image(final_video, work_dir)
+                    
                     # Move to uploads
                     final_name = f"video_{project_id}.mp4"
                     final_path = UPLOADS_DIR / final_name
@@ -754,6 +1034,9 @@ async def process_video_generation(project_id: str):
                             if video_with_audio:
                                 final_video = video_with_audio
                     
+                    # Generate poster
+                    poster_url = await generate_poster_image(final_video, work_dir)
+                    
                     # Move to uploads
                     final_name = f"video_{project_id}.mp4"
                     final_path = UPLOADS_DIR / final_name
@@ -773,6 +1056,7 @@ async def process_video_generation(project_id: str):
                 "scenes": scenes,
                 "audio_url": audio_url,
                 "video_url": video_url,
+                "poster_url": poster_url,
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )

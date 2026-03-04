@@ -107,12 +107,25 @@ export const HomePage = () => {
               className="video-card"
               data-testid={`video-card-${video.id}`}
             >
-              <video
-                src={`${BACKEND_URL}${video.video_url}`}
-                className="w-full h-full object-cover"
-                muted
-                playsInline
-              />
+              {video.poster_url ? (
+                <img
+                  src={`${BACKEND_URL}${video.poster_url}`}
+                  alt={video.title || "Video"}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <video
+                  src={`${BACKEND_URL}${video.video_url}`}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
+              )}
+              {/* Video title overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                <p className="text-xs text-white truncate">{video.title || "Видео"}</p>
+              </div>
             </button>
           ))
         ) : (

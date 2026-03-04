@@ -62,11 +62,11 @@ export const CreatePage = () => {
     try {
       const response = await axios.post(`${API}/video/generate`, {
         prompt: prompt.trim(),
-        format_id: "ai_story",
+        format_id: "auto",  // Smart auto-detection
         language: "auto"
       });
       
-      toast.success("Генерация началась!");
+      toast.success("Генерация началась! AI анализирует ваш промт...");
       navigate(`/video/${response.data.id}`);
     } catch (error) {
       console.error("Failed to start generation:", error);
