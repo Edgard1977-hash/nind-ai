@@ -77,62 +77,92 @@ def ease_in_out_sine(t: float) -> float:
 
 # ==================== CHAT ANIMATION (iMessage Style) ====================
 
-def draw_imessage_bubble(
-    draw: ImageDraw.ImageDraw,
+def draw_imessage_bubble_v2(
     img: Image.Image,
     x: int, y: int,
     width: int, height: int,
     color: Tuple[int, int, int],
     is_left: bool,
-    shadow: bool = True
+    opacity: int = 255,
+    scale: float = 1.0
 ):
-    """Draw iMessage-style bubble with tail"""
-    radius = 22
-    tail_size = 12
+    """Draw iMessage-style bubble with tail - improved version"""
+    if scale <= 0 or opacity <= 0:
+        return
     
-    # Create bubble with alpha for smooth edges
-    bubble = Image.new('RGBA', (width + tail_size + 10, height + 10), (0, 0, 0, 0))
-    bubble_draw = ImageDraw.Draw(bubble)
+    # Apply scale from center
+    scaled_width = int(width * scale)
+    scaled_height = int(height * scale)
     
-    # Shadow
-    if shadow:
-        shadow_offset = 3
-        bubble_draw.rounded_rectangle(
-            (shadow_offset + (0 if is_left else tail_size), shadow_offset, 
-             width + shadow_offset + (0 if is_left else tail_size), height + shadow_offset),
-            radius=radius,
-            fill=(0, 0, 0, 40)
-        )
+    # Offset for scaling from center
+    x_offset = (width - scaled_width) // 2
+    y_offset = (height - scaled_height) // 2
     
-    # Main bubble
-    bubble_x_offset = 0 if is_left else tail_size
+    radius = int(20 * scale)
+    tail_width = int(10 * scale)
+    tail_height = int(15 * scale)
+    
+    # Create bubble with transparency
+    bubble_img = Image.new('RGBA', (scaled_width + tail_width + 4, scaled_height + tail_height + 4), (0, 0, 0, 0))
+    bubble_draw = ImageDraw.Draw(bubble_img)
+    
+    # Bubble position within the bubble image
+    bx = tail_width if is_left else 0
+    by = 0
+    
+    # Draw shadow first
+    shadow_offset = 2
+    shadow_color = (0, 0, 0, int(40 * opacity / 255))
     bubble_draw.rounded_rectangle(
-        (bubble_x_offset, 0, width + bubble_x_offset, height),
+        (bx + shadow_offset, by + shadow_offset, bx + scaled_width + shadow_offset, by + scaled_height + shadow_offset),
         radius=radius,
-        fill=color + (255,)
+        fill=shadow_color
     )
     
-    # Draw tail (triangle)
+    # Draw main bubble
+    bubble_color = color + (opacity,)
+    bubble_draw.rounded_rectangle(
+        (bx, by, bx + scaled_width, by + scaled_height),
+        radius=radius,
+        fill=bubble_color
+    )
+    
+    # Draw tail
     if is_left:
-        # Tail on left bottom
+        # Tail pointing left-down
         tail_points = [
-            (bubble_x_offset + 5, height - 10),
-            (bubble_x_offset - tail_size + 2, height + 2),
-            (bubble_x_offset + 15, height - 2)
+            (bx, by + scaled_height - radius),
+            (0, by + scaled_height + tail_height - 2),
+            (bx + radius, by + scaled_height - 2)
         ]
     else:
-        # Tail on right bottom
+        # Tail pointing right-down
         tail_points = [
-            (width + bubble_x_offset - 5, height - 10),
-            (width + bubble_x_offset + tail_size - 2, height + 2),
-            (width + bubble_x_offset - 15, height - 2)
+            (bx + scaled_width, by + scaled_height - radius),
+            (bx + scaled_width + tail_width, by + scaled_height + tail_height - 2),
+            (bx + scaled_width - radius, by + scaled_height - 2)
         ]
     
-    bubble_draw.polygon(tail_points, fill=color + (255,))
+    bubble_draw.polygon(tail_points, fill=bubble_color)
     
-    # Paste bubble onto main image
-    paste_x = x - (tail_size if is_left else 0)
-    img.paste(bubble, (paste_x, y), bubble)
+    # Paste onto main image
+    paste_x = x + x_offset - (tail_width if is_left else 0)
+    paste_y = y + y_offset
+    img.paste(bubble_img, (paste_x, paste_y), bubble_img)
+
+
+def ease_out_back(t: float) -> float:
+    """Ease out with overshoot (bounce back effect)"""
+    c1 = 1.70158
+    c3 = c1 + 1
+    return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)
+
+
+def ease_out_elastic(t: float) -> float:
+    """Elastic ease out for bouncy effect"""
+    if t == 0 or t == 1:
+        return t
+    return pow(2, -10 * t) * math.sin((t * 10 - 0.75) * (2 * math.pi) / 3) + 1
 
 
 async def render_chat_animation(
@@ -142,31 +172,29 @@ async def render_chat_animation(
     """
     Render professional iMessage-style chat animation.
     
-    Based on reference image:
-    - Gray bubbles for received (left)
-    - Blue bubbles for sent (right)
-    - Bubble tails
-    - "Read" indicator
-    - Typing indicator in blue bubble
-    - No header - pure chat view
+    Features:
+    - Dynamic bounce animations
+    - Scale + slide effects
+    - Proper alignment
+    - Typing indicator with pulsing dots
     """
     output_file = output_path / f"chat_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_path / "frames"
     frames_dir.mkdir(exist_ok=True)
     
-    # Colors - matching iMessage exactly
+    # Colors - exact iMessage style
     BG_COLOR = (0, 0, 0)
-    RECEIVED_COLOR = (58, 58, 60)  # Gray for received (left)
-    SENT_COLOR = (0, 122, 255)  # Blue for sent (right) 
+    RECEIVED_COLOR = (58, 58, 62)  # Dark gray for received (left)
+    SENT_COLOR = (0, 122, 255)  # Blue for sent (right)
     TEXT_COLOR = (255, 255, 255)
-    READ_COLOR = (142, 142, 147)  # Gray for "Read"
+    READ_COLOR = (138, 138, 142)
     
-    # Layout
-    BUBBLE_PADDING_H = 18
-    BUBBLE_PADDING_V = 14
-    MESSAGE_MARGIN = 24
-    BUBBLE_MAX_WIDTH = WIDTH - 160
-    VERTICAL_SPACING = 8
+    # Layout - precise positioning
+    SCREEN_PADDING = 16
+    BUBBLE_PADDING_H = 16
+    BUBBLE_PADDING_V = 10
+    BUBBLE_MAX_WIDTH = int(WIDTH * 0.72)  # Max 72% of screen width
+    VERTICAL_GAP = 6
     
     participants = script_data.get("participants", [
         {"name": "Собеседник", "side": "left"},
@@ -174,16 +202,17 @@ async def render_chat_animation(
     ])
     messages = script_data.get("messages", [])
     
-    # Calculate animation timeline
-    current_time = 0.8
+    # Animation timeline
+    current_time = 0.5
     message_events = []
     
     for msg in messages:
         sender_idx = msg.get("sender", 0)
         is_received = participants[sender_idx].get("side", "left") == "left"
         
-        typing_start = current_time
-        typing_duration = msg.get("typing_duration", 0.8) if is_received else 0
+        # Typing only for received messages
+        typing_duration = msg.get("typing_duration", 1.0) if is_received else 0
+        typing_start = current_time if is_received else current_time
         typing_end = typing_start + typing_duration
         appear_time = typing_end + 0.1
         
@@ -196,15 +225,18 @@ async def render_chat_animation(
             "is_received": is_received
         })
         
-        current_time = appear_time + msg.get("delay", 1.5)
+        current_time = appear_time + msg.get("delay", 1.8)
     
-    total_duration = current_time + 2.0
+    total_duration = current_time + 2.5
     total_frames = int(total_duration * FPS)
     
     # Font
-    font_message = get_font(30)
-    font_read = get_font(14)
-    font_dots = get_font(40, bold=True)
+    try:
+        font_message = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 28)
+        font_read = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 13)
+    except:
+        font_message = ImageFont.load_default()
+        font_read = ImageFont.load_default()
     
     logger.info(f"Rendering {total_frames} frames for chat animation...")
     
@@ -215,64 +247,76 @@ async def render_chat_animation(
         img = Image.new('RGBA', (WIDTH, HEIGHT), BG_COLOR + (255,))
         draw = ImageDraw.Draw(img)
         
-        # Start position (no header, pure chat)
-        y_position = 120
-        
-        last_sent_bubble_bottom = 0
-        last_sent_bubble_right = 0
+        # Start position
+        y_position = 100
         
         for i, event in enumerate(message_events):
             is_received = event["is_received"]
             
-            # Check if we should show typing indicator
+            # === TYPING INDICATOR ===
             if current_sec < event["appear_time"]:
                 if is_received and event["typing_start"] <= current_sec < event["typing_end"]:
-                    # Draw typing indicator bubble
-                    typing_bubble_width = 90
-                    typing_bubble_height = 50
-                    typing_x = MESSAGE_MARGIN
+                    typing_progress = (current_sec - event["typing_start"]) / max(0.01, event["typing_end"] - event["typing_start"])
+                    
+                    # Typing bubble
+                    typing_width = 75
+                    typing_height = 40
+                    typing_x = SCREEN_PADDING
                     typing_y = y_position
                     
-                    draw_imessage_bubble(
-                        draw, img,
-                        typing_x, typing_y,
-                        typing_bubble_width, typing_bubble_height,
-                        SENT_COLOR,  # Blue typing indicator
-                        is_left=True,
-                        shadow=True
+                    # Animate typing bubble appearance
+                    if typing_progress < 0.3:
+                        t_scale = ease_out_back(typing_progress / 0.3)
+                    else:
+                        t_scale = 1.0
+                    
+                    draw_imessage_bubble_v2(
+                        img, typing_x, typing_y,
+                        typing_width, typing_height,
+                        SENT_COLOR, is_left=True,
+                        opacity=255, scale=t_scale
                     )
                     
-                    # Animated dots
-                    for dot_idx in range(3):
-                        dot_x = typing_x + 22 + dot_idx * 20
-                        dot_y = typing_y + typing_bubble_height // 2
-                        
-                        # Pulsing animation
-                        phase = (current_sec * 2.5 + dot_idx * 0.25) % 1.0
-                        scale = 0.6 + 0.4 * ease_in_out_sine(phase)
-                        dot_radius = int(6 * scale)
-                        
-                        draw.ellipse(
-                            (dot_x - dot_radius, dot_y - dot_radius,
-                             dot_x + dot_radius, dot_y + dot_radius),
-                            fill=TEXT_COLOR
-                        )
+                    # Animated pulsing dots
+                    if t_scale > 0.5:
+                        for dot_idx in range(3):
+                            dot_x = typing_x + 18 + dot_idx * 18
+                            dot_y = typing_y + typing_height // 2
+                            
+                            # Wave animation
+                            phase = (current_sec * 4 + dot_idx * 0.4) % 1.0
+                            dot_scale = 0.5 + 0.5 * math.sin(phase * math.pi)
+                            dot_radius = int(5 * dot_scale)
+                            dot_alpha = int(150 + 105 * dot_scale)
+                            
+                            if dot_radius > 0:
+                                draw.ellipse(
+                                    (dot_x - dot_radius, dot_y - dot_radius - 5,
+                                     dot_x + dot_radius, dot_y + dot_radius - 5),
+                                    fill=(255, 255, 255, dot_alpha)
+                                )
                 continue
             
-            # Message is visible
+            # === MESSAGE BUBBLE ===
             time_since_appear = current_sec - event["appear_time"]
-            slide_duration = 0.25
             
-            if time_since_appear < slide_duration:
-                progress = ease_out_cubic(time_since_appear / slide_duration)
-                opacity = int(255 * progress)
+            # Animation parameters
+            anim_duration = 0.4
+            
+            if time_since_appear < anim_duration:
+                progress = time_since_appear / anim_duration
+                # Use bounce easing for dynamic feel
+                scale_progress = ease_out_back(min(1.0, progress * 1.2))
+                slide_progress = ease_out_cubic(progress)
+                opacity = int(255 * min(1.0, progress * 2))
             else:
-                progress = 1.0
+                scale_progress = 1.0
+                slide_progress = 1.0
                 opacity = 255
             
             text = event["text"]
             
-            # Calculate text wrapping
+            # Text wrapping
             words = text.split()
             lines = []
             current_line = ""
@@ -280,7 +324,8 @@ async def render_chat_animation(
             for word in words:
                 test_line = current_line + (" " if current_line else "") + word
                 bbox = draw.textbbox((0, 0), test_line, font=font_message)
-                if bbox[2] - bbox[0] <= BUBBLE_MAX_WIDTH - BUBBLE_PADDING_H * 2:
+                line_width = bbox[2] - bbox[0]
+                if line_width <= BUBBLE_MAX_WIDTH - BUBBLE_PADDING_H * 2:
                     current_line = test_line
                 else:
                     if current_line:
@@ -293,8 +338,8 @@ async def render_chat_animation(
                 lines = [text]
             
             # Calculate bubble size
+            line_height = 34
             max_line_width = 0
-            line_height = 36
             for line in lines:
                 bbox = draw.textbbox((0, 0), line, font=font_message)
                 max_line_width = max(max_line_width, bbox[2] - bbox[0])
@@ -302,68 +347,74 @@ async def render_chat_animation(
             bubble_width = max_line_width + BUBBLE_PADDING_H * 2
             bubble_height = len(lines) * line_height + BUBBLE_PADDING_V * 2
             
-            # Position and colors based on sender
+            # Position calculation with slide animation
             if is_received:
-                # Left side - gray
-                final_x = MESSAGE_MARGIN
-                start_x = -bubble_width - 50
-                bubble_x = int(start_x + (final_x - start_x) * progress)
+                # Left side - slide from left
+                final_x = SCREEN_PADDING
+                start_x = -bubble_width - 30
+                bubble_x = int(start_x + (final_x - start_x) * slide_progress)
                 bubble_color = RECEIVED_COLOR
             else:
-                # Right side - blue
-                final_x = WIDTH - MESSAGE_MARGIN - bubble_width
-                start_x = WIDTH + 50
-                bubble_x = int(start_x + (final_x - start_x) * progress)
+                # Right side - slide from right
+                final_x = WIDTH - SCREEN_PADDING - bubble_width
+                start_x = WIDTH + 30
+                bubble_x = int(start_x + (final_x - start_x) * slide_progress)
                 bubble_color = SENT_COLOR
-                last_sent_bubble_bottom = y_position + bubble_height
-                last_sent_bubble_right = final_x + bubble_width
             
             bubble_y = y_position
             
-            # Draw bubble
-            draw_imessage_bubble(
-                draw, img,
-                bubble_x, bubble_y,
+            # Draw bubble with scale
+            draw_imessage_bubble_v2(
+                img, bubble_x, bubble_y,
                 bubble_width, bubble_height,
-                bubble_color,
-                is_left=is_received,
-                shadow=True
+                bubble_color, is_left=is_received,
+                opacity=opacity, scale=scale_progress
             )
             
-            # Draw text
-            text_x = bubble_x + BUBBLE_PADDING_H
-            text_y = bubble_y + BUBBLE_PADDING_V
-            for line in lines:
-                # Apply opacity
-                text_color_alpha = TEXT_COLOR + (opacity,)
-                draw.text((text_x, text_y), line, fill=text_color_alpha, font=font_message)
-                text_y += line_height
+            # Draw text (only if scale is sufficient)
+            if scale_progress > 0.3:
+                text_opacity = int(opacity * min(1.0, (scale_progress - 0.3) / 0.7))
+                
+                # Calculate scaled text position
+                scaled_width = int(bubble_width * scale_progress)
+                scaled_height = int(bubble_height * scale_progress)
+                x_off = (bubble_width - scaled_width) // 2
+                y_off = (bubble_height - scaled_height) // 2
+                
+                text_x = bubble_x + BUBBLE_PADDING_H + x_off
+                text_y = bubble_y + BUBBLE_PADDING_V + y_off
+                
+                for line in lines:
+                    text_color_alpha = TEXT_COLOR + (text_opacity,)
+                    draw.text((text_x, text_y), line, fill=text_color_alpha, font=font_message)
+                    text_y += int(line_height * scale_progress)
             
-            # Draw "Read" indicator for sent messages (after last one)
-            if not is_received and progress == 1.0:
-                # Check if this is the last visible sent message
+            # "Read" indicator for sent messages
+            if not is_received and slide_progress == 1.0 and time_since_appear > 0.8:
+                # Check if this is the last visible sent message so far
                 is_last_sent = True
                 for j in range(i + 1, len(message_events)):
                     if not message_events[j]["is_received"] and current_sec >= message_events[j]["appear_time"]:
                         is_last_sent = False
                         break
                 
-                if is_last_sent and time_since_appear > 0.5:
+                if is_last_sent:
+                    read_alpha = int(255 * min(1.0, (time_since_appear - 0.8) / 0.3))
                     read_text = "Read"
                     read_bbox = draw.textbbox((0, 0), read_text, font=font_read)
                     read_width = read_bbox[2] - read_bbox[0]
                     read_x = bubble_x + bubble_width - read_width
-                    read_y = bubble_y + bubble_height + 4
-                    draw.text((read_x, read_y), read_text, fill=READ_COLOR, font=font_read)
+                    read_y = bubble_y + bubble_height + 6
+                    draw.text((read_x, read_y), read_text, fill=READ_COLOR + (read_alpha,), font=font_read)
             
             # Update y position
-            y_position += bubble_height + VERTICAL_SPACING + (20 if not is_received else 8)
+            y_position += bubble_height + VERTICAL_GAP + 16
         
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
         img.save(frame_path, "PNG")
         
-        if frame_num % 30 == 0:
+        if frame_num % 60 == 0:
             logger.info(f"Rendered frame {frame_num}/{total_frames}")
     
     # Compile frames to video
@@ -376,7 +427,7 @@ async def render_chat_animation(
         "-c:v", "libx264",
         "-preset", "fast",
         "-pix_fmt", "yuv420p",
-        "-crf", "23",
+        "-crf", "20",
         str(output_file)
     ]
     
