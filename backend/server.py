@@ -19,7 +19,9 @@ import httpx
 from video_service import (
     create_gameplay_clip, create_split_screen_video, download_youtube_clip,
     create_image_video, concatenate_videos, add_audio_to_video, 
-    add_subtitles_to_video, cleanup_work_dir, create_chat_animation_video, WORK_DIR
+    add_subtitles_to_video, cleanup_work_dir, create_chat_animation_video,
+    create_apple_text_animation, create_kinetic_typography, create_logo_animation,
+    WORK_DIR
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -194,10 +196,40 @@ VIDEO_FORMATS = [
         name="Chat Animation",
         name_ru="Анимация диалога",
         description="Animated chat/message conversation video",
-        description_ru="Видео с анимированным диалогом сообщений",
+        description_ru="Видео с анимированным диалогом сообщений в стиле iMessage",
         icon="MessageSquare",
         category="entertainment",
         image_url="https://images.unsplash.com/photo-1611746872915-64382b5c76da?w=400"
+    ),
+    VideoFormat(
+        id="apple_text",
+        name="Apple Text Style",
+        name_ru="Текст в стиле Apple",
+        description="Minimalist text animation like Apple presentations",
+        description_ru="Минималистичная анимация текста как в презентациях Apple",
+        icon="Type",
+        category="presentation",
+        image_url="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400"
+    ),
+    VideoFormat(
+        id="kinetic_typography",
+        name="Kinetic Typography",
+        name_ru="Кинетическая типографика",
+        description="Word-by-word animated text reveal",
+        description_ru="Слово за словом - динамичная анимация текста",
+        icon="AlignLeft",
+        category="presentation",
+        image_url="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400"
+    ),
+    VideoFormat(
+        id="logo_animation",
+        name="Logo Animation",
+        name_ru="Анимация логотипа",
+        description="Simple brand logo reveal animation",
+        description_ru="Простая анимация появления логотипа бренда",
+        icon="Star",
+        category="branding",
+        image_url="https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400"
     ),
 ]
 
@@ -247,14 +279,14 @@ async def detect_video_type(prompt: str) -> dict:
         detection_prompt = f"""Analyze this user prompt and determine the best video type to create.
 
 Available video types:
-1. "chat_animation" - For dialog/conversation/messages animations (e.g., "make animation of chat with client", "show dialog between...", "animate our conversation")
-2. "news" - For news reports, current events, breaking news
-3. "ai_story" - For stories, narratives, tales, fiction
-4. "character_explainer" - For educational explanations with cute characters (how-to, learn, explain)
-5. "gameplay_clip" - For gaming content with YouTube clips
-6. "educational" - For learning content, tutorials, facts
-7. "meme" - For funny/viral meme content
-8. "product" - For product reviews/showcases
+1. "chat_animation" - For dialog/conversation/messages animations (e.g., "make animation of chat with client", "show dialog between...", "animate our conversation", "переписка", "диалог", "сообщения")
+2. "apple_text" - For minimalist text presentations like Apple style (e.g., "make text like Apple", "simple text animation", "презентация текста")
+3. "kinetic_typography" - For dynamic word-by-word text animations (e.g., "animate words", "kinetic text", "слова по очереди")
+4. "logo_animation" - For brand/logo reveal animations (e.g., "animate my logo", "brand intro", "анимация логотипа", "интро бренда")
+5. "news" - For news reports, current events, breaking news
+6. "ai_story" - For stories, narratives, tales, fiction
+7. "character_explainer" - For educational explanations with cute characters
+8. "gameplay_clip" - For gaming content with YouTube clips
 
 User prompt: "{prompt}"
 
@@ -264,10 +296,14 @@ Respond ONLY with a JSON object:
     "confidence": 0.0-1.0,
     "reason": "brief explanation",
     "detected_language": "ru" or "en",
-    "extracted_data": {{}}  // For chat_animation: extract messages array if present
+    "extracted_data": {{}}
 }}
 
-Important: If user mentions dialog, chat, conversation, messages, or provides a conversation in brackets [] or quotes, choose "chat_animation".
+Important rules:
+- If user mentions dialog, chat, conversation, messages, or provides a conversation in brackets [] or quotes, choose "chat_animation"
+- If user mentions Apple, minimalist text, presentation, choose "apple_text"
+- If user mentions word animation, kinetic, dynamic text, choose "kinetic_typography"
+- If user mentions logo, brand, intro, choose "logo_animation"
 """
         
         msg = UserMessage(text=detection_prompt)
@@ -289,6 +325,21 @@ Important: If user mentions dialog, chat, conversation, messages, or provides a 
     chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation', 'беседа']
     if any(kw in prompt_lower for kw in chat_keywords) or '[' in prompt or '«' in prompt:
         return {"format_id": "chat_animation", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for Apple/minimalist text
+    apple_keywords = ['apple', 'минимал', 'презентац', 'текст простой', 'simple text']
+    if any(kw in prompt_lower for kw in apple_keywords):
+        return {"format_id": "apple_text", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for kinetic typography
+    kinetic_keywords = ['kinetic', 'кинетик', 'слово за слов', 'word by word', 'динамич', 'типограф']
+    if any(kw in prompt_lower for kw in kinetic_keywords):
+        return {"format_id": "kinetic_typography", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for logo
+    logo_keywords = ['лого', 'logo', 'бренд', 'brand', 'интро', 'intro']
+    if any(kw in prompt_lower for kw in logo_keywords):
+        return {"format_id": "logo_animation", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
     # Check for news
     news_keywords = ['новост', 'news', 'breaking', 'событи', 'сегодня', 'headline']
@@ -324,35 +375,33 @@ async def generate_chat_animation_script(prompt: str, language: str) -> dict:
         system_prompt = f"""Create an animated chat/message conversation video script based on this prompt.
 {lang_instruction}
 
-The video will show an animated phone screen with messages appearing one by one.
-Style: Modern messenger app (like iMessage, WhatsApp, or Telegram)
+The video will show an animated phone screen with messages appearing one by one in iMessage style.
+Style: Modern messenger app (like iMessage) - black background, blue bubbles for received, gray for sent.
 
 Requirements:
 - Extract or create the conversation from the user's prompt
-- Each message should have a sender (left/right side)
+- Each message should have a sender (0 = received/left/blue, 1 = sent/right/gray)
 - Add emojis where appropriate for engagement
 - Messages should build tension or humor
 - Total duration: 30-60 seconds
+- Keep messages SHORT (max 50 characters each)
 
 Return a JSON object:
 {{
     "title": "Catchy title for the video",
     "theme": "dramatic/funny/romantic/business/mystery",
     "participants": [
-        {{"name": "Person 1 name", "side": "left", "avatar_color": "#hex"}},
-        {{"name": "Person 2 name", "side": "right", "avatar_color": "#hex"}}
+        {{"name": "Contact Name", "side": "left", "avatar_color": "#007AFF"}},
+        {{"name": "Me", "side": "right", "avatar_color": "#292929"}}
     ],
     "messages": [
         {{
-            "sender": 0 or 1 (index in participants),
-            "text": "Message text",
-            "delay": 1.5 (seconds before this message appears),
-            "typing_duration": 0.8 (typing animation duration),
-            "reaction": "emoji or null"
+            "sender": 0,
+            "text": "Short message text",
+            "delay": 1.2,
+            "typing_duration": 0.6
         }}
     ],
-    "background_style": "gradient/solid/image",
-    "background_colors": ["#hex1", "#hex2"],
     "full_script": "All messages combined for TTS narration"
 }}
 
@@ -374,37 +423,230 @@ User prompt: {prompt}"""
             "title": "Интересный диалог",
             "theme": "dramatic",
             "participants": [
-                {"name": "Клиент", "side": "left", "avatar_color": "#4a90d9"},
-                {"name": "Я", "side": "right", "avatar_color": "#27ae60"}
+                {"name": "Клиент", "side": "left", "avatar_color": "#007AFF"},
+                {"name": "Я", "side": "right", "avatar_color": "#292929"}
             ],
             "messages": [
-                {"sender": 0, "text": "Привет! 👋", "delay": 0.5, "typing_duration": 0.5},
-                {"sender": 1, "text": "Здравствуйте!", "delay": 1.0, "typing_duration": 0.6},
+                {"sender": 0, "text": "Привет! 👋", "delay": 1.2, "typing_duration": 0.6},
+                {"sender": 1, "text": "Здравствуйте!", "delay": 1.0, "typing_duration": 0.5},
                 {"sender": 0, "text": "Как дела?", "delay": 1.2, "typing_duration": 0.5},
-                {"sender": 1, "text": "Отлично! А у вас?", "delay": 1.0, "typing_duration": 0.7},
+                {"sender": 1, "text": "Отлично! 😊", "delay": 1.0, "typing_duration": 0.4},
             ],
-            "background_style": "gradient",
-            "background_colors": ["#1a1a2e", "#16213e"],
-            "full_script": "Привет! Здравствуйте! Как дела? Отлично! А у вас?"
+            "full_script": "Привет! Здравствуйте! Как дела? Отлично!"
         }
     else:
         return {
             "title": "Interesting Dialog",
             "theme": "dramatic",
             "participants": [
-                {"name": "Client", "side": "left", "avatar_color": "#4a90d9"},
-                {"name": "Me", "side": "right", "avatar_color": "#27ae60"}
+                {"name": "Client", "side": "left", "avatar_color": "#007AFF"},
+                {"name": "Me", "side": "right", "avatar_color": "#292929"}
             ],
             "messages": [
-                {"sender": 0, "text": "Hey! 👋", "delay": 0.5, "typing_duration": 0.5},
-                {"sender": 1, "text": "Hello!", "delay": 1.0, "typing_duration": 0.6},
+                {"sender": 0, "text": "Hey! 👋", "delay": 1.2, "typing_duration": 0.6},
+                {"sender": 1, "text": "Hello!", "delay": 1.0, "typing_duration": 0.5},
                 {"sender": 0, "text": "How are you?", "delay": 1.2, "typing_duration": 0.5},
-                {"sender": 1, "text": "Great! And you?", "delay": 1.0, "typing_duration": 0.7},
+                {"sender": 1, "text": "Great! 😊", "delay": 1.0, "typing_duration": 0.4},
             ],
-            "background_style": "gradient",
-            "background_colors": ["#1a1a2e", "#16213e"],
-            "full_script": "Hey! Hello! How are you? Great! And you?"
+            "full_script": "Hey! Hello! How are you? Great!"
         }
+
+
+async def generate_apple_text_script(prompt: str, language: str) -> dict:
+    """Generate script for Apple-style text animation"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"apple-text-{uuid.uuid4()}",
+            system_message="You create minimalist, impactful text content in Apple presentation style."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
+        
+        system_prompt = f"""Create Apple-style minimalist text animation content.
+{lang_instruction}
+
+Style: Clean, bold, impactful phrases. Like Apple keynotes.
+- Short phrases (3-5 words max per phrase)
+- Alternating white and black backgrounds
+- One underlined word for emphasis in the last phrase
+
+Return JSON:
+{{
+    "title": "Title",
+    "phrases": [
+        {{"text": "First phrase", "bg": "white"}},
+        {{"text": "Second phrase", "bg": "white"}},
+        {{"text": "Third phrase", "bg": "black"}},
+        {{"text": "Final phrase", "bg": "white", "underline": "word_to_underline"}}
+    ],
+    "full_script": "All phrases for TTS"
+}}
+
+User prompt: {prompt}"""
+        
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except Exception as e:
+        logger.warning(f"Apple text script generation failed: {e}")
+    
+    # Fallback
+    if is_russian:
+        return {
+            "title": "Презентация",
+            "phrases": [
+                {"text": "Давайте создадим", "bg": "white"},
+                {"text": "Что-то невероятное", "bg": "white"},
+                {"text": "Просто. Чисто.", "bg": "black"},
+                {"text": "Как Apple.", "bg": "white", "underline": "Apple"}
+            ],
+            "full_script": "Давайте создадим что-то невероятное. Просто. Чисто. Как Apple."
+        }
+    else:
+        return {
+            "title": "Presentation",
+            "phrases": [
+                {"text": "Let's create", "bg": "white"},
+                {"text": "Something amazing", "bg": "white"},
+                {"text": "Simple. Clean.", "bg": "black"},
+                {"text": "Like Apple.", "bg": "white", "underline": "Apple"}
+            ],
+            "full_script": "Let's create something amazing. Simple. Clean. Like Apple."
+        }
+
+
+async def generate_kinetic_typography_script(prompt: str, language: str) -> dict:
+    """Generate script for kinetic typography animation"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"kinetic-{uuid.uuid4()}",
+            system_message="You create impactful quotes and text for kinetic typography animations."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
+        
+        system_prompt = f"""Create text content for kinetic typography animation.
+{lang_instruction}
+
+The words will appear one by one on screen.
+- Create a powerful quote or message (10-20 words)
+- Each word appears sequentially with slight delay
+- Content should be impactful and memorable
+
+Return JSON:
+{{
+    "title": "Title",
+    "full_script": "The complete text that will be animated word by word",
+    "bg_color": "#000000",
+    "text_color": "#ffffff"
+}}
+
+User prompt: {prompt}"""
+        
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except Exception as e:
+        logger.warning(f"Kinetic typography script generation failed: {e}")
+    
+    # Fallback
+    if is_russian:
+        return {
+            "title": "Мотивация",
+            "full_script": "Каждое большое достижение начинается с решения попробовать",
+            "bg_color": "#000000",
+            "text_color": "#ffffff"
+        }
+    else:
+        return {
+            "title": "Motivation",
+            "full_script": "Every great achievement begins with the decision to try",
+            "bg_color": "#000000",
+            "text_color": "#ffffff"
+        }
+
+
+async def generate_logo_animation_script(prompt: str, language: str) -> dict:
+    """Generate script for logo animation"""
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"logo-{uuid.uuid4()}",
+            system_message="You help create brand identity and logo animation content."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
+        
+        system_prompt = f"""Create content for a logo/brand animation.
+{lang_instruction}
+
+Extract or suggest:
+- Brand name from the prompt
+- Optional tagline
+- Brand colors (suggest modern, appealing colors)
+
+Return JSON:
+{{
+    "title": "Brand Animation",
+    "brand_name": "Brand Name",
+    "tagline": "Optional tagline or slogan",
+    "bg_color": "#7289da",
+    "text_color": "#ffffff",
+    "full_script": "Brand name and tagline for TTS"
+}}
+
+User prompt: {prompt}"""
+        
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except Exception as e:
+        logger.warning(f"Logo animation script generation failed: {e}")
+    
+    # Fallback - extract brand name from prompt
+    words = prompt.split()
+    brand_name = words[0].capitalize() if words else "Brand"
+    
+    return {
+        "title": f"{brand_name} Animation",
+        "brand_name": brand_name,
+        "tagline": "",
+        "bg_color": "#7289da",
+        "text_color": "#ffffff",
+        "full_script": brand_name
+    }
 
 
 async def generate_poster_image(video_path: Path, output_path: Path) -> Optional[str]:
@@ -817,6 +1059,21 @@ async def process_video_generation(project_id: str):
                 project["prompt"],
                 project["language"]
             )
+        elif format_id == "apple_text":
+            script_data = await generate_apple_text_script(
+                project["prompt"],
+                project["language"]
+            )
+        elif format_id == "kinetic_typography":
+            script_data = await generate_kinetic_typography_script(
+                project["prompt"],
+                project["language"]
+            )
+        elif format_id == "logo_animation":
+            script_data = await generate_logo_animation_script(
+                project["prompt"],
+                project["language"]
+            )
         elif format_id == "ai_story":
             script_data = await generate_ai_story_script(
                 project["prompt"],
@@ -894,6 +1151,99 @@ async def process_video_generation(project_id: str):
                 poster_url = await generate_poster_image(final_video, work_dir)
                 
                 # Move to uploads
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
+        
+        # ============ APPLE_TEXT FORMAT ============
+        elif format_id == "apple_text":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 30, "progress_message": "Создаём Apple-style текст..."}}
+            )
+            
+            final_video = await create_apple_text_animation(script_data, work_dir)
+            
+            if final_video:
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 70, "progress_message": "Генерируем озвучку..."}}
+                )
+                
+                full_script = script_data.get("full_script", "")
+                if full_script:
+                    audio_url = await generate_tts(full_script)
+                    if audio_url:
+                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
+                        if audio_path.exists():
+                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
+                            if video_with_audio:
+                                final_video = video_with_audio
+                
+                poster_url = await generate_poster_image(final_video, work_dir)
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
+        
+        # ============ KINETIC_TYPOGRAPHY FORMAT ============
+        elif format_id == "kinetic_typography":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 30, "progress_message": "Создаём кинетическую типографику..."}}
+            )
+            
+            final_video = await create_kinetic_typography(script_data, work_dir)
+            
+            if final_video:
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 70, "progress_message": "Генерируем озвучку..."}}
+                )
+                
+                full_script = script_data.get("full_script", "")
+                if full_script:
+                    audio_url = await generate_tts(full_script)
+                    if audio_url:
+                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
+                        if audio_path.exists():
+                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
+                            if video_with_audio:
+                                final_video = video_with_audio
+                
+                poster_url = await generate_poster_image(final_video, work_dir)
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
+        
+        # ============ LOGO_ANIMATION FORMAT ============
+        elif format_id == "logo_animation":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 30, "progress_message": "Создаём анимацию логотипа..."}}
+            )
+            
+            final_video = await create_logo_animation(script_data, work_dir)
+            
+            if final_video:
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 70, "progress_message": "Генерируем озвучку..."}}
+                )
+                
+                full_script = script_data.get("full_script", "")
+                if full_script:
+                    audio_url = await generate_tts(full_script)
+                    if audio_url:
+                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
+                        if audio_path.exists():
+                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
+                            if video_with_audio:
+                                final_video = video_with_audio
+                
+                poster_url = await generate_poster_image(final_video, work_dir)
                 final_name = f"video_{project_id}.mp4"
                 final_path = UPLOADS_DIR / final_name
                 final_video.rename(final_path)

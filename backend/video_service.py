@@ -377,84 +377,268 @@ def cleanup_work_dir(work_dir: Path, keep_final: Path = None):
 
 
 async def create_chat_animation_video(script_data: dict, output_path: Path) -> Optional[Path]:
-    """Create animated chat/message conversation video"""
+    """
+    Create animated chat/message conversation video in iMessage style.
+    
+    Style based on analysis:
+    - Background: Black (#000000)
+    - Sent messages: Dark gray (#292929) - right side
+    - Received messages: Blue (#007AFF) - left side  
+    - Text: White, ~18px sans-serif
+    - Bubbles: Rounded corners ~18px, padding 15px
+    - Animation: Slide-in from side + fade, ~300ms
+    - Typing indicator: 3 dots
+    """
     output_file = output_path / f"chat_{uuid.uuid4().hex[:8]}.mp4"
     
     participants = script_data.get("participants", [
-        {"name": "User 1", "side": "left", "avatar_color": "#4a90d9"},
-        {"name": "User 2", "side": "right", "avatar_color": "#27ae60"}
+        {"name": "Собеседник", "side": "left", "avatar_color": "#007AFF"},
+        {"name": "Я", "side": "right", "avatar_color": "#292929"}
     ])
     messages = script_data.get("messages", [])
-    bg_colors = script_data.get("background_colors", ["#1a1a2e", "#16213e"])
+    title = script_data.get("title", "Чат")
     
-    # Calculate total duration based on messages
-    total_duration = 2.0  # Start delay
+    # iMessage color scheme
+    BG_COLOR = "#000000"
+    SENT_BUBBLE = "#292929"      # Dark gray for sent (right)
+    RECEIVED_BUBBLE = "#007AFF"  # Blue for received (left)
+    TEXT_COLOR = "#FFFFFF"
+    HEADER_BG = "#1c1c1e"
+    
+    # Calculate timing
+    current_time = 1.5  # Initial delay
+    message_timings = []
+    
     for msg in messages:
-        total_duration += msg.get("delay", 1.0) + msg.get("typing_duration", 0.5) + 1.0
-    total_duration = max(total_duration, 10.0)  # Minimum 10 seconds
-    
-    # Create complex filter for animated chat
-    # Generate drawtext filters for each message with appearance timing
-    
-    drawtext_filters = []
-    current_time = 1.0
-    y_position = 300  # Starting Y position
-    
-    for i, msg in enumerate(messages):
-        sender_idx = msg.get("sender", 0)
-        text = msg.get("text", "").replace("'", "'\\''").replace(":", r"\:")
-        delay = msg.get("delay", 1.0)
+        delay = msg.get("delay", 1.2)
+        typing_dur = msg.get("typing_duration", 0.6)
         
-        current_time += delay
+        # Typing indicator appears
+        typing_start = current_time
+        typing_end = typing_start + typing_dur
         
-        # Determine position (left or right)
+        # Message appears after typing
+        msg_appear = typing_end + 0.1
+        
+        message_timings.append({
+            "typing_start": typing_start,
+            "typing_end": typing_end,
+            "msg_appear": msg_appear,
+            "text": msg.get("text", ""),
+            "sender": msg.get("sender", 0)
+        })
+        
+        current_time = msg_appear + delay
+    
+    total_duration = max(current_time + 2.0, 12.0)  # Minimum 12 seconds
+    
+    # Build filter chain
+    filters = []
+    
+    # Screen dimensions
+    W, H = 720, 1280
+    MARGIN = 20
+    BUBBLE_PADDING = 18
+    FONT_SIZE = 32
+    LINE_HEIGHT = 50
+    BUBBLE_RADIUS = 18
+    
+    # Header bar
+    header_height = 90
+    filters.append(f"drawbox=x=0:y=0:w={W}:h={header_height}:color={HEADER_BG}:t=fill")
+    
+    # Time display (fake)
+    filters.append(f"drawtext=text='Сейчас':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:fontsize=14:fontcolor=#8e8e93:x=(w-tw)/2:y=15")
+    
+    # Contact name in header
+    contact_name = participants[0].get("name", "Чат") if participants else "Чат"
+    filters.append(f"drawtext=text='{contact_name}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=20:fontcolor=#ffffff:x=(w-tw)/2:y=50")
+    
+    # Calculate message positions
+    y_pos = header_height + 30
+    
+    for i, timing in enumerate(message_timings):
+        text = timing["text"].replace("'", "'\\''").replace(":", "\\:")
+        sender_idx = timing["sender"]
         participant = participants[sender_idx] if sender_idx < len(participants) else participants[0]
-        is_left = participant.get("side", "left") == "left"
+        is_received = participant.get("side", "left") == "left"
         
-        # Message bubble colors
-        if is_left:
-            box_color = "#e5e5ea"  # Light gray for left (received)
-            text_color = "#000000"
-            x_pos = "50"
+        msg_appear = timing["msg_appear"]
+        typing_start = timing["typing_start"]
+        typing_end = timing["typing_end"]
+        
+        # Bubble color based on sender
+        bubble_color = RECEIVED_BUBBLE if is_received else SENT_BUBBLE
+        
+        # Text width estimation (rough)
+        text_len = len(text)
+        est_width = min(text_len * 18 + BUBBLE_PADDING * 2, W - MARGIN * 4)
+        bubble_height = LINE_HEIGHT + BUBBLE_PADDING
+        
+        # Position: left for received, right for sent
+        if is_received:
+            bubble_x = MARGIN
         else:
-            box_color = "#0b93f6"  # Blue for right (sent)  
-            text_color = "#ffffff"
-            x_pos = "w-tw-70"
+            bubble_x = W - est_width - MARGIN
         
-        # Add message with fade-in effect
-        appear_time = current_time
-        filter_str = f"drawtext=text='{text}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:fontsize=28:fontcolor={text_color}:x={x_pos}:y={y_position}:enable='gte(t,{appear_time})':box=1:boxcolor={box_color}@0.9:boxborderw=15"
-        drawtext_filters.append(filter_str)
+        # Typing indicator (3 dots) - only for received messages
+        if is_received:
+            typing_x = MARGIN + 20
+            typing_y = y_pos + 15
+            
+            # Draw typing bubble
+            filters.append(
+                f"drawbox=x={MARGIN}:y={y_pos}:w=80:h=45:color={bubble_color}@0.9:t=fill:"
+                f"enable='between(t,{typing_start},{typing_end})'"
+            )
+            
+            # Animated dots (simple version - 3 static dots that appear)
+            for dot_idx in range(3):
+                dot_x = typing_x + dot_idx * 18
+                dot_delay = typing_start + dot_idx * 0.15
+                filters.append(
+                    f"drawtext=text='.':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
+                    f"fontsize=30:fontcolor=#ffffff:x={dot_x}:y={typing_y}:"
+                    f"enable='between(t,{dot_delay},{typing_end})'"
+                )
         
-        # Move to next line
-        y_position += 70
-        current_time += msg.get("typing_duration", 0.5) + 0.5
+        # Message bubble background
+        # Use drawbox for bubble (ffmpeg doesn't support rounded corners easily)
+        filters.append(
+            f"drawbox=x={bubble_x}:y={y_pos}:w={est_width}:h={bubble_height}:"
+            f"color={bubble_color}@0.95:t=fill:enable='gte(t,{msg_appear})'"
+        )
         
-        # Reset position if too low
-        if y_position > 1100:
-            y_position = 300
-    
-    # Build filter complex
-    bg_color = bg_colors[0] if bg_colors else "#1a1a2e"
-    
-    # Create base video with gradient background
-    base_filter = f"color=c={bg_color}:s=720x1280:d={total_duration}"
-    
-    # Add header (phone top bar simulation)
-    header_filter = f"drawbox=x=0:y=0:w=720:h=100:color=#000000@0.3:t=fill,drawtext=text='{participants[0].get('name', 'Chat')}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=36:fontcolor=#ffffff:x=(w-tw)/2:y=40"
+        # Message text
+        text_x = bubble_x + BUBBLE_PADDING
+        text_y = y_pos + BUBBLE_PADDING
+        
+        filters.append(
+            f"drawtext=text='{text}':"
+            f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:"
+            f"fontsize={FONT_SIZE}:fontcolor={TEXT_COLOR}:"
+            f"x={text_x}:y={text_y}:"
+            f"enable='gte(t,{msg_appear})'"
+        )
+        
+        # Move to next row
+        y_pos += bubble_height + 15
+        
+        # Reset if too low
+        if y_pos > H - 200:
+            y_pos = header_height + 30
     
     # Combine all filters
-    all_filters = ",".join([header_filter] + drawtext_filters)
+    filter_str = ",".join(filters)
+    
+    # Base video command
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi",
+        "-i", f"color=c={BG_COLOR}:s={W}x{H}:d={total_duration}",
+        "-f", "lavfi", 
+        "-i", "anullsrc=r=44100:cl=stereo",
+        "-vf", filter_str,
+        "-c:v", "libx264",
+        "-preset", "fast",
+        "-pix_fmt", "yuv420p",
+        "-c:a", "aac",
+        "-t", str(total_duration),
+        str(output_file)
+    ]
+    
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=180)
+    
+    if output_file.exists() and output_file.stat().st_size > 1000:
+        logger.info(f"Created chat animation video: {output_file}")
+        return output_file
+    
+    logger.error(f"Chat animation creation failed: {stderr.decode()}")
+    return None
+
+
+
+async def create_apple_text_animation(script_data: dict, output_path: Path) -> Optional[Path]:
+    """
+    Create Apple-style minimalist text animation.
+    
+    Style based on analysis:
+    - Background: Alternating white (#FFFFFF) ↔ black (#000000)
+    - Text: Bold sans-serif, large, centered
+    - Animation: Word-by-word, almost instant appearance
+    - Underline for emphasis on key words
+    """
+    output_file = output_path / f"apple_text_{uuid.uuid4().hex[:8]}.mp4"
+    
+    phrases = script_data.get("phrases", [
+        {"text": "Let's create", "bg": "white"},
+        {"text": "Some amazing content", "bg": "white"},
+        {"text": "Just like Apple.", "bg": "black"},
+        {"text": "Simple. Clean. Bold.", "bg": "black", "underline": "Bold"},
+    ])
+    
+    W, H = 720, 1280
+    FONT_SIZE = 56
+    PHRASE_DURATION = 1.8
+    
+    total_duration = len(phrases) * PHRASE_DURATION + 2.0
+    
+    # Build complex filter with background switching
+    filter_parts = []
+    
+    for i, phrase in enumerate(phrases):
+        text = phrase.get("text", "").replace("'", "'\\''").replace(":", "\\:")
+        bg = phrase.get("bg", "white")
+        underline_word = phrase.get("underline", None)
+        
+        start_time = i * PHRASE_DURATION + 1.0
+        end_time = start_time + PHRASE_DURATION
+        
+        bg_color = "#ffffff" if bg == "white" else "#000000"
+        text_color = "#000000" if bg == "white" else "#ffffff"
+        
+        # Background for this phrase
+        filter_parts.append(
+            f"drawbox=x=0:y=0:w={W}:h={H}:color={bg_color}:t=fill:"
+            f"enable='between(t,{start_time},{end_time})'"
+        )
+        
+        # Main text - centered
+        filter_parts.append(
+            f"drawtext=text='{text}':"
+            f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
+            f"fontsize={FONT_SIZE}:fontcolor={text_color}:"
+            f"x=(w-tw)/2:y=(h-th)/2:"
+            f"enable='between(t,{start_time},{end_time})'"
+        )
+        
+        # Add underline if specified
+        if underline_word:
+            # Simple underline under center of text
+            filter_parts.append(
+                f"drawbox=x=(w/2-100):y=(h/2+40):w=200:h=4:color={text_color}:t=fill:"
+                f"enable='between(t,{start_time},{end_time})'"
+            )
+    
+    # Initial white background
+    filter_parts.insert(0, f"drawbox=x=0:y=0:w={W}:h={H}:color=#ffffff:t=fill:enable='lt(t,1)'")
+    
+    filter_str = ",".join(filter_parts)
     
     cmd = [
         "ffmpeg", "-y",
         "-f", "lavfi",
-        "-i", base_filter,
+        "-i", f"color=c=#ffffff:s={W}x{H}:d={total_duration}",
         "-f", "lavfi",
         "-i", "anullsrc=r=44100:cl=stereo",
-        "-vf", all_filters,
+        "-vf", filter_str,
         "-c:v", "libx264",
-        "-preset", "ultrafast",
+        "-preset", "fast",
         "-pix_fmt", "yuv420p",
         "-c:a", "aac",
         "-t", str(total_duration),
@@ -469,8 +653,178 @@ async def create_chat_animation_video(script_data: dict, output_path: Path) -> O
     stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
     
     if output_file.exists() and output_file.stat().st_size > 1000:
-        logger.info(f"Created chat animation video: {output_file}")
+        logger.info(f"Created Apple text animation: {output_file}")
         return output_file
     
-    logger.error(f"Chat animation creation failed: {stderr.decode()}")
+    logger.error(f"Apple text animation failed: {stderr.decode()}")
+    return None
+
+
+async def create_kinetic_typography(script_data: dict, output_path: Path) -> Optional[Path]:
+    """
+    Create kinetic typography animation - word by word reveal.
+    
+    Style:
+    - Words appear sequentially with slight delay
+    - Clean sans-serif font
+    - Centered layout
+    - Smooth appearance
+    """
+    output_file = output_path / f"kinetic_{uuid.uuid4().hex[:8]}.mp4"
+    
+    # Parse script into words
+    full_text = script_data.get("full_script", "This is an amazing kinetic typography animation")
+    words = full_text.split()
+    
+    bg_color = script_data.get("bg_color", "#000000")
+    text_color = script_data.get("text_color", "#ffffff") 
+    
+    W, H = 720, 1280
+    FONT_SIZE = 48
+    WORD_DELAY = 0.25  # Delay between words
+    WORD_DURATION = 0.15  # How long word takes to appear
+    
+    total_duration = len(words) * WORD_DELAY + 5.0
+    
+    filter_parts = []
+    
+    # Calculate word positions for multi-line layout
+    words_per_line = 4
+    line_height = 70
+    start_y = H // 2 - (len(words) // words_per_line) * line_height // 2
+    
+    current_time = 1.0
+    
+    for i, word in enumerate(words):
+        word_clean = word.replace("'", "'\\''").replace(":", "\\:")
+        
+        line_num = i // words_per_line
+        word_in_line = i % words_per_line
+        
+        # Calculate position
+        y_pos = start_y + line_num * line_height
+        
+        # Center words in line
+        x_expr = f"(w-tw)/2+{(word_in_line - words_per_line/2) * 100}"
+        
+        appear_time = current_time + i * WORD_DELAY
+        
+        # Word appears and stays
+        filter_parts.append(
+            f"drawtext=text='{word_clean}':"
+            f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
+            f"fontsize={FONT_SIZE}:fontcolor={text_color}:"
+            f"x={x_expr}:y={y_pos}:"
+            f"enable='gte(t,{appear_time})'"
+        )
+    
+    filter_str = ",".join(filter_parts) if filter_parts else "null"
+    
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi",
+        "-i", f"color=c={bg_color}:s={W}x{H}:d={total_duration}",
+        "-f", "lavfi",
+        "-i", "anullsrc=r=44100:cl=stereo",
+        "-vf", filter_str,
+        "-c:v", "libx264",
+        "-preset", "fast",
+        "-pix_fmt", "yuv420p",
+        "-c:a", "aac",
+        "-t", str(total_duration),
+        str(output_file)
+    ]
+    
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
+    
+    if output_file.exists() and output_file.stat().st_size > 1000:
+        logger.info(f"Created kinetic typography: {output_file}")
+        return output_file
+    
+    logger.error(f"Kinetic typography failed: {stderr.decode()}")
+    return None
+
+
+async def create_logo_animation(script_data: dict, output_path: Path) -> Optional[Path]:
+    """
+    Create simple logo animation with text reveal.
+    
+    Style based on Discord analysis:
+    - Solid background color
+    - Icon/shape appears with subtle animation
+    - Text slides in and rotates into place
+    """
+    output_file = output_path / f"logo_{uuid.uuid4().hex[:8]}.mp4"
+    
+    brand_name = script_data.get("brand_name", "Brand")
+    tagline = script_data.get("tagline", "")
+    bg_color = script_data.get("bg_color", "#7289da")  # Discord purple as default
+    text_color = script_data.get("text_color", "#ffffff")
+    
+    W, H = 720, 1280
+    total_duration = 5.0
+    
+    filter_parts = []
+    
+    # Phase 1: Icon/shape appears (using a simple circle as placeholder)
+    # Simulated with growing circle
+    filter_parts.append(
+        f"drawbox=x={(W-100)//2}:y={(H-100)//2}:w=100:h=100:color={text_color}@0.9:t=fill:"
+        f"enable='gte(t,0.5)'"
+    )
+    
+    # Phase 2: Brand name appears
+    filter_parts.append(
+        f"drawtext=text='{brand_name}':"
+        f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
+        f"fontsize=64:fontcolor={text_color}:"
+        f"x=(w-tw)/2:y=(h/2+80):"
+        f"enable='gte(t,1.5)'"
+    )
+    
+    # Phase 3: Tagline appears (if provided)
+    if tagline:
+        tagline_clean = tagline.replace("'", "'\\''").replace(":", "\\:")
+        filter_parts.append(
+            f"drawtext=text='{tagline_clean}':"
+            f"fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:"
+            f"fontsize=28:fontcolor={text_color}@0.8:"
+            f"x=(w-tw)/2:y=(h/2+160):"
+            f"enable='gte(t,2.5)'"
+        )
+    
+    filter_str = ",".join(filter_parts)
+    
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi",
+        "-i", f"color=c={bg_color}:s={W}x{H}:d={total_duration}",
+        "-f", "lavfi",
+        "-i", "anullsrc=r=44100:cl=stereo",
+        "-vf", filter_str,
+        "-c:v", "libx264",
+        "-preset", "fast",
+        "-pix_fmt", "yuv420p",
+        "-c:a", "aac",
+        "-t", str(total_duration),
+        str(output_file)
+    ]
+    
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
+    
+    if output_file.exists() and output_file.stat().st_size > 1000:
+        logger.info(f"Created logo animation: {output_file}")
+        return output_file
+    
+    logger.error(f"Logo animation failed: {stderr.decode()}")
     return None
