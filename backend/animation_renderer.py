@@ -77,6 +77,64 @@ def ease_in_out_sine(t: float) -> float:
 
 # ==================== CHAT ANIMATION (iMessage Style) ====================
 
+def draw_imessage_bubble(
+    draw: ImageDraw.ImageDraw,
+    img: Image.Image,
+    x: int, y: int,
+    width: int, height: int,
+    color: Tuple[int, int, int],
+    is_left: bool,
+    shadow: bool = True
+):
+    """Draw iMessage-style bubble with tail"""
+    radius = 22
+    tail_size = 12
+    
+    # Create bubble with alpha for smooth edges
+    bubble = Image.new('RGBA', (width + tail_size + 10, height + 10), (0, 0, 0, 0))
+    bubble_draw = ImageDraw.Draw(bubble)
+    
+    # Shadow
+    if shadow:
+        shadow_offset = 3
+        bubble_draw.rounded_rectangle(
+            (shadow_offset + (0 if is_left else tail_size), shadow_offset, 
+             width + shadow_offset + (0 if is_left else tail_size), height + shadow_offset),
+            radius=radius,
+            fill=(0, 0, 0, 40)
+        )
+    
+    # Main bubble
+    bubble_x_offset = 0 if is_left else tail_size
+    bubble_draw.rounded_rectangle(
+        (bubble_x_offset, 0, width + bubble_x_offset, height),
+        radius=radius,
+        fill=color + (255,)
+    )
+    
+    # Draw tail (triangle)
+    if is_left:
+        # Tail on left bottom
+        tail_points = [
+            (bubble_x_offset + 5, height - 10),
+            (bubble_x_offset - tail_size + 2, height + 2),
+            (bubble_x_offset + 15, height - 2)
+        ]
+    else:
+        # Tail on right bottom
+        tail_points = [
+            (width + bubble_x_offset - 5, height - 10),
+            (width + bubble_x_offset + tail_size - 2, height + 2),
+            (width + bubble_x_offset - 15, height - 2)
+        ]
+    
+    bubble_draw.polygon(tail_points, fill=color + (255,))
+    
+    # Paste bubble onto main image
+    paste_x = x - (tail_size if is_left else 0)
+    img.paste(bubble, (paste_x, y), bubble)
+
+
 async def render_chat_animation(
     script_data: dict,
     output_path: Path
@@ -84,72 +142,69 @@ async def render_chat_animation(
     """
     Render professional iMessage-style chat animation.
     
-    Features:
-    - Black background
-    - Rounded message bubbles with shadows
-    - Slide-in animations
-    - Typing indicator with animated dots
+    Based on reference image:
+    - Gray bubbles for received (left)
+    - Blue bubbles for sent (right)
+    - Bubble tails
+    - "Read" indicator
+    - Typing indicator in blue bubble
+    - No header - pure chat view
     """
     output_file = output_path / f"chat_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_path / "frames"
     frames_dir.mkdir(exist_ok=True)
     
-    # Colors
+    # Colors - matching iMessage exactly
     BG_COLOR = (0, 0, 0)
-    RECEIVED_COLOR = hex_to_rgb("#007AFF")  # Blue
-    SENT_COLOR = hex_to_rgb("#3A3A3C")  # Dark gray
+    RECEIVED_COLOR = (58, 58, 60)  # Gray for received (left)
+    SENT_COLOR = (0, 122, 255)  # Blue for sent (right) 
     TEXT_COLOR = (255, 255, 255)
-    HEADER_COLOR = (28, 28, 30)
-    SUBTLE_TEXT = (142, 142, 147)
+    READ_COLOR = (142, 142, 147)  # Gray for "Read"
     
     # Layout
-    HEADER_HEIGHT = 90
-    BUBBLE_RADIUS = 20
-    BUBBLE_PADDING_H = 16
-    BUBBLE_PADDING_V = 12
-    MESSAGE_MARGIN = 20
-    BUBBLE_MAX_WIDTH = WIDTH - 140
+    BUBBLE_PADDING_H = 18
+    BUBBLE_PADDING_V = 14
+    MESSAGE_MARGIN = 24
+    BUBBLE_MAX_WIDTH = WIDTH - 160
+    VERTICAL_SPACING = 8
     
     participants = script_data.get("participants", [
-        {"name": "Клиент", "side": "left"},
+        {"name": "Собеседник", "side": "left"},
         {"name": "Я", "side": "right"}
     ])
     messages = script_data.get("messages", [])
     
     # Calculate animation timeline
-    current_time = 0.5  # Start delay
+    current_time = 0.8
     message_events = []
     
     for msg in messages:
+        sender_idx = msg.get("sender", 0)
+        is_received = participants[sender_idx].get("side", "left") == "left"
+        
         typing_start = current_time
-        typing_duration = msg.get("typing_duration", 0.8)
+        typing_duration = msg.get("typing_duration", 0.8) if is_received else 0
         typing_end = typing_start + typing_duration
-        appear_time = typing_end
+        appear_time = typing_end + 0.1
         
         message_events.append({
             "typing_start": typing_start,
             "typing_end": typing_end,
             "appear_time": appear_time,
             "text": msg.get("text", ""),
-            "sender": msg.get("sender", 0),
-            "is_received": participants[msg.get("sender", 0)].get("side", "left") == "left"
+            "sender": sender_idx,
+            "is_received": is_received
         })
         
-        current_time = appear_time + msg.get("delay", 1.2)
+        current_time = appear_time + msg.get("delay", 1.5)
     
-    total_duration = current_time + 1.5
+    total_duration = current_time + 2.0
     total_frames = int(total_duration * FPS)
     
     # Font
-    font_message = get_font(28)
-    font_header = get_font(20, bold=True)
-    font_time = get_font(14)
-    font_dots = get_font(36, bold=True)
-    
-    contact_name = participants[0].get("name", "Контакт") if participants else "Контакт"
-    
-    # Track visible messages and their positions
-    visible_messages = []
+    font_message = get_font(30)
+    font_read = get_font(14)
+    font_dots = get_font(40, bold=True)
     
     logger.info(f"Rendering {total_frames} frames for chat animation...")
     
@@ -160,71 +215,62 @@ async def render_chat_animation(
         img = Image.new('RGBA', (WIDTH, HEIGHT), BG_COLOR + (255,))
         draw = ImageDraw.Draw(img)
         
-        # Draw header
-        draw.rectangle((0, 0, WIDTH, HEADER_HEIGHT), fill=HEADER_COLOR)
+        # Start position (no header, pure chat)
+        y_position = 120
         
-        # Time text
-        time_text = "Сейчас"
-        time_bbox = draw.textbbox((0, 0), time_text, font=font_time)
-        time_width = time_bbox[2] - time_bbox[0]
-        draw.text(((WIDTH - time_width) // 2, 12), time_text, fill=SUBTLE_TEXT, font=font_time)
-        
-        # Contact name
-        name_bbox = draw.textbbox((0, 0), contact_name, font=font_header)
-        name_width = name_bbox[2] - name_bbox[0]
-        draw.text(((WIDTH - name_width) // 2, 45), contact_name, fill=TEXT_COLOR, font=font_header)
-        
-        # Calculate which messages are visible and their states
-        y_position = HEADER_HEIGHT + 30
+        last_sent_bubble_bottom = 0
+        last_sent_bubble_right = 0
         
         for i, event in enumerate(message_events):
-            # Check if message should be visible
+            is_received = event["is_received"]
+            
+            # Check if we should show typing indicator
             if current_sec < event["appear_time"]:
-                # Check if we should show typing indicator
-                if event["is_received"] and event["typing_start"] <= current_sec < event["typing_end"]:
-                    # Draw typing indicator
-                    typing_progress = (current_sec - event["typing_start"]) / (event["typing_end"] - event["typing_start"])
+                if is_received and event["typing_start"] <= current_sec < event["typing_end"]:
+                    # Draw typing indicator bubble
+                    typing_bubble_width = 90
+                    typing_bubble_height = 50
+                    typing_x = MESSAGE_MARGIN
+                    typing_y = y_position
                     
-                    # Typing bubble
-                    bubble_width = 80
-                    bubble_height = 44
-                    bubble_x = MESSAGE_MARGIN
-                    bubble_y = y_position
-                    
-                    draw_rounded_rectangle(
-                        draw,
-                        (bubble_x, bubble_y, bubble_x + bubble_width, bubble_y + bubble_height),
-                        radius=BUBBLE_RADIUS,
-                        fill=RECEIVED_COLOR,
+                    draw_imessage_bubble(
+                        draw, img,
+                        typing_x, typing_y,
+                        typing_bubble_width, typing_bubble_height,
+                        SENT_COLOR,  # Blue typing indicator
+                        is_left=True,
                         shadow=True
                     )
                     
                     # Animated dots
-                    dot_y = bubble_y + bubble_height // 2
                     for dot_idx in range(3):
-                        dot_x = bubble_x + 20 + dot_idx * 18
+                        dot_x = typing_x + 22 + dot_idx * 20
+                        dot_y = typing_y + typing_bubble_height // 2
+                        
                         # Pulsing animation
-                        phase = (current_sec * 3 + dot_idx * 0.3) % 1.0
-                        alpha = int(100 + 155 * ease_in_out_sine(phase))
-                        dot_color = (255, 255, 255, alpha)
+                        phase = (current_sec * 2.5 + dot_idx * 0.25) % 1.0
+                        scale = 0.6 + 0.4 * ease_in_out_sine(phase)
+                        dot_radius = int(6 * scale)
+                        
                         draw.ellipse(
-                            (dot_x - 5, dot_y - 8, dot_x + 5, dot_y + 2),
-                            fill=dot_color
+                            (dot_x - dot_radius, dot_y - dot_radius,
+                             dot_x + dot_radius, dot_y + dot_radius),
+                            fill=TEXT_COLOR
                         )
                 continue
             
-            # Message is visible - calculate slide animation
+            # Message is visible
             time_since_appear = current_sec - event["appear_time"]
-            slide_duration = 0.3
+            slide_duration = 0.25
             
             if time_since_appear < slide_duration:
-                # Sliding in
                 progress = ease_out_cubic(time_since_appear / slide_duration)
+                opacity = int(255 * progress)
             else:
                 progress = 1.0
+                opacity = 255
             
             text = event["text"]
-            is_received = event["is_received"]
             
             # Calculate text wrapping
             words = text.split()
@@ -248,7 +294,7 @@ async def render_chat_animation(
             
             # Calculate bubble size
             max_line_width = 0
-            line_height = 32
+            line_height = 36
             for line in lines:
                 bbox = draw.textbbox((0, 0), line, font=font_message)
                 max_line_width = max(max_line_width, bbox[2] - bbox[0])
@@ -256,41 +302,62 @@ async def render_chat_animation(
             bubble_width = max_line_width + BUBBLE_PADDING_H * 2
             bubble_height = len(lines) * line_height + BUBBLE_PADDING_V * 2
             
-            # Position based on sender
+            # Position and colors based on sender
             if is_received:
-                # Slide from left
+                # Left side - gray
                 final_x = MESSAGE_MARGIN
-                start_x = -bubble_width - 20
+                start_x = -bubble_width - 50
                 bubble_x = int(start_x + (final_x - start_x) * progress)
                 bubble_color = RECEIVED_COLOR
             else:
-                # Slide from right
+                # Right side - blue
                 final_x = WIDTH - MESSAGE_MARGIN - bubble_width
-                start_x = WIDTH + 20
+                start_x = WIDTH + 50
                 bubble_x = int(start_x + (final_x - start_x) * progress)
                 bubble_color = SENT_COLOR
+                last_sent_bubble_bottom = y_position + bubble_height
+                last_sent_bubble_right = final_x + bubble_width
             
             bubble_y = y_position
             
-            # Draw bubble with shadow
-            draw_rounded_rectangle(
-                draw,
-                (bubble_x, bubble_y, bubble_x + bubble_width, bubble_y + bubble_height),
-                radius=BUBBLE_RADIUS,
-                fill=bubble_color,
-                shadow=True,
-                shadow_offset=3
+            # Draw bubble
+            draw_imessage_bubble(
+                draw, img,
+                bubble_x, bubble_y,
+                bubble_width, bubble_height,
+                bubble_color,
+                is_left=is_received,
+                shadow=True
             )
             
             # Draw text
             text_x = bubble_x + BUBBLE_PADDING_H
             text_y = bubble_y + BUBBLE_PADDING_V
             for line in lines:
-                draw.text((text_x, text_y), line, fill=TEXT_COLOR, font=font_message)
+                # Apply opacity
+                text_color_alpha = TEXT_COLOR + (opacity,)
+                draw.text((text_x, text_y), line, fill=text_color_alpha, font=font_message)
                 text_y += line_height
             
-            # Update y position for next message
-            y_position += bubble_height + 12
+            # Draw "Read" indicator for sent messages (after last one)
+            if not is_received and progress == 1.0:
+                # Check if this is the last visible sent message
+                is_last_sent = True
+                for j in range(i + 1, len(message_events)):
+                    if not message_events[j]["is_received"] and current_sec >= message_events[j]["appear_time"]:
+                        is_last_sent = False
+                        break
+                
+                if is_last_sent and time_since_appear > 0.5:
+                    read_text = "Read"
+                    read_bbox = draw.textbbox((0, 0), read_text, font=font_read)
+                    read_width = read_bbox[2] - read_bbox[0]
+                    read_x = bubble_x + bubble_width - read_width
+                    read_y = bubble_y + bubble_height + 4
+                    draw.text((read_x, read_y), read_text, fill=READ_COLOR, font=font_read)
+            
+            # Update y position
+            y_position += bubble_height + VERTICAL_SPACING + (20 if not is_received else 8)
         
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
@@ -625,11 +692,11 @@ async def render_logo_animation(
     """
     Render logo/brand animation.
     
-    Features:
-    - Icon reveal with scale animation
-    - Brand name fade in
-    - Tagline appearance
-    - Glow effect
+    Animation sequence:
+    1. Logo icon appears in center (fade + scale)
+    2. Logo slides to the left
+    3. Brand name appears to the right of logo (where logo was)
+    4. Optional tagline fades in below
     """
     output_file = output_path / f"logo_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_path / "frames"
@@ -640,19 +707,40 @@ async def render_logo_animation(
     bg_color = hex_to_rgb(script_data.get("bg_color", "#7289da"))
     text_color = hex_to_rgb(script_data.get("text_color", "#ffffff"))
     
-    total_duration = 4.0
+    total_duration = 5.0
     total_frames = int(total_duration * FPS)
     
-    font_brand = get_font(64, bold=True)
-    font_tagline = get_font(28)
+    font_brand = get_font(56, bold=True)
+    font_tagline = get_font(24)
     
     # Animation timeline
-    ICON_START = 0.3
-    ICON_DURATION = 0.5
-    TEXT_START = 1.2
-    TEXT_DURATION = 0.4
-    TAGLINE_START = 2.0
+    LOGO_APPEAR_START = 0.3
+    LOGO_APPEAR_DURATION = 0.6
+    LOGO_HOLD = 1.0  # Time logo stays in center
+    LOGO_SLIDE_START = LOGO_APPEAR_START + LOGO_APPEAR_DURATION + LOGO_HOLD
+    LOGO_SLIDE_DURATION = 0.5
+    TEXT_APPEAR_START = LOGO_SLIDE_START + 0.2
+    TEXT_APPEAR_DURATION = 0.4
+    TAGLINE_START = TEXT_APPEAR_START + TEXT_APPEAR_DURATION + 0.3
     TAGLINE_DURATION = 0.4
+    
+    # Pre-calculate positions
+    logo_size = 80
+    center_x = WIDTH // 2
+    center_y = HEIGHT // 2 - 30
+    
+    # Calculate brand name width
+    temp_img = Image.new('RGB', (1, 1))
+    temp_draw = ImageDraw.Draw(temp_img)
+    brand_bbox = temp_draw.textbbox((0, 0), brand_name, font=font_brand)
+    brand_width = brand_bbox[2] - brand_bbox[0]
+    brand_height = brand_bbox[3] - brand_bbox[1]
+    
+    # Final positions (logo left, text right, both centered together)
+    gap = 30  # Gap between logo and text
+    total_width = logo_size * 2 + gap + brand_width
+    final_logo_x = (WIDTH - total_width) // 2 + logo_size
+    final_text_x = final_logo_x + logo_size + gap
     
     logger.info(f"Rendering {total_frames} frames for logo animation...")
     
@@ -662,63 +750,97 @@ async def render_logo_animation(
         img = Image.new('RGBA', (WIDTH, HEIGHT), bg_color + (255,))
         draw = ImageDraw.Draw(img)
         
-        center_x = WIDTH // 2
-        center_y = HEIGHT // 2 - 50
+        # Phase 1: Logo appears in center
+        logo_x = center_x
+        logo_y = center_y
+        logo_scale = 0
+        logo_opacity = 0
         
-        # Icon (simple circle/shape)
-        if current_sec >= ICON_START:
-            icon_progress = min(1.0, (current_sec - ICON_START) / ICON_DURATION)
-            icon_progress = ease_out_cubic(icon_progress)
+        if current_sec >= LOGO_APPEAR_START:
+            if current_sec < LOGO_APPEAR_START + LOGO_APPEAR_DURATION:
+                # Logo appearing
+                progress = (current_sec - LOGO_APPEAR_START) / LOGO_APPEAR_DURATION
+                progress = ease_out_cubic(progress)
+                logo_scale = progress
+                logo_opacity = int(255 * progress)
+            elif current_sec < LOGO_SLIDE_START:
+                # Logo holding in center
+                logo_scale = 1.0
+                logo_opacity = 255
+            elif current_sec < LOGO_SLIDE_START + LOGO_SLIDE_DURATION:
+                # Logo sliding left
+                progress = (current_sec - LOGO_SLIDE_START) / LOGO_SLIDE_DURATION
+                progress = ease_out_cubic(progress)
+                logo_x = center_x + (final_logo_x - center_x) * progress
+                logo_scale = 1.0
+                logo_opacity = 255
+            else:
+                # Logo at final position
+                logo_x = final_logo_x
+                logo_scale = 1.0
+                logo_opacity = 255
+        
+        # Draw logo (circle with glow effect)
+        if logo_scale > 0:
+            scaled_size = int(logo_size * logo_scale)
             
-            icon_size = int(80 * icon_progress)
-            icon_opacity = int(255 * icon_progress)
-            
-            if icon_size > 0:
-                # Draw glow
-                for glow_size in range(3, 0, -1):
-                    glow_radius = icon_size + glow_size * 8
-                    glow_alpha = int(30 * icon_progress / glow_size)
+            # Glow effect
+            if logo_opacity > 100:
+                for glow_layer in range(4, 0, -1):
+                    glow_size = scaled_size + glow_layer * 12
+                    glow_alpha = int(20 * (logo_opacity / 255) / glow_layer)
                     draw.ellipse(
-                        (center_x - glow_radius, center_y - glow_radius,
-                         center_x + glow_radius, center_y + glow_radius),
+                        (int(logo_x) - glow_size, int(logo_y) - glow_size,
+                         int(logo_x) + glow_size, int(logo_y) + glow_size),
                         fill=text_color + (glow_alpha,)
                     )
-                
-                # Draw icon
-                draw.ellipse(
-                    (center_x - icon_size, center_y - icon_size,
-                     center_x + icon_size, center_y + icon_size),
-                    fill=text_color + (icon_opacity,)
-                )
+            
+            # Main logo circle
+            draw.ellipse(
+                (int(logo_x) - scaled_size, int(logo_y) - scaled_size,
+                 int(logo_x) + scaled_size, int(logo_y) + scaled_size),
+                fill=text_color + (logo_opacity,)
+            )
         
-        # Brand name
-        if current_sec >= TEXT_START:
-            text_progress = min(1.0, (current_sec - TEXT_START) / TEXT_DURATION)
-            text_progress = ease_out_cubic(text_progress)
+        # Phase 2: Brand name appears
+        if current_sec >= TEXT_APPEAR_START:
+            if current_sec < TEXT_APPEAR_START + TEXT_APPEAR_DURATION:
+                text_progress = (current_sec - TEXT_APPEAR_START) / TEXT_APPEAR_DURATION
+                text_progress = ease_out_cubic(text_progress)
+                text_opacity = int(255 * text_progress)
+                text_y_offset = int(20 * (1 - text_progress))
+            else:
+                text_opacity = 255
+                text_y_offset = 0
             
-            text_opacity = int(255 * text_progress)
-            text_y_offset = int(20 * (1 - text_progress))  # Slide up
-            
-            bbox = draw.textbbox((0, 0), brand_name, font=font_brand)
-            text_width = bbox[2] - bbox[0]
-            text_x = (WIDTH - text_width) // 2
-            text_y = center_y + 120 + text_y_offset
-            
-            draw.text((text_x, text_y), brand_name, fill=text_color + (text_opacity,), font=font_brand)
+            text_y = center_y - brand_height // 2 + text_y_offset
+            draw.text(
+                (final_text_x, text_y),
+                brand_name,
+                fill=text_color + (text_opacity,),
+                font=font_brand
+            )
         
-        # Tagline
+        # Phase 3: Tagline appears
         if tagline and current_sec >= TAGLINE_START:
-            tagline_progress = min(1.0, (current_sec - TAGLINE_START) / TAGLINE_DURATION)
-            tagline_progress = ease_out_cubic(tagline_progress)
+            if current_sec < TAGLINE_START + TAGLINE_DURATION:
+                tagline_progress = (current_sec - TAGLINE_START) / TAGLINE_DURATION
+                tagline_progress = ease_out_cubic(tagline_progress)
+                tagline_opacity = int(200 * tagline_progress)
+            else:
+                tagline_opacity = 200
             
-            tagline_opacity = int(200 * tagline_progress)
-            
-            bbox = draw.textbbox((0, 0), tagline, font=font_tagline)
-            tagline_width = bbox[2] - bbox[0]
+            tagline_bbox = draw.textbbox((0, 0), tagline, font=font_tagline)
+            tagline_width = tagline_bbox[2] - tagline_bbox[0]
             tagline_x = (WIDTH - tagline_width) // 2
-            tagline_y = center_y + 200
+            tagline_y = center_y + logo_size + 50
             
-            draw.text((tagline_x, tagline_y), tagline, fill=text_color + (tagline_opacity,), font=font_tagline)
+            draw.text(
+                (tagline_x, tagline_y),
+                tagline,
+                fill=text_color + (tagline_opacity,),
+                font=font_tagline
+            )
         
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
