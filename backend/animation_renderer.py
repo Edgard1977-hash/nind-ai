@@ -77,124 +77,42 @@ def ease_in_out_sine(t: float) -> float:
 
 # ==================== CHAT ANIMATION (iMessage Style) ====================
 
-def draw_imessage_bubble_v2(
-    img: Image.Image,
-    x: int, y: int,
-    width: int, height: int,
-    color: Tuple[int, int, int],
-    is_left: bool,
-    opacity: int = 255,
-    scale: float = 1.0
-):
-    """Draw iMessage-style bubble with tail - improved version"""
-    if scale <= 0 or opacity <= 0:
-        return
-    
-    # Apply scale from center
-    scaled_width = int(width * scale)
-    scaled_height = int(height * scale)
-    
-    # Offset for scaling from center
-    x_offset = (width - scaled_width) // 2
-    y_offset = (height - scaled_height) // 2
-    
-    radius = int(20 * scale)
-    tail_width = int(10 * scale)
-    tail_height = int(15 * scale)
-    
-    # Create bubble with transparency
-    bubble_img = Image.new('RGBA', (scaled_width + tail_width + 4, scaled_height + tail_height + 4), (0, 0, 0, 0))
-    bubble_draw = ImageDraw.Draw(bubble_img)
-    
-    # Bubble position within the bubble image
-    bx = tail_width if is_left else 0
-    by = 0
-    
-    # Draw shadow first
-    shadow_offset = 2
-    shadow_color = (0, 0, 0, int(40 * opacity / 255))
-    bubble_draw.rounded_rectangle(
-        (bx + shadow_offset, by + shadow_offset, bx + scaled_width + shadow_offset, by + scaled_height + shadow_offset),
-        radius=radius,
-        fill=shadow_color
-    )
-    
-    # Draw main bubble
-    bubble_color = color + (opacity,)
-    bubble_draw.rounded_rectangle(
-        (bx, by, bx + scaled_width, by + scaled_height),
-        radius=radius,
-        fill=bubble_color
-    )
-    
-    # Draw tail
-    if is_left:
-        # Tail pointing left-down
-        tail_points = [
-            (bx, by + scaled_height - radius),
-            (0, by + scaled_height + tail_height - 2),
-            (bx + radius, by + scaled_height - 2)
-        ]
-    else:
-        # Tail pointing right-down
-        tail_points = [
-            (bx + scaled_width, by + scaled_height - radius),
-            (bx + scaled_width + tail_width, by + scaled_height + tail_height - 2),
-            (bx + scaled_width - radius, by + scaled_height - 2)
-        ]
-    
-    bubble_draw.polygon(tail_points, fill=bubble_color)
-    
-    # Paste onto main image
-    paste_x = x + x_offset - (tail_width if is_left else 0)
-    paste_y = y + y_offset
-    img.paste(bubble_img, (paste_x, paste_y), bubble_img)
-
-
-def ease_out_back(t: float) -> float:
-    """Ease out with overshoot (bounce back effect)"""
-    c1 = 1.70158
-    c3 = c1 + 1
-    return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)
-
-
-def ease_out_elastic(t: float) -> float:
-    """Elastic ease out for bouncy effect"""
-    if t == 0 or t == 1:
-        return t
-    return pow(2, -10 * t) * math.sin((t * 10 - 0.75) * (2 * math.pi) / 3) + 1
-
-
 async def render_chat_animation(
     script_data: dict,
     output_path: Path
 ) -> Optional[Path]:
     """
-    Render professional iMessage-style chat animation.
+    Render iMessage-style chat animation with camera following messages.
     
     Features:
-    - Dynamic bounce animations
-    - Scale + slide effects
-    - Proper alignment
-    - Typing indicator with pulsing dots
+    - Camera smoothly pans to each new message
+    - High quality rendering
+    - Proper iMessage bubble style
+    - Dynamic feel
     """
     output_file = output_path / f"chat_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_path / "frames"
     frames_dir.mkdir(exist_ok=True)
     
-    # Colors - exact iMessage style
-    BG_COLOR = (0, 0, 0)
-    RECEIVED_COLOR = (58, 58, 62)  # Dark gray for received (left)
-    SENT_COLOR = (0, 122, 255)  # Blue for sent (right)
-    TEXT_COLOR = (255, 255, 255)
-    READ_COLOR = (138, 138, 142)
+    # Higher quality settings
+    RENDER_WIDTH = 1080  # Higher resolution
+    RENDER_HEIGHT = 1920
+    RENDER_FPS = 30
     
-    # Layout - precise positioning
-    SCREEN_PADDING = 16
-    BUBBLE_PADDING_H = 16
-    BUBBLE_PADDING_V = 10
-    BUBBLE_MAX_WIDTH = int(WIDTH * 0.72)  # Max 72% of screen width
-    VERTICAL_GAP = 6
+    # Colors - exact iMessage
+    BG_COLOR = (0, 0, 0)
+    RECEIVED_COLOR = (55, 55, 57)  # Gray
+    SENT_COLOR = (0, 122, 255)  # Blue
+    TEXT_COLOR = (255, 255, 255)
+    READ_COLOR = (130, 130, 134)
+    
+    # Layout
+    PADDING = 20
+    BUBBLE_H_PAD = 18
+    BUBBLE_V_PAD = 12
+    MAX_BUBBLE_WIDTH = int(RENDER_WIDTH * 0.75)
+    BUBBLE_RADIUS = 22
+    MESSAGE_GAP = 10
     
     participants = script_data.get("participants", [
         {"name": "Собеседник", "side": "left"},
@@ -202,232 +120,292 @@ async def render_chat_animation(
     ])
     messages = script_data.get("messages", [])
     
-    # Animation timeline
-    current_time = 0.5
-    message_events = []
-    
-    for msg in messages:
-        sender_idx = msg.get("sender", 0)
-        is_received = participants[sender_idx].get("side", "left") == "left"
-        
-        # Typing only for received messages
-        typing_duration = msg.get("typing_duration", 1.0) if is_received else 0
-        typing_start = current_time if is_received else current_time
-        typing_end = typing_start + typing_duration
-        appear_time = typing_end + 0.1
-        
-        message_events.append({
-            "typing_start": typing_start,
-            "typing_end": typing_end,
-            "appear_time": appear_time,
-            "text": msg.get("text", ""),
-            "sender": sender_idx,
-            "is_received": is_received
-        })
-        
-        current_time = appear_time + msg.get("delay", 1.8)
-    
-    total_duration = current_time + 2.5
-    total_frames = int(total_duration * FPS)
-    
-    # Font
+    # Pre-calculate all message layouts
     try:
-        font_message = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 28)
-        font_read = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 13)
+        font_msg = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 32)
+        font_read = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 15)
     except:
-        font_message = ImageFont.load_default()
+        font_msg = ImageFont.load_default()
         font_read = ImageFont.load_default()
     
-    logger.info(f"Rendering {total_frames} frames for chat animation...")
+    # Calculate message data
+    temp_img = Image.new('RGB', (1, 1))
+    temp_draw = ImageDraw.Draw(temp_img)
     
-    for frame_num in range(total_frames):
-        current_sec = frame_num / FPS
+    message_data = []
+    canvas_y = 150  # Start position on canvas
+    
+    for idx, msg in enumerate(messages):
+        sender_idx = msg.get("sender", 0)
+        is_left = participants[sender_idx].get("side", "left") == "left"
+        text = msg.get("text", "")
+        
+        # Word wrap
+        words = text.split()
+        lines = []
+        current_line = ""
+        for word in words:
+            test = current_line + (" " if current_line else "") + word
+            bbox = temp_draw.textbbox((0, 0), test, font=font_msg)
+            if bbox[2] - bbox[0] <= MAX_BUBBLE_WIDTH - BUBBLE_H_PAD * 2:
+                current_line = test
+            else:
+                if current_line:
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+        if not lines:
+            lines = [text]
+        
+        # Calculate bubble dimensions
+        line_h = 40
+        max_w = 0
+        for line in lines:
+            bbox = temp_draw.textbbox((0, 0), line, font=font_msg)
+            max_w = max(max_w, bbox[2] - bbox[0])
+        
+        bubble_w = max_w + BUBBLE_H_PAD * 2
+        bubble_h = len(lines) * line_h + BUBBLE_V_PAD * 2
+        
+        # X position
+        if is_left:
+            bubble_x = PADDING
+        else:
+            bubble_x = RENDER_WIDTH - PADDING - bubble_w
+        
+        message_data.append({
+            "text": text,
+            "lines": lines,
+            "is_left": is_left,
+            "bubble_x": bubble_x,
+            "bubble_y": canvas_y,
+            "bubble_w": bubble_w,
+            "bubble_h": bubble_h,
+            "typing_duration": msg.get("typing_duration", 0.9) if is_left else 0,
+            "delay": msg.get("delay", 1.5)
+        })
+        
+        canvas_y += bubble_h + MESSAGE_GAP + 25
+    
+    # Calculate timeline
+    time_cursor = 0.8
+    for md in message_data:
+        md["typing_start"] = time_cursor if md["is_left"] else time_cursor
+        md["typing_end"] = md["typing_start"] + md["typing_duration"]
+        md["appear_time"] = md["typing_end"] + 0.15
+        time_cursor = md["appear_time"] + md["delay"]
+    
+    total_duration = time_cursor + 2.0
+    total_frames = int(total_duration * RENDER_FPS)
+    
+    # Camera tracking
+    camera_y = 0  # Current camera Y offset
+    camera_target_y = 0
+    
+    logger.info(f"Rendering {total_frames} HQ frames...")
+    
+    for frame_idx in range(total_frames):
+        current_time = frame_idx / RENDER_FPS
+        
+        # Find which message camera should focus on
+        for md in message_data:
+            if current_time >= md["appear_time"] - 0.3:
+                # Camera target: center the message in view
+                msg_center_y = md["bubble_y"] + md["bubble_h"] / 2
+                camera_target_y = max(0, msg_center_y - RENDER_HEIGHT * 0.4)
+        
+        # Smooth camera movement
+        camera_speed = 0.08
+        camera_y += (camera_target_y - camera_y) * camera_speed
         
         # Create frame
-        img = Image.new('RGBA', (WIDTH, HEIGHT), BG_COLOR + (255,))
+        img = Image.new('RGBA', (RENDER_WIDTH, RENDER_HEIGHT), BG_COLOR + (255,))
         draw = ImageDraw.Draw(img)
         
-        # Start position
-        y_position = 100
-        
-        for i, event in enumerate(message_events):
-            is_received = event["is_received"]
+        # Draw messages
+        for i, md in enumerate(message_data):
+            # Screen position (with camera offset)
+            screen_y = md["bubble_y"] - camera_y
             
-            # === TYPING INDICATOR ===
-            if current_sec < event["appear_time"]:
-                if is_received and event["typing_start"] <= current_sec < event["typing_end"]:
-                    typing_progress = (current_sec - event["typing_start"]) / max(0.01, event["typing_end"] - event["typing_start"])
+            # Skip if off screen
+            if screen_y > RENDER_HEIGHT + 100 or screen_y < -md["bubble_h"] - 100:
+                continue
+            
+            is_left = md["is_left"]
+            
+            # === Typing indicator ===
+            if md["is_left"] and md["typing_start"] <= current_time < md["typing_end"]:
+                typing_progress = (current_time - md["typing_start"]) / max(0.01, md["typing_duration"])
+                
+                # Typing bubble
+                t_w, t_h = 80, 44
+                t_x = PADDING
+                t_y = screen_y
+                
+                # Scale in
+                t_scale = min(1.0, typing_progress * 3) if typing_progress < 0.33 else 1.0
+                
+                if t_scale > 0.1:
+                    # Draw typing bubble
+                    scaled_w = int(t_w * t_scale)
+                    scaled_h = int(t_h * t_scale)
+                    offset_x = (t_w - scaled_w) // 2
+                    offset_y = (t_h - scaled_h) // 2
                     
-                    # Typing bubble
-                    typing_width = 75
-                    typing_height = 40
-                    typing_x = SCREEN_PADDING
-                    typing_y = y_position
-                    
-                    # Animate typing bubble appearance
-                    if typing_progress < 0.3:
-                        t_scale = ease_out_back(typing_progress / 0.3)
-                    else:
-                        t_scale = 1.0
-                    
-                    draw_imessage_bubble_v2(
-                        img, typing_x, typing_y,
-                        typing_width, typing_height,
-                        SENT_COLOR, is_left=True,
-                        opacity=255, scale=t_scale
+                    draw.rounded_rectangle(
+                        (t_x + offset_x, t_y + offset_y, 
+                         t_x + offset_x + scaled_w, t_y + offset_y + scaled_h),
+                        radius=int(BUBBLE_RADIUS * t_scale),
+                        fill=SENT_COLOR
                     )
                     
-                    # Animated pulsing dots
+                    # Animated dots
                     if t_scale > 0.5:
-                        for dot_idx in range(3):
-                            dot_x = typing_x + 18 + dot_idx * 18
-                            dot_y = typing_y + typing_height // 2
-                            
-                            # Wave animation
-                            phase = (current_sec * 4 + dot_idx * 0.4) % 1.0
-                            dot_scale = 0.5 + 0.5 * math.sin(phase * math.pi)
-                            dot_radius = int(5 * dot_scale)
-                            dot_alpha = int(150 + 105 * dot_scale)
-                            
-                            if dot_radius > 0:
+                        for dot_i in range(3):
+                            dot_x = t_x + 20 + dot_i * 20
+                            dot_y = t_y + t_h // 2
+                            phase = (current_time * 5 + dot_i * 0.3) % 1.0
+                            dot_r = int(5 * (0.6 + 0.4 * math.sin(phase * math.pi)))
+                            if dot_r > 0:
                                 draw.ellipse(
-                                    (dot_x - dot_radius, dot_y - dot_radius - 5,
-                                     dot_x + dot_radius, dot_y + dot_radius - 5),
-                                    fill=(255, 255, 255, dot_alpha)
+                                    (dot_x - dot_r, dot_y - dot_r, dot_x + dot_r, dot_y + dot_r),
+                                    fill=TEXT_COLOR
                                 )
                 continue
             
-            # === MESSAGE BUBBLE ===
-            time_since_appear = current_sec - event["appear_time"]
+            # === Message bubble ===
+            if current_time < md["appear_time"]:
+                continue
             
-            # Animation parameters
-            anim_duration = 0.4
+            time_since = current_time - md["appear_time"]
+            anim_dur = 0.35
             
-            if time_since_appear < anim_duration:
-                progress = time_since_appear / anim_duration
-                # Use bounce easing for dynamic feel
-                scale_progress = ease_out_back(min(1.0, progress * 1.2))
-                slide_progress = ease_out_cubic(progress)
-                opacity = int(255 * min(1.0, progress * 2))
-            else:
-                scale_progress = 1.0
-                slide_progress = 1.0
-                opacity = 255
-            
-            text = event["text"]
-            
-            # Text wrapping
-            words = text.split()
-            lines = []
-            current_line = ""
-            
-            for word in words:
-                test_line = current_line + (" " if current_line else "") + word
-                bbox = draw.textbbox((0, 0), test_line, font=font_message)
-                line_width = bbox[2] - bbox[0]
-                if line_width <= BUBBLE_MAX_WIDTH - BUBBLE_PADDING_H * 2:
-                    current_line = test_line
+            # Animation progress
+            if time_since < anim_dur:
+                prog = time_since / anim_dur
+                # Smooth ease out
+                prog = 1 - (1 - prog) ** 3
+                opacity = int(255 * min(1.0, prog * 1.5))
+                
+                # Slide from side
+                if is_left:
+                    slide_x = int(-100 * (1 - prog))
                 else:
-                    if current_line:
-                        lines.append(current_line)
-                    current_line = word
-            if current_line:
-                lines.append(current_line)
-            
-            if not lines:
-                lines = [text]
-            
-            # Calculate bubble size
-            line_height = 34
-            max_line_width = 0
-            for line in lines:
-                bbox = draw.textbbox((0, 0), line, font=font_message)
-                max_line_width = max(max_line_width, bbox[2] - bbox[0])
-            
-            bubble_width = max_line_width + BUBBLE_PADDING_H * 2
-            bubble_height = len(lines) * line_height + BUBBLE_PADDING_V * 2
-            
-            # Position calculation with slide animation
-            if is_received:
-                # Left side - slide from left
-                final_x = SCREEN_PADDING
-                start_x = -bubble_width - 30
-                bubble_x = int(start_x + (final_x - start_x) * slide_progress)
-                bubble_color = RECEIVED_COLOR
+                    slide_x = int(100 * (1 - prog))
+                
+                # Scale
+                scale = 0.7 + 0.3 * prog
             else:
-                # Right side - slide from right
-                final_x = WIDTH - SCREEN_PADDING - bubble_width
-                start_x = WIDTH + 30
-                bubble_x = int(start_x + (final_x - start_x) * slide_progress)
-                bubble_color = SENT_COLOR
+                opacity = 255
+                slide_x = 0
+                scale = 1.0
             
-            bubble_y = y_position
+            if opacity < 10:
+                continue
             
-            # Draw bubble with scale
-            draw_imessage_bubble_v2(
-                img, bubble_x, bubble_y,
-                bubble_width, bubble_height,
-                bubble_color, is_left=is_received,
-                opacity=opacity, scale=scale_progress
+            # Calculate final bubble position
+            bx = md["bubble_x"] + slide_x
+            by = screen_y
+            bw = md["bubble_w"]
+            bh = md["bubble_h"]
+            
+            # Apply scale from bottom-corner
+            scaled_w = int(bw * scale)
+            scaled_h = int(bh * scale)
+            
+            if is_left:
+                final_x = bx
+            else:
+                final_x = bx + (bw - scaled_w)
+            final_y = by + (bh - scaled_h)
+            
+            # Draw bubble
+            bubble_color = RECEIVED_COLOR if is_left else SENT_COLOR
+            
+            # Shadow
+            shadow_offset = 3
+            draw.rounded_rectangle(
+                (final_x + shadow_offset, final_y + shadow_offset,
+                 final_x + scaled_w + shadow_offset, final_y + scaled_h + shadow_offset),
+                radius=int(BUBBLE_RADIUS * scale),
+                fill=(0, 0, 0, 50)
             )
             
-            # Draw text (only if scale is sufficient)
-            if scale_progress > 0.3:
-                text_opacity = int(opacity * min(1.0, (scale_progress - 0.3) / 0.7))
-                
-                # Calculate scaled text position
-                scaled_width = int(bubble_width * scale_progress)
-                scaled_height = int(bubble_height * scale_progress)
-                x_off = (bubble_width - scaled_width) // 2
-                y_off = (bubble_height - scaled_height) // 2
-                
-                text_x = bubble_x + BUBBLE_PADDING_H + x_off
-                text_y = bubble_y + BUBBLE_PADDING_V + y_off
-                
-                for line in lines:
-                    text_color_alpha = TEXT_COLOR + (text_opacity,)
-                    draw.text((text_x, text_y), line, fill=text_color_alpha, font=font_message)
-                    text_y += int(line_height * scale_progress)
+            # Main bubble
+            draw.rounded_rectangle(
+                (final_x, final_y, final_x + scaled_w, final_y + scaled_h),
+                radius=int(BUBBLE_RADIUS * scale),
+                fill=bubble_color + (opacity,)
+            )
             
-            # "Read" indicator for sent messages
-            if not is_received and slide_progress == 1.0 and time_since_appear > 0.8:
-                # Check if this is the last visible sent message so far
+            # Draw tail
+            tail_size = int(12 * scale)
+            if is_left:
+                tail_pts = [
+                    (final_x + 8, final_y + scaled_h - 8),
+                    (final_x - tail_size + 2, final_y + scaled_h + tail_size - 5),
+                    (final_x + 20, final_y + scaled_h - 2)
+                ]
+            else:
+                tail_pts = [
+                    (final_x + scaled_w - 8, final_y + scaled_h - 8),
+                    (final_x + scaled_w + tail_size - 2, final_y + scaled_h + tail_size - 5),
+                    (final_x + scaled_w - 20, final_y + scaled_h - 2)
+                ]
+            draw.polygon(tail_pts, fill=bubble_color + (opacity,))
+            
+            # Draw text
+            if scale > 0.5:
+                text_alpha = int(opacity * min(1.0, (scale - 0.5) / 0.5))
+                text_x = final_x + int(BUBBLE_H_PAD * scale)
+                text_y = final_y + int(BUBBLE_V_PAD * scale)
+                
+                for line in md["lines"]:
+                    draw.text(
+                        (text_x, text_y),
+                        line,
+                        fill=TEXT_COLOR + (text_alpha,),
+                        font=font_msg
+                    )
+                    text_y += int(40 * scale)
+            
+            # "Read" indicator
+            if not is_left and time_since > 0.6:
                 is_last_sent = True
-                for j in range(i + 1, len(message_events)):
-                    if not message_events[j]["is_received"] and current_sec >= message_events[j]["appear_time"]:
+                for j in range(i + 1, len(message_data)):
+                    if not message_data[j]["is_left"] and current_time >= message_data[j]["appear_time"]:
                         is_last_sent = False
                         break
                 
                 if is_last_sent:
-                    read_alpha = int(255 * min(1.0, (time_since_appear - 0.8) / 0.3))
+                    read_alpha = int(255 * min(1.0, (time_since - 0.6) / 0.3))
                     read_text = "Read"
-                    read_bbox = draw.textbbox((0, 0), read_text, font=font_read)
-                    read_width = read_bbox[2] - read_bbox[0]
-                    read_x = bubble_x + bubble_width - read_width
-                    read_y = bubble_y + bubble_height + 6
-                    draw.text((read_x, read_y), read_text, fill=READ_COLOR + (read_alpha,), font=font_read)
-            
-            # Update y position
-            y_position += bubble_height + VERTICAL_GAP + 16
+                    r_bbox = draw.textbbox((0, 0), read_text, font=font_read)
+                    r_w = r_bbox[2] - r_bbox[0]
+                    r_x = final_x + scaled_w - r_w
+                    r_y = final_y + scaled_h + 8
+                    draw.text((r_x, r_y), read_text, fill=READ_COLOR + (read_alpha,), font=font_read)
         
         # Save frame
-        frame_path = frames_dir / f"frame_{frame_num:05d}.png"
-        img.save(frame_path, "PNG")
+        frame_path = frames_dir / f"frame_{frame_idx:05d}.png"
+        img.save(frame_path, "PNG", optimize=False)
         
-        if frame_num % 60 == 0:
-            logger.info(f"Rendered frame {frame_num}/{total_frames}")
+        if frame_idx % 60 == 0:
+            logger.info(f"Frame {frame_idx}/{total_frames}")
     
-    # Compile frames to video
-    logger.info("Compiling frames to video...")
+    # Compile to video - high quality
+    logger.info("Compiling HQ video...")
     
     cmd = [
         "ffmpeg", "-y",
-        "-framerate", str(FPS),
+        "-framerate", str(RENDER_FPS),
         "-i", str(frames_dir / "frame_%05d.png"),
         "-c:v", "libx264",
-        "-preset", "fast",
+        "-preset", "slow",
+        "-crf", "18",  # Higher quality
         "-pix_fmt", "yuv420p",
-        "-crf", "20",
+        "-movflags", "+faststart",
         str(output_file)
     ]
     
@@ -438,16 +416,16 @@ async def render_chat_animation(
     )
     await process.communicate()
     
-    # Cleanup frames
+    # Cleanup
     for f in frames_dir.glob("*.png"):
         f.unlink()
     frames_dir.rmdir()
     
     if output_file.exists() and output_file.stat().st_size > 1000:
-        logger.info(f"Created chat animation: {output_file}")
+        logger.info(f"Created HQ chat animation: {output_file}")
         return output_file
     
-    logger.error("Chat animation creation failed")
+    logger.error("Chat animation failed")
     return None
 
 
