@@ -24,6 +24,14 @@ from video_service import (
     WORK_DIR
 )
 
+# Import professional animation renderer
+from animation_renderer import (
+    render_chat_animation,
+    render_apple_text_animation,
+    render_kinetic_typography,
+    render_logo_animation
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -1118,11 +1126,11 @@ async def process_video_generation(project_id: str):
         if format_id == "chat_animation":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём анимацию диалога..."}}
+                {"$set": {"progress": 30, "progress_message": "Рендерим анимацию диалога..."}}
             )
             
-            # Create chat animation video
-            final_video = await create_chat_animation_video(script_data, work_dir)
+            # Use professional PIL renderer
+            final_video = await render_chat_animation(script_data, work_dir)
             
             if final_video:
                 await db.video_projects.update_one(
@@ -1160,10 +1168,11 @@ async def process_video_generation(project_id: str):
         elif format_id == "apple_text":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём Apple-style текст..."}}
+                {"$set": {"progress": 30, "progress_message": "Рендерим Apple-style текст..."}}
             )
             
-            final_video = await create_apple_text_animation(script_data, work_dir)
+            # Use professional PIL renderer
+            final_video = await render_apple_text_animation(script_data, work_dir)
             
             if final_video:
                 await db.video_projects.update_one(
@@ -1191,10 +1200,11 @@ async def process_video_generation(project_id: str):
         elif format_id == "kinetic_typography":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём кинетическую типографику..."}}
+                {"$set": {"progress": 30, "progress_message": "Рендерим кинетическую типографику..."}}
             )
             
-            final_video = await create_kinetic_typography(script_data, work_dir)
+            # Use professional PIL renderer
+            final_video = await render_kinetic_typography(script_data, work_dir)
             
             if final_video:
                 await db.video_projects.update_one(
@@ -1222,10 +1232,11 @@ async def process_video_generation(project_id: str):
         elif format_id == "logo_animation":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём анимацию логотипа..."}}
+                {"$set": {"progress": 30, "progress_message": "Рендерим анимацию логотипа..."}}
             )
             
-            final_video = await create_logo_animation(script_data, work_dir)
+            # Use professional PIL renderer
+            final_video = await render_logo_animation(script_data, work_dir)
             
             if final_video:
                 await db.video_projects.update_one(
