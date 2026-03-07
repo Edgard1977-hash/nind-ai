@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, UploadFile, File
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -29,7 +29,8 @@ from animation_renderer import (
     render_chat_animation,
     render_apple_text_animation,
     render_kinetic_typography,
-    render_logo_animation
+    render_logo_animation,
+    render_product_advertisement
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -76,6 +77,10 @@ class VideoGenerateRequest(BaseModel):
     youtube_url: Optional[str] = None
     character_type: Optional[str] = None
     gameplay_type: Optional[str] = None
+    # Product advertisement fields
+    product_images: Optional[List[str]] = None  # URLs to uploaded product images
+    logo_url: Optional[str] = None  # URL to uploaded logo
+    brand_name: Optional[str] = None  # Brand name for logo animation
 
 class VideoScene(BaseModel):
     text: str
@@ -93,6 +98,10 @@ class VideoProject(BaseModel):
     youtube_url: Optional[str] = None
     character_type: Optional[str] = None
     gameplay_type: Optional[str] = None
+    # Product advertisement fields
+    product_images: Optional[List[str]] = None
+    logo_url: Optional[str] = None
+    brand_name: Optional[str] = None
     status: str = "pending"
     progress: int = 0
     progress_message: str = "Инициализация..."
@@ -239,6 +248,16 @@ VIDEO_FORMATS = [
         category="branding",
         image_url="https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400"
     ),
+    VideoFormat(
+        id="product_advertisement",
+        name="Product Advertisement",
+        name_ru="Реклама продукта",
+        description="Professional product showcase like Apple ads - with hands, multiple angles, and brand reveal",
+        description_ru="Профессиональная реклама продукта как у Apple - руки, ракурсы, бренд",
+        icon="ShoppingBag",
+        category="commercial",
+        image_url="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"
+    ),
 ]
 
 # Character types for character_explainer format
@@ -291,10 +310,11 @@ Available video types:
 2. "apple_text" - For minimalist text presentations like Apple style (e.g., "make text like Apple", "simple text animation", "презентация текста")
 3. "kinetic_typography" - For dynamic word-by-word text animations (e.g., "animate words", "kinetic text", "слова по очереди")
 4. "logo_animation" - For brand/logo reveal animations (e.g., "animate my logo", "brand intro", "анимация логотипа", "интро бренда")
-5. "news" - For news reports, current events, breaking news
-6. "ai_story" - For stories, narratives, tales, fiction
-7. "character_explainer" - For educational explanations with cute characters
-8. "gameplay_clip" - For gaming content with YouTube clips
+5. "product_advertisement" - For product showcase/advertisement videos like Apple ads (e.g., "product ad", "реклама продукта", "реклама товара", "showcase product", "advertise my product", "MacBook ad style", "iPhone style ad", "показать товар", "рекламный ролик")
+6. "news" - For news reports, current events, breaking news
+7. "ai_story" - For stories, narratives, tales, fiction
+8. "character_explainer" - For educational explanations with cute characters
+9. "gameplay_clip" - For gaming content with YouTube clips
 
 User prompt: "{prompt}"
 
@@ -312,6 +332,7 @@ Important rules:
 - If user mentions Apple, minimalist text, presentation, choose "apple_text"
 - If user mentions word animation, kinetic, dynamic text, choose "kinetic_typography"
 - If user mentions logo, brand, intro, choose "logo_animation"
+- If user mentions product ad, product advertisement, товар, реклама, showcase, commercial, or wants to advertise a physical product, choose "product_advertisement"
 """
         
         msg = UserMessage(text=detection_prompt)
@@ -348,6 +369,11 @@ Important rules:
     logo_keywords = ['лого', 'logo', 'бренд', 'brand', 'интро', 'intro']
     if any(kw in prompt_lower for kw in logo_keywords):
         return {"format_id": "logo_animation", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for product advertisement
+    product_keywords = ['реклам', 'товар', 'продукт', 'product', 'advertis', 'showcase', 'commercial', 'macbook', 'iphone', 'показать продукт']
+    if any(kw in prompt_lower for kw in product_keywords):
+        return {"format_id": "product_advertisement", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
     # Check for news
     news_keywords = ['новост', 'news', 'breaking', 'событи', 'сегодня', 'headline']
@@ -655,6 +681,217 @@ User prompt: {prompt}"""
         "text_color": "#ffffff",
         "full_script": brand_name
     }
+
+
+async def generate_product_advertisement_script(
+    prompt: str, 
+    language: str,
+    product_images: Optional[List[str]] = None,
+    logo_url: Optional[str] = None,
+    brand_name: Optional[str] = None
+) -> dict:
+    """
+    Generate script for Product Advertisement format.
+    Like Apple MacBook Neo ads - professional product showcase with hands, angles, brand reveal.
+    """
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"product-ad-{uuid.uuid4()}",
+            system_message="You create professional product advertisement scripts like Apple commercials."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
+        has_images = product_images and len(product_images) > 0
+        has_logo = logo_url is not None
+        
+        system_prompt = f"""Create a professional product advertisement video script like Apple MacBook Neo commercials.
+{lang_instruction}
+
+User prompt: {prompt}
+Has product images uploaded: {has_images}
+Has logo uploaded: {has_logo}
+Brand name provided: {brand_name or 'Not specified'}
+
+Video structure (like MacBook Neo ad):
+1. Scene 1: Product introduction - closed/static view (hand holding from below if applicable)
+2. Scene 2: Product reveal - open/dynamic view showing key feature
+3. Scene 3: Brand reveal - Logo + Product name with gradient text effect
+4. Scene 4 (optional): Tagline/disclaimer at bottom
+
+For each scene, determine:
+- Whether to use uploaded image OR generate new AI image
+- Whether to include hands holding the product
+- Camera movement (static, subtle pan, zoom)
+- Text overlays and animations
+
+Return JSON:
+{{
+    "title": "Product Ad Title",
+    "product_name": "Product Name",
+    "brand_name": "{brand_name or 'Brand'}",
+    "tagline": "Optional tagline",
+    "scenes": [
+        {{
+            "scene_number": 1,
+            "description": "Product closed, held by hand from below",
+            "use_uploaded_image": false,
+            "image_prompt": "Professional product photo of [product] on pure white background, minimalist, high quality, hand holding from below, premium lighting, 9:16 vertical format",
+            "needs_hands": true,
+            "camera_movement": "static",
+            "duration": 1.5,
+            "text_overlay": null
+        }},
+        {{
+            "scene_number": 2,
+            "description": "Product open/revealed, side angle",
+            "use_uploaded_image": false,
+            "image_prompt": "Professional product photo of [product] from side angle showing key feature, pure white background, minimalist, premium lighting",
+            "needs_hands": false,
+            "camera_movement": "subtle_zoom_in",
+            "duration": 1.5,
+            "text_overlay": null
+        }},
+        {{
+            "scene_number": 3,
+            "description": "Brand reveal",
+            "use_uploaded_image": false,
+            "image_prompt": null,
+            "needs_hands": false,
+            "camera_movement": "static",
+            "duration": 2.0,
+            "text_overlay": {{
+                "brand_name": "Brand",
+                "product_name": "Product Name",
+                "use_gradient": true,
+                "gradient_colors": ["#00ff00", "#ffffff"]
+            }}
+        }}
+    ],
+    "bg_color": "#ffffff",
+    "include_logo": {str(has_logo).lower()},
+    "full_script": "Brand name. Product name."
+}}
+
+Important:
+- If user uploaded product images, set use_uploaded_image=true for appropriate scenes
+- If prompt mentions logo/brand at start or end, include logo scene
+- Generate detailed image prompts for AI to create professional product shots
+- Keep it minimal and premium like Apple ads
+"""
+        
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            return json.loads(response[json_start:json_end])
+    except Exception as e:
+        logger.warning(f"Product advertisement script generation failed: {e}")
+    
+    # Fallback script
+    product_name_fallback = brand_name or "Product"
+    if is_russian:
+        return {
+            "title": f"Реклама {product_name_fallback}",
+            "product_name": product_name_fallback,
+            "brand_name": brand_name or "Brand",
+            "tagline": "",
+            "scenes": [
+                {
+                    "scene_number": 1,
+                    "description": "Продукт крупным планом",
+                    "use_uploaded_image": bool(product_images),
+                    "image_prompt": f"Professional product photography of {product_name_fallback}, pure white background, minimalist Apple style, hand holding from below, premium lighting, vertical 9:16",
+                    "needs_hands": True,
+                    "camera_movement": "static",
+                    "duration": 1.5,
+                    "text_overlay": None
+                },
+                {
+                    "scene_number": 2,
+                    "description": "Продукт с другого ракурса",
+                    "use_uploaded_image": False,
+                    "image_prompt": f"Professional product photography of {product_name_fallback} from side angle, pure white background, showing details, premium lighting",
+                    "needs_hands": False,
+                    "camera_movement": "subtle_zoom_in",
+                    "duration": 1.5,
+                    "text_overlay": None
+                },
+                {
+                    "scene_number": 3,
+                    "description": "Название бренда",
+                    "use_uploaded_image": False,
+                    "image_prompt": None,
+                    "needs_hands": False,
+                    "camera_movement": "static",
+                    "duration": 2.0,
+                    "text_overlay": {
+                        "brand_name": brand_name or "Brand",
+                        "product_name": product_name_fallback,
+                        "use_gradient": True,
+                        "gradient_colors": ["#00ff00", "#ffffff"]
+                    }
+                }
+            ],
+            "bg_color": "#ffffff",
+            "include_logo": bool(logo_url),
+            "full_script": f"{brand_name or 'Brand'}. {product_name_fallback}."
+        }
+    else:
+        return {
+            "title": f"{product_name_fallback} Advertisement",
+            "product_name": product_name_fallback,
+            "brand_name": brand_name or "Brand",
+            "tagline": "",
+            "scenes": [
+                {
+                    "scene_number": 1,
+                    "description": "Product close-up",
+                    "use_uploaded_image": bool(product_images),
+                    "image_prompt": f"Professional product photography of {product_name_fallback}, pure white background, minimalist Apple style, hand holding from below, premium lighting, vertical 9:16",
+                    "needs_hands": True,
+                    "camera_movement": "static",
+                    "duration": 1.5,
+                    "text_overlay": None
+                },
+                {
+                    "scene_number": 2,
+                    "description": "Product from different angle",
+                    "use_uploaded_image": False,
+                    "image_prompt": f"Professional product photography of {product_name_fallback} from side angle, pure white background, showing details, premium lighting",
+                    "needs_hands": False,
+                    "camera_movement": "subtle_zoom_in",
+                    "duration": 1.5,
+                    "text_overlay": None
+                },
+                {
+                    "scene_number": 3,
+                    "description": "Brand name reveal",
+                    "use_uploaded_image": False,
+                    "image_prompt": None,
+                    "needs_hands": False,
+                    "camera_movement": "static",
+                    "duration": 2.0,
+                    "text_overlay": {
+                        "brand_name": brand_name or "Brand",
+                        "product_name": product_name_fallback,
+                        "use_gradient": True,
+                        "gradient_colors": ["#00ff00", "#ffffff"]
+                    }
+                }
+            ],
+            "bg_color": "#ffffff",
+            "include_logo": bool(logo_url),
+            "full_script": f"{brand_name or 'Brand'}. {product_name_fallback}."
+        }
 
 
 async def generate_poster_image(video_path: Path, output_path: Path) -> Optional[str]:
@@ -1100,6 +1337,14 @@ async def process_video_generation(project_id: str):
                 project.get("gameplay_type", "minecraft_parkour"),
                 project["language"]
             )
+        elif format_id == "product_advertisement":
+            script_data = await generate_product_advertisement_script(
+                project["prompt"],
+                project["language"],
+                project.get("product_images"),
+                project.get("logo_url"),
+                project.get("brand_name")
+            )
         else:
             script_data = await analyze_prompt_and_generate_script(
                 project["prompt"], 
@@ -1242,6 +1487,88 @@ async def process_video_generation(project_id: str):
                 await db.video_projects.update_one(
                     {"id": project_id},
                     {"$set": {"progress": 70, "progress_message": "Генерируем озвучку..."}}
+                )
+                
+                full_script = script_data.get("full_script", "")
+                if full_script:
+                    audio_url = await generate_tts(full_script)
+                    if audio_url:
+                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
+                        if audio_path.exists():
+                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
+                            if video_with_audio:
+                                final_video = video_with_audio
+                
+                poster_url = await generate_poster_image(final_video, work_dir)
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
+        
+        # ============ PRODUCT_ADVERTISEMENT FORMAT ============
+        elif format_id == "product_advertisement":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 20, "progress_message": "Подготавливаем рекламу продукта..."}}
+            )
+            
+            # Process uploaded product images
+            product_image_paths = []
+            uploaded_images = project.get("product_images", [])
+            
+            if uploaded_images:
+                for img_url in uploaded_images:
+                    if img_url.startswith("/api/uploads/"):
+                        img_path = UPLOADS_DIR / img_url.split("/")[-1]
+                        if img_path.exists():
+                            product_image_paths.append(img_path)
+            
+            # If no uploaded images, generate AI images for product scenes
+            if not product_image_paths:
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 30, "progress_message": "Генерируем изображения продукта..."}}
+                )
+                
+                for i, scene in enumerate(scenes):
+                    if scene.get("image_prompt") and not scene.get("text_overlay"):
+                        img_prompt = scene.get("image_prompt", "")
+                        img_url = await generate_image(img_prompt)
+                        if img_url:
+                            img_path = UPLOADS_DIR / img_url.split("/")[-1]
+                            if img_path.exists():
+                                product_image_paths.append(img_path)
+                        
+                        await db.video_projects.update_one(
+                            {"id": project_id},
+                            {"$set": {"progress": 30 + int(20 * (i + 1) / len(scenes)), "progress_message": f"Сгенерировано {i+1}/{len(scenes)} изображений..."}}
+                        )
+            
+            # Process logo
+            logo_path = None
+            logo_url = project.get("logo_url")
+            if logo_url and logo_url.startswith("/api/uploads/"):
+                logo_path = UPLOADS_DIR / logo_url.split("/")[-1]
+                if not logo_path.exists():
+                    logo_path = None
+            
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 60, "progress_message": "Рендерим рекламный ролик..."}}
+            )
+            
+            # Render product advertisement
+            final_video = await render_product_advertisement(
+                script_data, 
+                work_dir,
+                product_image_paths,
+                logo_path
+            )
+            
+            if final_video:
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 80, "progress_message": "Генерируем озвучку..."}}
                 )
                 
                 full_script = script_data.get("full_script", "")
@@ -1462,7 +1789,10 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
         language=request.language,
         youtube_url=request.youtube_url,
         character_type=request.character_type,
-        gameplay_type=request.gameplay_type
+        gameplay_type=request.gameplay_type,
+        product_images=request.product_images,
+        logo_url=request.logo_url,
+        brand_name=request.brand_name
     )
     
     # Save to DB
@@ -1475,6 +1805,32 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
     background_tasks.add_task(process_video_generation, project.id)
     
     return {"id": project.id, "status": "pending"}
+
+
+@api_router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    """Upload a file (product image, logo, etc.)"""
+    # Validate file type
+    allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/webp", "video/mp4"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"File type not allowed. Allowed: {allowed_types}")
+    
+    # Generate unique filename
+    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+    filename = f"{uuid.uuid4()}.{ext}"
+    file_path = UPLOADS_DIR / filename
+    
+    # Save file
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    
+    return {
+        "url": f"/api/uploads/{filename}",
+        "filename": filename,
+        "content_type": file.content_type,
+        "size": len(content)
+    }
 
 @api_router.get("/video/{project_id}")
 async def get_video_project(project_id: str):

@@ -928,3 +928,457 @@ async def render_logo_animation(
         return output_file
     
     return None
+
+
+# ==================== PRODUCT ADVERTISEMENT ====================
+
+async def render_product_advertisement(
+    script_data: dict,
+    output_path: Path,
+    product_images: List[Path] = None,
+    logo_path: Path = None
+) -> Optional[Path]:
+    """
+    Render professional product advertisement video like Apple MacBook Neo ads.
+    
+    Structure:
+    1. Product shots (with optional hands) - from uploaded or AI-generated images
+    2. Multiple angles with smooth transitions
+    3. Brand reveal with logo + gradient text
+    4. Optional tagline fade-in
+    
+    Key visual features:
+    - Pure white background
+    - High-quality product images
+    - Smooth zoom/pan camera movements
+    - Apple-style text reveal with gradient
+    """
+    output_file = output_path / f"product_ad_{uuid.uuid4().hex[:8]}.mp4"
+    frames_dir = output_path / "frames"
+    frames_dir.mkdir(exist_ok=True)
+    
+    # High quality settings (1080x1920 for 9:16)
+    W = 1080
+    H = 1920
+    FPS = 30
+    
+    # Colors
+    BG_COLOR = (255, 255, 255)  # Pure white
+    TEXT_COLOR = (0, 0, 0)  # Black text
+    
+    scenes = script_data.get("scenes", [])
+    brand_name = script_data.get("brand_name", "Brand")
+    product_name = script_data.get("product_name", "Product")
+    tagline = script_data.get("tagline", "")
+    
+    # Calculate total duration
+    total_duration = sum(s.get("duration", 1.5) for s in scenes) + 1.0  # +1s for outro
+    total_frames = int(total_duration * FPS)
+    
+    # Fonts
+    try:
+        font_brand = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 72)
+        font_product = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 56)
+        font_tagline = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 24)
+    except:
+        font_brand = ImageFont.load_default()
+        font_product = ImageFont.load_default()
+        font_tagline = ImageFont.load_default()
+    
+    # Pre-calculate scene timings
+    scene_timings = []
+    current_time = 0
+    for scene in scenes:
+        duration = scene.get("duration", 1.5)
+        scene_timings.append({
+            "start": current_time,
+            "end": current_time + duration,
+            "duration": duration,
+            **scene
+        })
+        current_time += duration
+    
+    # Transition duration between scenes
+    TRANSITION_DURATION = 0.3
+    
+    logger.info(f"Rendering {total_frames} frames for product advertisement...")
+    
+    for frame_idx in range(total_frames):
+        current_time = frame_idx / FPS
+        
+        # Create frame with white background
+        img = Image.new('RGBA', (W, H), BG_COLOR + (255,))
+        draw = ImageDraw.Draw(img)
+        
+        # Find active scene
+        active_scene = None
+        scene_progress = 0
+        next_scene = None
+        transition_progress = 0
+        
+        for i, st in enumerate(scene_timings):
+            if st["start"] <= current_time < st["end"]:
+                active_scene = st
+                scene_progress = (current_time - st["start"]) / st["duration"]
+                
+                # Check if we're in transition to next scene
+                time_to_end = st["end"] - current_time
+                if time_to_end < TRANSITION_DURATION and i < len(scene_timings) - 1:
+                    next_scene = scene_timings[i + 1]
+                    transition_progress = 1 - (time_to_end / TRANSITION_DURATION)
+                break
+        
+        if not active_scene:
+            # We're past all scenes - show final brand frame
+            active_scene = scene_timings[-1] if scene_timings else None
+            scene_progress = 1.0
+        
+        if active_scene:
+            text_overlay = active_scene.get("text_overlay")
+            
+            if text_overlay:
+                # Brand reveal scene
+                render_brand_reveal(
+                    draw, img, W, H,
+                    text_overlay.get("brand_name", brand_name),
+                    text_overlay.get("product_name", product_name),
+                    scene_progress,
+                    font_brand, font_product,
+                    text_overlay.get("gradient_colors", ["#00ff00", "#ffffff"]),
+                    logo_path
+                )
+            else:
+                # Product image scene
+                # For now, render a placeholder product visualization
+                # In production, this would load actual product images
+                image_prompt = active_scene.get("image_prompt", "")
+                camera_movement = active_scene.get("camera_movement", "static")
+                needs_hands = active_scene.get("needs_hands", False)
+                
+                render_product_scene(
+                    draw, img, W, H,
+                    scene_progress,
+                    camera_movement,
+                    product_images,
+                    active_scene.get("scene_number", 1) - 1  # 0-indexed
+                )
+        
+        # Draw tagline if we're near the end
+        if tagline and current_time > total_duration - 1.5:
+            tagline_progress = min(1.0, (current_time - (total_duration - 1.5)) / 0.5)
+            tagline_progress = ease_out_cubic(tagline_progress)
+            tagline_opacity = int(180 * tagline_progress)
+            
+            tagline_bbox = draw.textbbox((0, 0), tagline, font=font_tagline)
+            tagline_width = tagline_bbox[2] - tagline_bbox[0]
+            tagline_x = (W - tagline_width) // 2
+            tagline_y = H - 150
+            
+            draw.text(
+                (tagline_x, tagline_y),
+                tagline,
+                fill=(100, 100, 100, tagline_opacity),
+                font=font_tagline
+            )
+        
+        # Save frame
+        frame_path = frames_dir / f"frame_{frame_idx:05d}.png"
+        img.save(frame_path, "PNG")
+        
+        if frame_idx % 60 == 0:
+            logger.info(f"Frame {frame_idx}/{total_frames}")
+    
+    # Compile to high quality video
+    logger.info("Compiling product advertisement video...")
+    
+    cmd = [
+        "ffmpeg", "-y",
+        "-framerate", str(FPS),
+        "-i", str(frames_dir / "frame_%05d.png"),
+        "-c:v", "libx264",
+        "-preset", "slow",
+        "-crf", "17",
+        "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
+        str(output_file)
+    ]
+    
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+    await process.communicate()
+    
+    # Cleanup
+    for f in frames_dir.glob("*.png"):
+        f.unlink()
+    frames_dir.rmdir()
+    
+    if output_file.exists() and output_file.stat().st_size > 1000:
+        logger.info(f"Created product advertisement: {output_file}")
+        return output_file
+    
+    return None
+
+
+def render_brand_reveal(
+    draw: ImageDraw.ImageDraw,
+    img: Image.Image,
+    W: int, H: int,
+    brand_name: str,
+    product_name: str,
+    progress: float,
+    font_brand: ImageFont.FreeTypeFont,
+    font_product: ImageFont.FreeTypeFont,
+    gradient_colors: List[str],
+    logo_path: Path = None
+):
+    """
+    Render the brand reveal scene with Apple-style animation.
+    - Logo appears first (if provided)
+    - Logo slides left, brand name appears to the right
+    - Product name fades in with gradient effect
+    """
+    center_x = W // 2
+    center_y = H // 2 - 50
+    
+    # Animation phases
+    logo_appear_end = 0.3
+    logo_slide_start = 0.3
+    logo_slide_end = 0.5
+    text_appear_start = 0.4
+    text_appear_end = 0.7
+    product_appear_start = 0.6
+    
+    # Calculate brand name dimensions
+    brand_bbox = draw.textbbox((0, 0), brand_name, font=font_brand)
+    brand_width = brand_bbox[2] - brand_bbox[0]
+    brand_height = brand_bbox[3] - brand_bbox[1]
+    
+    # Logo settings
+    logo_size = 80
+    gap = 30
+    
+    # Final positions (logo left, text right, centered together)
+    total_width = logo_size * 2 + gap + brand_width
+    final_logo_x = (W - total_width) // 2 + logo_size
+    final_text_x = final_logo_x + logo_size + gap
+    
+    # Phase 1: Logo appears in center
+    logo_x = center_x
+    logo_scale = 0
+    logo_opacity = 0
+    
+    if progress < logo_appear_end:
+        # Logo appearing
+        p = progress / logo_appear_end
+        p = ease_out_cubic(p)
+        logo_scale = p
+        logo_opacity = int(255 * p)
+    elif progress < logo_slide_end:
+        # Logo sliding to final position
+        p = (progress - logo_slide_start) / (logo_slide_end - logo_slide_start)
+        p = ease_out_cubic(max(0, min(1, p)))
+        logo_x = center_x + (final_logo_x - center_x) * p
+        logo_scale = 1.0
+        logo_opacity = 255
+    else:
+        # Logo at final position
+        logo_x = final_logo_x
+        logo_scale = 1.0
+        logo_opacity = 255
+    
+    # Draw logo (circle placeholder or actual logo)
+    if logo_scale > 0:
+        scaled_size = int(logo_size * logo_scale)
+        
+        # Draw Apple-style logo circle
+        if logo_path and logo_path.exists():
+            # Load and draw actual logo
+            try:
+                logo_img = Image.open(logo_path).convert('RGBA')
+                logo_img = logo_img.resize((scaled_size * 2, scaled_size * 2), Image.Resampling.LANCZOS)
+                # Center logo
+                paste_x = int(logo_x) - scaled_size
+                paste_y = center_y - scaled_size
+                img.paste(logo_img, (paste_x, paste_y), logo_img)
+            except Exception as e:
+                logger.warning(f"Failed to load logo: {e}")
+                # Fallback to circle
+                draw.ellipse(
+                    (int(logo_x) - scaled_size, center_y - scaled_size,
+                     int(logo_x) + scaled_size, center_y + scaled_size),
+                    fill=(0, 0, 0, logo_opacity)
+                )
+        else:
+            # Draw placeholder circle logo
+            draw.ellipse(
+                (int(logo_x) - scaled_size, center_y - scaled_size,
+                 int(logo_x) + scaled_size, center_y + scaled_size),
+                fill=(0, 0, 0, logo_opacity)
+            )
+    
+    # Phase 2: Brand name appears
+    if progress >= text_appear_start:
+        text_p = min(1.0, (progress - text_appear_start) / (text_appear_end - text_appear_start))
+        text_p = ease_out_cubic(text_p)
+        text_opacity = int(255 * text_p)
+        text_y_offset = int(20 * (1 - text_p))
+        
+        text_y = center_y - brand_height // 2 + text_y_offset
+        draw.text(
+            (final_text_x, text_y),
+            brand_name,
+            fill=(0, 0, 0, text_opacity),
+            font=font_brand
+        )
+    
+    # Phase 3: Product name with gradient effect
+    if progress >= product_appear_start:
+        prod_p = min(1.0, (progress - product_appear_start) / (1.0 - product_appear_start))
+        prod_p = ease_out_cubic(prod_p)
+        
+        # Calculate product name position (below brand name)
+        prod_bbox = draw.textbbox((0, 0), product_name, font=font_product)
+        prod_width = prod_bbox[2] - prod_bbox[0]
+        prod_x = (W - prod_width) // 2
+        prod_y = center_y + logo_size + 40
+        
+        # Create gradient text effect
+        if len(gradient_colors) >= 2:
+            # Parse gradient colors
+            try:
+                color1 = hex_to_rgb(gradient_colors[0])
+                color2 = hex_to_rgb(gradient_colors[1])
+                
+                # Interpolate colors based on progress
+                r = int(color1[0] + (color2[0] - color1[0]) * prod_p)
+                g = int(color1[1] + (color2[1] - color1[1]) * prod_p)
+                b = int(color1[2] + (color2[2] - color1[2]) * prod_p)
+                
+                prod_opacity = int(255 * prod_p)
+                prod_y_offset = int(15 * (1 - prod_p))
+                
+                draw.text(
+                    (prod_x, prod_y + prod_y_offset),
+                    product_name,
+                    fill=(r, g, b, prod_opacity),
+                    font=font_product
+                )
+            except:
+                draw.text(
+                    (prod_x, prod_y),
+                    product_name,
+                    fill=(0, 0, 0, int(255 * prod_p)),
+                    font=font_product
+                )
+        else:
+            draw.text(
+                (prod_x, prod_y),
+                product_name,
+                fill=(0, 0, 0, int(255 * prod_p)),
+                font=font_product
+            )
+
+
+def render_product_scene(
+    draw: ImageDraw.ImageDraw,
+    img: Image.Image,
+    W: int, H: int,
+    progress: float,
+    camera_movement: str,
+    product_images: List[Path] = None,
+    scene_index: int = 0
+):
+    """
+    Render a product scene with camera movement.
+    Uses uploaded images if available, otherwise draws a placeholder.
+    """
+    # If we have product images, use them
+    if product_images and len(product_images) > scene_index:
+        try:
+            prod_img_path = product_images[scene_index]
+            if prod_img_path.exists():
+                prod_img = Image.open(prod_img_path).convert('RGBA')
+                
+                # Apply camera movement
+                if camera_movement == "subtle_zoom_in":
+                    # Zoom from 95% to 100%
+                    scale = 0.95 + 0.05 * ease_out_cubic(progress)
+                elif camera_movement == "subtle_zoom_out":
+                    scale = 1.0 - 0.05 * ease_out_cubic(progress)
+                else:
+                    scale = 1.0
+                
+                # Scale image
+                new_w = int(W * scale)
+                new_h = int(H * scale)
+                prod_img = prod_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                
+                # Center and crop
+                paste_x = (W - new_w) // 2
+                paste_y = (H - new_h) // 2
+                
+                # Create composite
+                temp = Image.new('RGBA', (W, H), (255, 255, 255, 255))
+                temp.paste(prod_img, (paste_x, paste_y), prod_img if prod_img.mode == 'RGBA' else None)
+                img.paste(temp, (0, 0))
+                return
+        except Exception as e:
+            logger.warning(f"Failed to load product image: {e}")
+    
+    # Fallback: Draw placeholder product visualization
+    center_x = W // 2
+    center_y = H // 2
+    
+    # Apply camera movement to placeholder
+    if camera_movement == "subtle_zoom_in":
+        scale = 0.9 + 0.1 * ease_out_cubic(progress)
+    elif camera_movement == "subtle_zoom_out":
+        scale = 1.0 - 0.1 * ease_out_cubic(progress)
+    else:
+        scale = 1.0
+    
+    # Draw a stylized product placeholder (rounded rectangle like a device)
+    product_w = int(400 * scale)
+    product_h = int(280 * scale)
+    
+    x1 = center_x - product_w // 2
+    y1 = center_y - product_h // 2
+    x2 = center_x + product_w // 2
+    y2 = center_y + product_h // 2
+    
+    # Shadow
+    draw.rounded_rectangle(
+        (x1 + 8, y1 + 8, x2 + 8, y2 + 8),
+        radius=20,
+        fill=(200, 200, 200, 100)
+    )
+    
+    # Main product shape
+    draw.rounded_rectangle(
+        (x1, y1, x2, y2),
+        radius=20,
+        fill=(80, 80, 80, 255)
+    )
+    
+    # Screen area
+    screen_padding = 15
+    draw.rounded_rectangle(
+        (x1 + screen_padding, y1 + screen_padding, 
+         x2 - screen_padding, y2 - screen_padding),
+        radius=10,
+        fill=(40, 40, 40, 255)
+    )
+    
+    # Subtle screen glow
+    glow_size = int(5 * scale)
+    for i in range(3):
+        alpha = 30 - i * 10
+        draw.rounded_rectangle(
+            (x1 + screen_padding - i, y1 + screen_padding - i,
+             x2 - screen_padding + i, y2 - screen_padding + i),
+            radius=10 + i,
+            outline=(100, 150, 255, alpha)
+        )
