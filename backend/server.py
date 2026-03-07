@@ -497,31 +497,40 @@ async def generate_apple_text_script(prompt: str, language: str) -> dict:
         chat = LlmChat(
             api_key=api_key,
             session_id=f"apple-text-{uuid.uuid4()}",
-            system_message="You create minimalist, impactful text content in Apple presentation style."
+            system_message="You follow user instructions EXACTLY. Never translate, never add extra content."
         )
         chat.with_model("openai", "gpt-5.2")
         
-        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
-        
-        system_prompt = f"""Create Apple-style minimalist text animation content.
-{lang_instruction}
+        system_prompt = f"""Create Apple-style minimalist text animation.
 
-Style: Clean, bold, impactful phrases. Like Apple keynotes.
-- Short phrases (3-5 words max per phrase)
+CRITICAL RULES:
+1. Use EXACTLY the text the user provides - DO NOT translate it
+2. DO NOT add text that user didn't ask for
+3. If user specifies colors (like "blue gradient", "голубой"), use those EXACT colors
+4. Keep the EXACT language user wrote in - if they wrote "Go make content", keep it as "Go make content"
+
+Style: Clean, bold, impactful. Like Apple keynotes.
 - Alternating white and black backgrounds
-- One underlined word for emphasis in the last phrase
+- One underlined word for emphasis (optional)
+
+Color codes for gradients:
+- "голубо-синий" / "blue" = ["#00D4FF", "#0066FF"]
+- "зелёный" / "green" = ["#00FF87", "#00D4AA"]  
+- "фиолетовый" / "purple" = ["#9D4EDD", "#7B2CBF"]
+- "оранжевый" / "orange" = ["#FF6B35", "#FF8C42"]
 
 Return JSON:
 {{
-    "title": "Title",
+    "title": "Title from user prompt",
     "phrases": [
-        {{"text": "First phrase", "bg": "white"}},
-        {{"text": "Second phrase", "bg": "white"}},
-        {{"text": "Third phrase", "bg": "black"}},
-        {{"text": "Final phrase", "bg": "white", "underline": "word_to_underline"}}
+        {{"text": "EXACT user text phrase 1", "bg": "white"}},
+        {{"text": "EXACT user text phrase 2", "bg": "black"}},
+        {{"text": "Brand/Final text", "bg": "white", "gradient_colors": ["#color1", "#color2"]}}
     ],
-    "full_script": "All phrases for TTS"
+    "full_script": "All text for TTS"
 }}
+
+If user asks for gradient on brand name at the end, add "gradient_colors" to that phrase.
 
 User prompt: {prompt}"""
         

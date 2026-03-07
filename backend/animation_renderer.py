@@ -524,8 +524,40 @@ async def render_apple_text_animation(
         text_x = (WIDTH - text_width) // 2
         text_y = (HEIGHT - text_height) // 2
         
-        # Apply opacity by creating overlay
-        if opacity < 255:
+        # Check for gradient colors
+        gradient_colors = phrase.get("gradient_colors")
+        
+        if gradient_colors and len(gradient_colors) >= 2 and opacity > 0:
+            # Render gradient text
+            try:
+                color1 = hex_to_rgb(gradient_colors[0])
+                color2 = hex_to_rgb(gradient_colors[1])
+                
+                # Create gradient text by drawing character by character with interpolated colors
+                text_img = Image.new('RGBA', (WIDTH, HEIGHT), (0, 0, 0, 0))
+                text_draw = ImageDraw.Draw(text_img)
+                
+                char_x = text_x
+                for i, char in enumerate(text):
+                    # Interpolate color based on position
+                    t = i / max(len(text) - 1, 1)
+                    r = int(color1[0] + (color2[0] - color1[0]) * t)
+                    g = int(color1[1] + (color2[1] - color1[1]) * t)
+                    b = int(color1[2] + (color2[2] - color1[2]) * t)
+                    
+                    char_color = (r, g, b, opacity)
+                    text_draw.text((char_x, text_y), char, fill=char_color, font=font_large)
+                    
+                    # Move to next character position
+                    char_bbox = text_draw.textbbox((0, 0), char, font=font_large)
+                    char_x += char_bbox[2] - char_bbox[0]
+                
+                img = Image.alpha_composite(img.convert('RGBA'), text_img).convert('RGB')
+            except Exception as e:
+                # Fallback to regular text
+                draw.text((text_x, text_y), text, fill=text_color, font=font_large)
+        elif opacity < 255:
+            # Apply opacity by creating overlay
             text_color_with_alpha = text_color + (opacity,)
             overlay = Image.new('RGBA', (WIDTH, HEIGHT), (0, 0, 0, 0))
             overlay_draw = ImageDraw.Draw(overlay)
