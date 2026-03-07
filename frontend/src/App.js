@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 import HomePage from "@/pages/HomePage";
 import CreatePage from "@/pages/CreatePage";
 import VideoPage from "@/pages/VideoPage";
+import PricingPage from "@/pages/PricingPage";
+import SubscriptionSuccessPage from "@/pages/SubscriptionSuccessPage";
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/create" element={<CreatePage />} />
           <Route path="/video/:id" element={<VideoPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-center" richColors />

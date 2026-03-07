@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Image, Home, Compass, User, HelpCircle } from "lucide-react";
+import { Video, Image, Home, Compass, User, HelpCircle, Crown } from "lucide-react";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -156,6 +156,14 @@ export const HomePage = () => {
           >
             <Compass className="w-6 h-6" />
             <span className="text-xs">Создать</span>
+          </button>
+          <button 
+            onClick={() => navigate("/pricing")}
+            className="flex flex-col items-center gap-1 text-white/50"
+            data-testid="nav-pricing"
+          >
+            <Crown className="w-6 h-6" />
+            <span className="text-xs">Тарифы</span>
           </button>
           <button className="flex flex-col items-center gap-1 text-white/50" data-testid="nav-profile">
             <User className="w-6 h-6" />

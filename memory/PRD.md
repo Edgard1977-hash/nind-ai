@@ -10,16 +10,24 @@ AI сервис для создания контент-видео. Пользо�
 - Умный движок авто-определения типа видео
 - **PIL/Pillow рендерер** для профессиональных анимаций
 - **Upload API** для загрузки изображений продуктов и логотипов
+- **Stripe Подписки** — 3 плана ($7.99, $19, $79)
 
 ### Animation Formats (5 профессиональных форматов)
 
 | Format | Описание | Особенности |
 |--------|----------|-------------|
-| **chat_animation** | iMessage-стиль диалог | Скруглённые баблы, тени, slide-in анимация, typing indicator |
-| **apple_text** | Apple презентация | Чередование белый/чёрный фон, fade transitions |
+| **chat_animation** | iMessage-стиль диалог | Scale-up + fade-in, мягкие тени, падающие деньги overlay, реакции-эмодзи |
+| **apple_text** | Apple презентация | Word-by-word появление, градиентный текст (синий→фиолетовый), подчёркивание |
 | **kinetic_typography** | Слово за словом | Плавное появление с easing |
 | **logo_animation** | Интро бренда | Glow эффект, scale animation |
 | **product_advertisement** | Реклама продукта | Apple-стиль, руки, ракурсы, бренд reveal, gradient text |
+
+### Subscription Plans ✅
+| План | Цена | Видео/месяц | Качество |
+|------|------|-------------|----------|
+| Starter | $7.99 | 10 | 720p |
+| Pro | $19.00 | 50 | 1080p |
+| Unlimited | $79.00 | ∞ | 4K |
 
 ### Technical Implementation
 - **Рендерер:** PIL/Pillow (покадровый рендеринг)
@@ -51,7 +59,11 @@ AI сервис для создания контент-видео. Пользо�
 - `POST /api/video/generate` - format_id: "auto", "chat_animation", "product_advertisement", etc.
 - `POST /api/upload` - Upload product images or logos
 - `GET /api/video/{id}` - статус генерации
-- `GET /api/formats` - список форматов (14)
+- `GET /api/formats` - список форматов (15)
+- `GET /api/subscription/plans` - список планов подписки
+- `POST /api/subscription/checkout` - создать Stripe сессию
+- `GET /api/subscription/status/{session_id}` - статус оплаты
+- `POST /api/webhook/stripe` - Stripe webhook
 
 ## Known Limitations
 - Emergent LLM Key бюджет (используются fallback скрипты)

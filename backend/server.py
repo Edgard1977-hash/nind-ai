@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, UploadFile, File, Request
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -7,13 +7,21 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timezone
 import asyncio
 import base64
 import json
 import httpx
+
+# Stripe integration
+from emergentintegrations.payments.stripe.checkout import (
+    StripeCheckout, 
+    CheckoutSessionResponse, 
+    CheckoutStatusResponse, 
+    CheckoutSessionRequest
+)
 
 # Import video service
 from video_service import (
@@ -1877,6 +1885,193 @@ async def get_upload(filename: str):
         media_type = "application/octet-stream"
     
     return FileResponse(file_path, media_type=media_type)
+
+
+# ==================== SUBSCRIPTION PLANS ====================
+
+SUBSCRIPTION_PLANS = {
+    "starter": {
+        "id": "starter",
+        "name": "Starter",
+        "name_ru": "Стартовый",
+        "price": 7.99,
+        "currency": "usd",
+        "features": ["10 видео/месяц", "720p качество", "Базовые форматы"],
+        "features_en": ["10 videos/month", "720p quality", "Basic formats"],
+        "videos_per_month": 10
+    },
+    "pro": {
+        "id": "pro",
+        "name": "Pro",
+        "name_ru": "Про",
+        "price": 19.00,
+        "currency": "usd",
+        "features": ["50 видео/месяц", "1080p качество", "Все форматы", "Приоритетная генерация"],
+        "features_en": ["50 videos/month", "1080p quality", "All formats", "Priority generation"],
+        "videos_per_month": 50
+    },
+    "unlimited": {
+        "id": "unlimited",
+        "name": "Unlimited",
+        "name_ru": "Безлимит",
+        "price": 79.00,
+        "currency": "usd",
+        "features": ["Безлимитные видео", "4K качество", "Все форматы", "API доступ", "Приоритетная поддержка"],
+        "features_en": ["Unlimited videos", "4K quality", "All formats", "API access", "Priority support"],
+        "videos_per_month": -1  # -1 = unlimited
+    }
+}
+
+
+class SubscriptionRequest(BaseModel):
+    plan_id: str
+    origin_url: str
+
+
+@api_router.get("/subscription/plans")
+async def get_subscription_plans():
+    """Get available subscription plans"""
+    return {"plans": list(SUBSCRIPTION_PLANS.values())}
+
+
+@api_router.post("/subscription/checkout")
+async def create_subscription_checkout(request: SubscriptionRequest, http_request: Request):
+    """Create a Stripe checkout session for subscription"""
+    plan_id = request.plan_id
+    origin_url = request.origin_url.rstrip('/')
+    
+    if plan_id not in SUBSCRIPTION_PLANS:
+        raise HTTPException(status_code=400, detail="Invalid subscription plan")
+    
+    plan = SUBSCRIPTION_PLANS[plan_id]
+    
+    # Initialize Stripe
+    stripe_api_key = os.getenv("STRIPE_API_KEY")
+    if not stripe_api_key:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    host_url = str(http_request.base_url).rstrip('/')
+    webhook_url = f"{host_url}api/webhook/stripe"
+    
+    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+    
+    # Build URLs
+    success_url = f"{origin_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{origin_url}/pricing"
+    
+    # Create checkout session
+    checkout_request = CheckoutSessionRequest(
+        amount=float(plan["price"]),
+        currency=plan["currency"],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        metadata={
+            "plan_id": plan_id,
+            "plan_name": plan["name"],
+            "videos_per_month": str(plan["videos_per_month"])
+        }
+    )
+    
+    try:
+        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Create payment transaction record
+        transaction = {
+            "id": str(uuid.uuid4()),
+            "session_id": session.session_id,
+            "plan_id": plan_id,
+            "amount": plan["price"],
+            "currency": plan["currency"],
+            "payment_status": "pending",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.payment_transactions.insert_one(transaction)
+        
+        return {
+            "url": session.url,
+            "session_id": session.session_id
+        }
+    except Exception as e:
+        logger.error(f"Stripe checkout error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.get("/subscription/status/{session_id}")
+async def get_subscription_status(session_id: str, http_request: Request):
+    """Check subscription payment status"""
+    stripe_api_key = os.getenv("STRIPE_API_KEY")
+    if not stripe_api_key:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    host_url = str(http_request.base_url).rstrip('/')
+    webhook_url = f"{host_url}api/webhook/stripe"
+    
+    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+    
+    try:
+        status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update transaction in database
+        if status.payment_status == "paid":
+            await db.payment_transactions.update_one(
+                {"session_id": session_id},
+                {
+                    "$set": {
+                        "payment_status": "paid",
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+            )
+        
+        return {
+            "status": status.status,
+            "payment_status": status.payment_status,
+            "amount_total": status.amount_total,
+            "currency": status.currency,
+            "metadata": status.metadata
+        }
+    except Exception as e:
+        logger.error(f"Stripe status check error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.post("/webhook/stripe")
+async def stripe_webhook(request: Request):
+    """Handle Stripe webhooks"""
+    stripe_api_key = os.getenv("STRIPE_API_KEY")
+    if not stripe_api_key:
+        raise HTTPException(status_code=500, detail="Stripe not configured")
+    
+    host_url = str(request.base_url).rstrip('/')
+    webhook_url = f"{host_url}api/webhook/stripe"
+    
+    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+    
+    try:
+        body = await request.body()
+        signature = request.headers.get("Stripe-Signature")
+        
+        webhook_response = await stripe_checkout.handle_webhook(body, signature)
+        
+        # Update transaction based on webhook event
+        if webhook_response.payment_status == "paid":
+            await db.payment_transactions.update_one(
+                {"session_id": webhook_response.session_id},
+                {
+                    "$set": {
+                        "payment_status": "paid",
+                        "event_type": webhook_response.event_type,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }
+                }
+            )
+        
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Stripe webhook error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 # Include the router in the main app
 app.include_router(api_router)

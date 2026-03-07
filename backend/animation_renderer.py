@@ -75,22 +75,21 @@ def ease_in_out_sine(t: float) -> float:
     return -(math.cos(math.pi * t) - 1) / 2
 
 
-# ==================== CHAT ANIMATION (iMessage Style) ====================
+# ==================== CHAT ANIMATION (iMessage Style + Dynamic Effects) ====================
 
 async def render_chat_animation(
     script_data: dict,
     output_path: Path
 ) -> Optional[Path]:
     """
-    Render iMessage-style chat animation - EXACT replica.
+    Render iMessage-style chat animation with dynamic effects.
     
-    Key behaviors from analysis:
-    - 2-3 messages visible at a time in bottom half of screen
-    - New message: scale up from bottom + fade in (200-300ms, ease-out)
-    - Old messages: slide up smoothly (NO fade)
-    - View is FIXED - messages scroll up within it
-    - Messages compact, close together
-    - Typing indicator below last received message
+    Based on analysis of example videos:
+    - Messages: scale-up + fade-in (NOT slide)
+    - Dark background with soft shadows
+    - Scrolling upward when new messages appear
+    - OVERLAY EFFECTS: falling money, emojis, memes appearing
+    - Reactions/stickers appearing next to messages
     """
     output_file = output_path / f"chat_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_path / "frames"
@@ -101,38 +100,48 @@ async def render_chat_animation(
     H = 1920
     FPS = 30
     
-    # Colors - exact iMessage
-    BG_COLOR = (0, 0, 0)
-    SENT_COLOR = (50, 50, 52)  # Dark gray - LEFT side (we send)
-    RECEIVED_COLOR = (0, 122, 255)  # Blue - RIGHT side (they send)
+    # Colors - dark chat style (from analysis)
+    BG_COLOR = (18, 18, 20)  # Very dark, almost black
+    SENT_COLOR = (58, 58, 62)  # Dark gray with subtle gradient feel
+    RECEIVED_COLOR = (0, 122, 255)  # Blue for received
     TEXT_COLOR = (255, 255, 255)
     READ_COLOR = (130, 130, 134)
     
-    # Layout - compact messages in bottom half
-    PADDING = 24
-    BUBBLE_H_PAD = 16
-    BUBBLE_V_PAD = 10
-    MAX_BUBBLE_W = int(W * 0.72)
-    BUBBLE_RADIUS = 18
-    MSG_GAP = 8  # Small gap between messages
+    # Layout - compact messages in bottom portion
+    PADDING = 28
+    BUBBLE_H_PAD = 18
+    BUBBLE_V_PAD = 12
+    MAX_BUBBLE_W = int(W * 0.70)
+    BUBBLE_RADIUS = 20
+    MSG_GAP = 12
     
-    # Messages positioned in bottom portion of screen
-    CHAT_BOTTOM = H - 120  # Bottom of chat area
-    CHAT_TOP = H * 0.35  # Messages don't go above this
+    # Messages positioned in bottom 60% of screen
+    CHAT_BOTTOM = H - 150
+    CHAT_TOP = H * 0.3
     
     participants = script_data.get("participants", [
-        {"name": "Я", "side": "left"},  # We are on left (gray)
-        {"name": "Собеседник", "side": "right"}  # They are on right (blue)
+        {"name": "Я", "side": "left"},
+        {"name": "Собеседник", "side": "right"}
     ])
     messages = script_data.get("messages", [])
     
+    # Dynamic effects configuration
+    overlay_effects = script_data.get("overlay_effects", [])
+    # Default falling money effect if conversation is about money/buying
+    if not overlay_effects:
+        full_text = " ".join([m.get("text", "") for m in messages]).lower()
+        if any(word in full_text for word in ["купить", "деньг", "плат", "цена", "buy", "money", "pay", "price", "$"]):
+            overlay_effects = [{"type": "falling_money", "start": 0.5, "duration": 10.0}]
+    
     # Font
     try:
-        font_msg = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 30)
+        font_msg = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 32)
         font_read = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 14)
+        font_emoji = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 48)
     except:
         font_msg = ImageFont.load_default()
         font_read = ImageFont.load_default()
+        font_emoji = ImageFont.load_default()
     
     # Pre-calculate message layouts
     temp_img = Image.new('RGB', (1, 1))
@@ -164,7 +173,7 @@ async def render_chat_animation(
             lines = [text]
         
         # Calculate bubble dimensions
-        line_h = 38
+        line_h = 40
         max_w = 0
         for line in lines:
             bbox = temp_draw.textbbox((0, 0), line, font=font_msg)
@@ -173,59 +182,62 @@ async def render_chat_animation(
         bubble_w = max_w + BUBBLE_H_PAD * 2
         bubble_h = len(lines) * line_h + BUBBLE_V_PAD * 2
         
+        # Reaction emoji (appears next to message)
+        reaction = msg.get("reaction")  # e.g., "👀", "💰", "😱"
+        
         message_data.append({
             "text": text,
             "lines": lines,
             "is_left": is_left,
             "bubble_w": bubble_w,
             "bubble_h": bubble_h,
-            "typing_duration": msg.get("typing_duration", 1.2) if not is_left else 0,
-            "delay": msg.get("delay", 2.0)
+            "typing_duration": msg.get("typing_duration", 1.0) if not is_left else 0,
+            "delay": msg.get("delay", 1.8),
+            "reaction": reaction
         })
     
     # Calculate timeline
-    time_cursor = 0.8
+    time_cursor = 0.6
     for md in message_data:
         md["typing_start"] = time_cursor
         md["typing_end"] = md["typing_start"] + md["typing_duration"]
-        md["appear_time"] = md["typing_end"] + 0.1
+        md["appear_time"] = md["typing_end"] + 0.05
+        md["reaction_time"] = md["appear_time"] + 0.4  # Reaction appears 0.4s after message
         time_cursor = md["appear_time"] + md["delay"]
     
     total_duration = time_cursor + 2.0
     total_frames = int(total_duration * FPS)
     
     # Animation constants
-    MSG_APPEAR_DURATION = 0.28  # 280ms for message to appear
-    SCROLL_DURATION = 0.35  # How long old messages take to slide up
+    MSG_APPEAR_DURATION = 0.22  # 220ms - fast pop
+    SCROLL_DURATION = 0.30
+    REACTION_APPEAR_DURATION = 0.18
     
-    logger.info(f"Rendering {total_frames} frames (exact iMessage style)...")
+    # Pre-generate falling particles for overlay
+    particles = []
+    if any(e.get("type") == "falling_money" for e in overlay_effects):
+        for i in range(30):
+            particles.append({
+                "x": (i * 73 + 100) % W,
+                "y": -100 - i * 80,
+                "speed": 180 + (i % 5) * 40,
+                "rotation": i * 30,
+                "rot_speed": 60 + (i % 3) * 30,
+                "size": 50 + (i % 3) * 15
+            })
+    
+    logger.info(f"Rendering {total_frames} frames (iMessage + dynamic effects)...")
     
     for frame_idx in range(total_frames):
         current_time = frame_idx / FPS
         
-        # Create frame
+        # Create frame with dark background
         img = Image.new('RGBA', (W, H), BG_COLOR + (255,))
         draw = ImageDraw.Draw(img)
         
-        # Calculate scroll offset - how much to push messages up
-        # Each new message pushes previous ones up
-        scroll_offset = 0
-        
-        for i, md in enumerate(message_data):
-            if current_time >= md["appear_time"]:
-                time_since = current_time - md["appear_time"]
-                # Smooth scroll animation
-                scroll_progress = min(1.0, time_since / SCROLL_DURATION)
-                scroll_progress = 1 - (1 - scroll_progress) ** 3  # ease-out
-                
-                # Add this message's height to scroll offset
-                scroll_offset += (md["bubble_h"] + MSG_GAP + 20) * scroll_progress
-        
-        # Draw visible messages from bottom up
-        current_y = CHAT_BOTTOM
-        
-        # First, figure out which messages are visible and their positions
+        # Calculate visible messages and their positions
         visible_messages = []
+        current_y = CHAT_BOTTOM
         
         for i in range(len(message_data) - 1, -1, -1):
             md = message_data[i]
@@ -233,45 +245,44 @@ async def render_chat_animation(
             if current_time < md["appear_time"]:
                 continue
             
-            # This message's position (from bottom)
-            msg_bottom_y = current_y
-            
-            # Calculate how much this message has been scrolled up
-            msgs_after = 0
+            # Calculate scroll offset from messages appearing after this one
+            scroll_offset = 0
             for j in range(i + 1, len(message_data)):
                 if current_time >= message_data[j]["appear_time"]:
                     time_since_next = current_time - message_data[j]["appear_time"]
                     scroll_prog = min(1.0, time_since_next / SCROLL_DURATION)
-                    scroll_prog = 1 - (1 - scroll_prog) ** 3
-                    msgs_after += (message_data[j]["bubble_h"] + MSG_GAP + 20) * scroll_prog
+                    scroll_prog = 1 - (1 - scroll_prog) ** 3  # ease-out
+                    scroll_offset += (message_data[j]["bubble_h"] + MSG_GAP + 24) * scroll_prog
             
-            final_y = msg_bottom_y - md["bubble_h"] - msgs_after
+            final_y = current_y - md["bubble_h"] - scroll_offset
             
             # Skip if above visible area
-            if final_y < CHAT_TOP - 100:
+            if final_y < CHAT_TOP - 150:
                 continue
             
             visible_messages.append((i, md, final_y))
-            current_y = final_y - MSG_GAP - 20
+            current_y = final_y - MSG_GAP - 24
         
-        # Draw messages (oldest first so newest is on top)
+        # Draw messages (oldest first)
         for i, md, base_y in reversed(visible_messages):
             is_left = md["is_left"]
             time_since = current_time - md["appear_time"]
             
-            # Appearance animation - scale from bottom + fade
+            # Appearance animation - SCALE UP + FADE (like in example)
             if time_since < MSG_APPEAR_DURATION:
                 progress = time_since / MSG_APPEAR_DURATION
-                # Ease-out cubic
-                progress = 1 - (1 - progress) ** 3
+                progress = 1 - (1 - progress) ** 3  # ease-out
                 
-                scale = 0.3 + 0.7 * progress
+                scale = 0.4 + 0.6 * progress
                 opacity = int(255 * progress)
+                # Slight bounce at end
+                if progress > 0.7:
+                    bounce = math.sin((progress - 0.7) / 0.3 * math.pi) * 0.03
+                    scale += bounce
             else:
                 scale = 1.0
                 opacity = 255
             
-            # Calculate bubble position
             bubble_w = md["bubble_w"]
             bubble_h = md["bubble_h"]
             
@@ -281,11 +292,10 @@ async def render_chat_animation(
             else:
                 bubble_x = W - PADDING - bubble_w
             
-            # Y position with scale from bottom
+            # Apply scale from center-bottom
             scaled_h = int(bubble_h * scale)
             scaled_w = int(bubble_w * scale)
             
-            # Scale from bottom of bubble
             bubble_y = base_y + (bubble_h - scaled_h)
             
             if is_left:
@@ -295,13 +305,17 @@ async def render_chat_animation(
             
             bubble_color = SENT_COLOR if is_left else RECEIVED_COLOR
             
-            # Draw shadow
+            # Soft shadow (like in example)
             if opacity > 50:
-                draw.rounded_rectangle(
-                    (final_x + 2, bubble_y + 2, final_x + scaled_w + 2, bubble_y + scaled_h + 2),
-                    radius=int(BUBBLE_RADIUS * scale),
-                    fill=(0, 0, 0, int(40 * opacity / 255))
-                )
+                for shadow_i in range(3):
+                    shadow_alpha = int(25 * opacity / 255) - shadow_i * 7
+                    if shadow_alpha > 0:
+                        draw.rounded_rectangle(
+                            (final_x + 3 + shadow_i, bubble_y + 3 + shadow_i, 
+                             final_x + scaled_w + 3 + shadow_i, bubble_y + scaled_h + 3 + shadow_i),
+                            radius=int(BUBBLE_RADIUS * scale),
+                            fill=(0, 0, 0, shadow_alpha)
+                        )
             
             # Draw bubble
             draw.rounded_rectangle(
@@ -310,60 +324,72 @@ async def render_chat_animation(
                 fill=bubble_color + (opacity,)
             )
             
-            # Draw tail
-            if scale > 0.5:
-                tail_size = int(10 * scale)
-                tail_opacity = int(opacity * min(1.0, (scale - 0.5) / 0.5))
-                
-                if is_left:
-                    # Tail on left bottom
-                    tail_pts = [
-                        (final_x + 6, bubble_y + scaled_h - 6),
-                        (final_x - tail_size + 2, bubble_y + scaled_h + tail_size - 3),
-                        (final_x + 18, bubble_y + scaled_h - 2)
-                    ]
-                else:
-                    # Tail on right bottom
-                    tail_pts = [
-                        (final_x + scaled_w - 6, bubble_y + scaled_h - 6),
-                        (final_x + scaled_w + tail_size - 2, bubble_y + scaled_h + tail_size - 3),
-                        (final_x + scaled_w - 18, bubble_y + scaled_h - 2)
-                    ]
-                
-                draw.polygon(tail_pts, fill=bubble_color + (tail_opacity,))
-            
             # Draw text
-            if scale > 0.4 and opacity > 50:
-                text_opacity = int(opacity * min(1.0, (scale - 0.4) / 0.6))
+            if scale > 0.5 and opacity > 80:
+                text_opacity = int(opacity * min(1.0, (scale - 0.5) / 0.5))
                 text_x = final_x + int(BUBBLE_H_PAD * scale)
                 text_y = bubble_y + int(BUBBLE_V_PAD * scale)
+                
+                scaled_font_size = int(32 * scale)
+                try:
+                    scaled_font = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", max(12, scaled_font_size))
+                except:
+                    scaled_font = font_msg
                 
                 for line in md["lines"]:
                     draw.text(
                         (text_x, text_y),
                         line,
                         fill=TEXT_COLOR + (text_opacity,),
-                        font=font_msg
+                        font=scaled_font
                     )
-                    text_y += int(38 * scale)
+                    text_y += int(40 * scale)
             
-            # "Read" indicator for sent messages (left side)
-            if is_left and scale == 1.0 and time_since > 0.5:
-                # Only show on last visible sent message
-                is_last_sent = True
-                for j in range(i + 1, len(message_data)):
-                    if message_data[j]["is_left"] and current_time >= message_data[j]["appear_time"]:
-                        is_last_sent = False
-                        break
+            # Draw reaction emoji (appears next to message with pop animation)
+            reaction = md.get("reaction")
+            if reaction and current_time >= md.get("reaction_time", 999):
+                reaction_since = current_time - md["reaction_time"]
+                
+                if reaction_since < REACTION_APPEAR_DURATION:
+                    r_prog = reaction_since / REACTION_APPEAR_DURATION
+                    r_prog = 1 - (1 - r_prog) ** 3
+                    r_scale = 0.2 + 1.0 * r_prog
+                    # Overshoot bounce
+                    if r_prog > 0.6:
+                        r_scale += math.sin((r_prog - 0.6) / 0.4 * math.pi) * 0.2
+                    r_opacity = int(255 * r_prog)
+                else:
+                    r_scale = 1.0
+                    r_opacity = 255
+                
+                # Position reaction to the side of message
+                if is_left:
+                    r_x = final_x + scaled_w + 12
+                else:
+                    r_x = final_x - 50
+                r_y = bubble_y + scaled_h // 2 - 20
+                
+                # Draw reaction with scale
+                r_size = int(40 * r_scale)
+                draw.text(
+                    (r_x, r_y),
+                    reaction,
+                    fill=(255, 255, 255, r_opacity),
+                    font=font_emoji
+                )
+            
+            # "Read" indicator
+            if is_left and scale == 1.0 and time_since > 0.6:
+                is_last_sent = all(
+                    not message_data[j]["is_left"] or current_time < message_data[j]["appear_time"]
+                    for j in range(i + 1, len(message_data))
+                )
                 
                 if is_last_sent:
-                    read_alpha = int(255 * min(1.0, (time_since - 0.5) / 0.3))
-                    read_text = "Read"
-                    r_bbox = draw.textbbox((0, 0), read_text, font=font_read)
-                    r_w = r_bbox[2] - r_bbox[0]
+                    read_alpha = int(255 * min(1.0, (time_since - 0.6) / 0.3))
                     draw.text(
-                        (final_x + scaled_w - r_w, bubble_y + scaled_h + 6),
-                        read_text,
+                        (final_x + scaled_w - 35, bubble_y + scaled_h + 6),
+                        "Read",
                         fill=READ_COLOR + (read_alpha,),
                         font=font_read
                     )
@@ -373,34 +399,29 @@ async def render_chat_animation(
             if not md["is_left"] and md["typing_start"] <= current_time < md["typing_end"]:
                 typing_progress = (current_time - md["typing_start"]) / max(0.01, md["typing_duration"])
                 
-                # Position: below last visible message
-                typing_y = CHAT_BOTTOM - 60
-                typing_x = W - PADDING - 80
+                typing_y = CHAT_BOTTOM - 55
+                typing_x = W - PADDING - 85
                 
-                # Scale in animation
-                t_scale = min(1.0, typing_progress * 4) if typing_progress < 0.25 else 1.0
+                t_scale = min(1.0, typing_progress * 5) if typing_progress < 0.2 else 1.0
                 t_scale = 1 - (1 - t_scale) ** 3
                 
                 if t_scale > 0.1:
-                    t_w = int(75 * t_scale)
-                    t_h = int(42 * t_scale)
+                    t_w = int(78 * t_scale)
+                    t_h = int(44 * t_scale)
                     
-                    # Draw typing bubble
                     draw.rounded_rectangle(
                         (typing_x, typing_y, typing_x + t_w, typing_y + t_h),
                         radius=int(BUBBLE_RADIUS * t_scale),
                         fill=RECEIVED_COLOR
                     )
                     
-                    # Animated dots
                     if t_scale > 0.5:
                         for dot_i in range(3):
-                            dot_x = typing_x + 18 + dot_i * 18
+                            dot_x = typing_x + 20 + dot_i * 16
                             dot_y = typing_y + t_h // 2
                             
-                            # Sequential pulse animation
-                            phase = (current_time * 4 + dot_i * 0.33) % 1.0
-                            dot_r = int(5 * (0.5 + 0.5 * math.sin(phase * math.pi)))
+                            phase = (current_time * 4.5 + dot_i * 0.35) % 1.0
+                            dot_r = int(5 * (0.6 + 0.4 * math.sin(phase * math.pi)))
                             
                             if dot_r > 0:
                                 draw.ellipse(
@@ -408,6 +429,35 @@ async def render_chat_animation(
                                     fill=TEXT_COLOR
                                 )
                 break
+        
+        # Draw overlay effects (falling money, emojis, etc.)
+        for effect in overlay_effects:
+            effect_start = effect.get("start", 0)
+            effect_duration = effect.get("duration", 5.0)
+            
+            if effect_start <= current_time <= effect_start + effect_duration:
+                effect_time = current_time - effect_start
+                
+                if effect.get("type") == "falling_money":
+                    # Draw falling dollar signs / money symbols
+                    for p in particles:
+                        p_y = p["y"] + p["speed"] * effect_time
+                        p_y = p_y % (H + 200) - 100  # Loop
+                        
+                        p_x = p["x"] + math.sin(effect_time * 0.5 + p["x"] * 0.01) * 30
+                        p_rot = p["rotation"] + p["rot_speed"] * effect_time
+                        
+                        # Draw money symbol with glow
+                        money_text = "$"
+                        text_size = p["size"]
+                        
+                        # Glow effect
+                        glow_color = (0, 200, 0, 60)
+                        draw.text((int(p_x) - 2, int(p_y) - 2), money_text, fill=glow_color, font=font_emoji)
+                        draw.text((int(p_x) + 2, int(p_y) + 2), money_text, fill=glow_color, font=font_emoji)
+                        
+                        # Main symbol
+                        draw.text((int(p_x), int(p_y)), money_text, fill=(0, 255, 100, 200), font=font_emoji)
         
         # Save frame
         frame_path = frames_dir / f"frame_{frame_idx:05d}.png"
@@ -460,32 +510,44 @@ async def render_apple_text_animation(
     """
     Render Apple-style minimalist text animation.
     
-    Features:
+    Based on analysis of example:
+    - Word-by-word reveal with fade-in + subtle scale up
     - Clean white/black backgrounds
-    - Large bold text
-    - Smooth fade transitions
+    - Smooth transitions between phrases
+    - Gradient text support (like MacBook Neo: blue→purple)
     - Underline for emphasis
     """
     output_file = output_path / f"apple_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_path / "frames"
     frames_dir.mkdir(exist_ok=True)
     
+    # High quality settings
+    W = 1080
+    H = 1920
+    FPS = 30
+    
     phrases = script_data.get("phrases", [
-        {"text": "Создаём", "bg": "white"},
-        {"text": "Невероятное", "bg": "white"},
-        {"text": "Просто.", "bg": "black"},
-        {"text": "Как Apple.", "bg": "white", "underline": "Apple"}
+        {"text": "Let's create", "bg": "white"},
+        {"text": "Something amazing", "bg": "white"},
+        {"text": "Just like Apple.", "bg": "black"},
     ])
     
-    PHRASE_DURATION = 1.8
-    FADE_DURATION = 0.3
+    # Timing configuration
+    PHRASE_DURATION = 2.2  # Time per phrase
+    WORD_APPEAR_DURATION = 0.15  # 150ms per word
+    WORD_DELAY = 0.12  # Delay between words
+    FADE_OUT_DURATION = 0.35
     
     total_duration = len(phrases) * PHRASE_DURATION + 1.0
     total_frames = int(total_duration * FPS)
     
-    font_large = get_font(72, bold=True)
+    # Font - bold, large, modern
+    try:
+        font_large = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 80)
+    except:
+        font_large = ImageFont.load_default()
     
-    logger.info(f"Rendering {total_frames} frames for Apple text animation...")
+    logger.info(f"Rendering {total_frames} frames for Apple text animation (word-by-word)...")
     
     for frame_num in range(total_frames):
         current_sec = frame_num / FPS
@@ -499,89 +561,137 @@ async def render_apple_text_animation(
         # Background color
         bg_white = phrase.get("bg", "white") == "white"
         bg_color = (255, 255, 255) if bg_white else (0, 0, 0)
-        text_color = (0, 0, 0) if bg_white else (255, 255, 255)
+        default_text_color = (0, 0, 0) if bg_white else (255, 255, 255)
         
-        img = Image.new('RGB', (WIDTH, HEIGHT), bg_color)
+        img = Image.new('RGBA', (W, H), bg_color + (255,))
         draw = ImageDraw.Draw(img)
         
         text = phrase.get("text", "")
-        
-        # Calculate fade
-        if time_in_phrase < FADE_DURATION:
-            # Fade in
-            opacity = int(255 * (time_in_phrase / FADE_DURATION))
-        elif time_in_phrase > PHRASE_DURATION - FADE_DURATION:
-            # Fade out
-            opacity = int(255 * ((PHRASE_DURATION - time_in_phrase) / FADE_DURATION))
-        else:
-            opacity = 255
-        
-        # Create text with opacity
-        text_bbox = draw.textbbox((0, 0), text, font=font_large)
-        text_width = text_bbox[2] - text_bbox[0]
-        text_height = text_bbox[3] - text_bbox[1]
-        
-        text_x = (WIDTH - text_width) // 2
-        text_y = (HEIGHT - text_height) // 2
+        words = text.split()
         
         # Check for gradient colors
         gradient_colors = phrase.get("gradient_colors")
         
-        if gradient_colors and len(gradient_colors) >= 2 and opacity > 0:
-            # Render gradient text
-            try:
-                color1 = hex_to_rgb(gradient_colors[0])
-                color2 = hex_to_rgb(gradient_colors[1])
+        # Calculate total text width for centering
+        temp_img = Image.new('RGB', (1, 1))
+        temp_draw = ImageDraw.Draw(temp_img)
+        
+        word_widths = []
+        total_width = 0
+        space_width = 20
+        
+        for i, word in enumerate(words):
+            bbox = temp_draw.textbbox((0, 0), word, font=font_large)
+            w = bbox[2] - bbox[0]
+            word_widths.append(w)
+            total_width += w
+            if i < len(words) - 1:
+                total_width += space_width
+        
+        text_bbox = temp_draw.textbbox((0, 0), text, font=font_large)
+        text_height = text_bbox[3] - text_bbox[1]
+        
+        start_x = (W - total_width) // 2
+        text_y = (H - text_height) // 2
+        
+        # Calculate fade out (at end of phrase)
+        phrase_fade_out = 1.0
+        if time_in_phrase > PHRASE_DURATION - FADE_OUT_DURATION:
+            phrase_fade_out = (PHRASE_DURATION - time_in_phrase) / FADE_OUT_DURATION
+            phrase_fade_out = max(0, phrase_fade_out)
+        
+        # Draw each word with staggered animation
+        current_x = start_x
+        
+        for i, word in enumerate(words):
+            # Calculate when this word should appear
+            word_start_time = i * (WORD_APPEAR_DURATION + WORD_DELAY)
+            word_time = time_in_phrase - word_start_time
+            
+            if word_time < 0:
+                # Word hasn't appeared yet
+                current_x += word_widths[i] + space_width
+                continue
+            
+            # Word appearance animation
+            if word_time < WORD_APPEAR_DURATION:
+                progress = word_time / WORD_APPEAR_DURATION
+                progress = 1 - (1 - progress) ** 3  # ease-out
                 
-                # Create gradient text by drawing character by character with interpolated colors
-                text_img = Image.new('RGBA', (WIDTH, HEIGHT), (0, 0, 0, 0))
-                text_draw = ImageDraw.Draw(text_img)
-                
-                char_x = text_x
-                for i, char in enumerate(text):
-                    # Interpolate color based on position
-                    t = i / max(len(text) - 1, 1)
-                    r = int(color1[0] + (color2[0] - color1[0]) * t)
-                    g = int(color1[1] + (color2[1] - color1[1]) * t)
-                    b = int(color1[2] + (color2[2] - color1[2]) * t)
+                word_opacity = int(255 * progress * phrase_fade_out)
+                word_scale = 0.85 + 0.15 * progress
+                # Subtle upward movement
+                y_offset = int(12 * (1 - progress))
+            else:
+                word_opacity = int(255 * phrase_fade_out)
+                word_scale = 1.0
+                y_offset = 0
+            
+            if word_opacity <= 0:
+                current_x += word_widths[i] + space_width
+                continue
+            
+            word_y = text_y + y_offset
+            
+            # Determine text color (gradient or solid)
+            if gradient_colors and len(gradient_colors) >= 2:
+                # Gradient text - color based on character position in whole phrase
+                try:
+                    color1 = hex_to_rgb(gradient_colors[0])
+                    color2 = hex_to_rgb(gradient_colors[1])
                     
-                    char_color = (r, g, b, opacity)
-                    text_draw.text((char_x, text_y), char, fill=char_color, font=font_large)
+                    # Calculate character start index for this word
+                    char_start_idx = sum(len(words[j]) + 1 for j in range(i))
+                    total_chars = len(text.replace(" ", ""))
                     
-                    # Move to next character position
-                    char_bbox = text_draw.textbbox((0, 0), char, font=font_large)
-                    char_x += char_bbox[2] - char_bbox[0]
-                
-                img = Image.alpha_composite(img.convert('RGBA'), text_img).convert('RGB')
-            except Exception as e:
-                # Fallback to regular text
-                draw.text((text_x, text_y), text, fill=text_color, font=font_large)
-        elif opacity < 255:
-            # Apply opacity by creating overlay
-            text_color_with_alpha = text_color + (opacity,)
-            overlay = Image.new('RGBA', (WIDTH, HEIGHT), (0, 0, 0, 0))
-            overlay_draw = ImageDraw.Draw(overlay)
-            overlay_draw.text((text_x, text_y), text, fill=text_color_with_alpha, font=font_large)
-            img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
-        else:
-            draw.text((text_x, text_y), text, fill=text_color, font=font_large)
+                    char_x = current_x
+                    for ci, char in enumerate(word):
+                        # Interpolate color
+                        global_char_idx = char_start_idx + ci
+                        t = global_char_idx / max(total_chars - 1, 1)
+                        
+                        r = int(color1[0] + (color2[0] - color1[0]) * t)
+                        g = int(color1[1] + (color2[1] - color1[1]) * t)
+                        b = int(color1[2] + (color2[2] - color1[2]) * t)
+                        
+                        char_color = (r, g, b, word_opacity)
+                        draw.text((char_x, word_y), char, fill=char_color, font=font_large)
+                        
+                        char_bbox = draw.textbbox((0, 0), char, font=font_large)
+                        char_x += char_bbox[2] - char_bbox[0]
+                except:
+                    draw.text((current_x, word_y), word, fill=default_text_color + (word_opacity,), font=font_large)
+            else:
+                # Solid color
+                draw.text((current_x, word_y), word, fill=default_text_color + (word_opacity,), font=font_large)
+            
+            current_x += word_widths[i] + space_width
         
         # Draw underline if specified
         underline_word = phrase.get("underline")
-        if underline_word and opacity > 200:
-            # Simple underline under center of text
-            draw = ImageDraw.Draw(img)
-            underline_y = text_y + text_height + 8
-            underline_width = int(text_width * 0.6)
-            underline_x = (WIDTH - underline_width) // 2
-            draw.rectangle(
-                (underline_x, underline_y, underline_x + underline_width, underline_y + 4),
-                fill=text_color
-            )
+        if underline_word and phrase_fade_out > 0.5:
+            # Find underline word position
+            underline_start_time = len(words) * (WORD_APPEAR_DURATION + WORD_DELAY) + 0.2
+            
+            if time_in_phrase > underline_start_time:
+                underline_progress = min(1.0, (time_in_phrase - underline_start_time) / 0.25)
+                underline_progress = 1 - (1 - underline_progress) ** 3
+                
+                # Calculate underline position
+                underline_y = text_y + text_height + 12
+                underline_width = int(total_width * 0.5 * underline_progress)
+                underline_x = (W - underline_width) // 2
+                
+                underline_opacity = int(200 * underline_progress * phrase_fade_out)
+                
+                draw.rectangle(
+                    (underline_x, underline_y, underline_x + underline_width, underline_y + 5),
+                    fill=default_text_color + (underline_opacity,)
+                )
         
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
-        img.save(frame_path, "PNG")
+        img.convert('RGB').save(frame_path, "PNG")
     
     # Compile frames
     logger.info("Compiling Apple text animation...")
