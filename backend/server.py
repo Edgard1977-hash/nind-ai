@@ -1906,17 +1906,133 @@ async def upload_file(file: UploadFile = File(...)):
     filename = f"{uuid.uuid4()}.{ext}"
     file_path = UPLOADS_DIR / filename
     
-    # Save file
-    content = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(content)
+    # Save file with streaming (better for large files)
+    try:
+        with open(file_path, "wb") as f:
+            # Read in chunks to handle large files
+            while chunk := await file.read(1024 * 1024):  # 1MB chunks
+                f.write(chunk)
+        
+        file_size = file_path.stat().st_size
+        
+        return {
+            "url": f"/api/uploads/{filename}",
+            "filename": filename,
+            "content_type": file.content_type,
+            "size": file_size
+        }
+    except Exception as e:
+        logger.error(f"File upload failed: {e}")
+        if file_path.exists():
+            file_path.unlink()
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+class ChunkUploadInit(BaseModel):
+    filename: str
+    total_size: int
+    total_chunks: int
+
+
+class ChunkUploadData(BaseModel):
+    upload_id: str
+    chunk_index: int
+    data: str  # base64 encoded chunk
+
+
+@api_router.post("/upload/init")
+async def init_chunked_upload(request: ChunkUploadInit):
+    """Initialize a chunked upload session"""
+    upload_id = str(uuid.uuid4())
+    ext = request.filename.split(".")[-1].lower() if "." in request.filename else "mp4"
     
-    return {
-        "url": f"/api/uploads/{filename}",
-        "filename": filename,
-        "content_type": file.content_type,
-        "size": len(content)
+    # Create upload session in DB
+    session = {
+        "upload_id": upload_id,
+        "filename": request.filename,
+        "ext": ext,
+        "total_size": request.total_size,
+        "total_chunks": request.total_chunks,
+        "received_chunks": [],
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
+    await db.upload_sessions.insert_one(session)
+    
+    # Create temp directory for chunks
+    chunk_dir = UPLOADS_DIR / f"chunks_{upload_id}"
+    chunk_dir.mkdir(exist_ok=True)
+    
+    return {"upload_id": upload_id, "status": "ready"}
+
+
+@api_router.post("/upload/chunk")
+async def upload_chunk(request: ChunkUploadData):
+    """Upload a single chunk"""
+    session = await db.upload_sessions.find_one({"upload_id": request.upload_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Upload session not found")
+    
+    chunk_dir = UPLOADS_DIR / f"chunks_{request.upload_id}"
+    if not chunk_dir.exists():
+        chunk_dir.mkdir(exist_ok=True)
+    
+    # Decode and save chunk
+    try:
+        chunk_data = base64.b64decode(request.data)
+        chunk_path = chunk_dir / f"chunk_{request.chunk_index:05d}"
+        with open(chunk_path, "wb") as f:
+            f.write(chunk_data)
+        
+        # Update session
+        await db.upload_sessions.update_one(
+            {"upload_id": request.upload_id},
+            {"$push": {"received_chunks": request.chunk_index}}
+        )
+        
+        return {"status": "ok", "chunk_index": request.chunk_index}
+    except Exception as e:
+        logger.error(f"Chunk upload failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.post("/upload/complete")
+async def complete_chunked_upload(upload_id: str):
+    """Complete chunked upload by merging all chunks"""
+    session = await db.upload_sessions.find_one({"upload_id": upload_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Upload session not found")
+    
+    chunk_dir = UPLOADS_DIR / f"chunks_{upload_id}"
+    ext = session.get("ext", "mp4")
+    filename = f"{uuid.uuid4()}.{ext}"
+    final_path = UPLOADS_DIR / filename
+    
+    try:
+        # Merge all chunks
+        with open(final_path, "wb") as outfile:
+            for i in range(session["total_chunks"]):
+                chunk_path = chunk_dir / f"chunk_{i:05d}"
+                if chunk_path.exists():
+                    with open(chunk_path, "rb") as chunk_file:
+                        outfile.write(chunk_file.read())
+        
+        # Cleanup chunks
+        import shutil
+        shutil.rmtree(chunk_dir, ignore_errors=True)
+        
+        # Delete session
+        await db.upload_sessions.delete_one({"upload_id": upload_id})
+        
+        file_size = final_path.stat().st_size
+        
+        return {
+            "url": f"/api/uploads/{filename}",
+            "filename": filename,
+            "size": file_size
+        }
+    except Exception as e:
+        logger.error(f"Chunk merge failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/video/{project_id}")
 async def get_video_project(project_id: str):

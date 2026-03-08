@@ -92,49 +92,90 @@ export const MontagePage = () => {
       return;
     }
     
-    // Check file size - warn if large
     const fileSizeMB = file.size / (1024 * 1024);
-    if (fileSizeMB > 100) {
-      toast.warning(`Большой файл (${fileSizeMB.toFixed(0)} MB) — загрузка может занять время`);
-    }
-    
     setVideoFile(file);
     setVideoPreview(URL.createObjectURL(file));
     
-    // Upload video with progress tracking
     setIsUploading(true);
     setProgress(0);
-    setProgressMessage("Загружаем видео...");
-    
-    const formData = new FormData();
-    formData.append("file", file);
     
     try {
-      const response = await axios.post(`${API}/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 300000, // 5 min timeout for large files
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setProgress(percentCompleted);
-          setProgressMessage(`Загружаем видео... ${percentCompleted}%`);
-        }
-      });
-      setVideoUrl(response.data.url);
+      // Use chunked upload for files > 5MB
+      if (fileSizeMB > 5) {
+        setProgressMessage(`Загружаем ${fileSizeMB.toFixed(0)} MB по частям...`);
+        const url = await uploadFileChunked(file);
+        setVideoUrl(url);
+      } else {
+        // Small files - direct upload
+        setProgressMessage("Загружаем видео...");
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const response = await axios.post(`${API}/upload`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 300000,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setProgress(percentCompleted);
+            setProgressMessage(`Загружаем видео... ${percentCompleted}%`);
+          }
+        });
+        setVideoUrl(response.data.url);
+      }
+      
       setProgress(0);
       setProgressMessage("");
       toast.success("Видео загружено!");
     } catch (error) {
       console.error("Video upload failed:", error);
-      if (error.code === 'ECONNABORTED') {
-        toast.error("Таймаут загрузки. Попробуйте файл меньшего размера.");
-      } else {
-        toast.error("Ошибка загрузки видео");
-      }
+      toast.error(error.message || "Ошибка загрузки видео");
       setVideoFile(null);
       setVideoPreview(null);
     } finally {
       setIsUploading(false);
     }
+  };
+  
+  // Chunked upload for large files
+  const uploadFileChunked = async (file) => {
+    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    
+    // Initialize upload
+    const initResponse = await axios.post(`${API}/upload/init`, {
+      filename: file.name,
+      total_size: file.size,
+      total_chunks: totalChunks
+    });
+    
+    const uploadId = initResponse.data.upload_id;
+    
+    // Upload chunks
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+      
+      // Convert to base64
+      const arrayBuffer = await chunk.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      
+      await axios.post(`${API}/upload/chunk`, {
+        upload_id: uploadId,
+        chunk_index: i,
+        data: base64
+      });
+      
+      const percentCompleted = Math.round(((i + 1) / totalChunks) * 100);
+      setProgress(percentCompleted);
+      setProgressMessage(`Загружаем часть ${i + 1}/${totalChunks}... ${percentCompleted}%`);
+    }
+    
+    // Complete upload
+    const completeResponse = await axios.post(`${API}/upload/complete?upload_id=${uploadId}`);
+    return completeResponse.data.url;
   };
 
   const handleMusicSelect = async (e) => {
