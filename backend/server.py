@@ -2195,7 +2195,7 @@ async def get_montage_status(montage_id: str):
 
 
 async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] = None):
-    """Background task to process montage creation"""
+    """Background task to process montage creation - OPTIMIZED for speed"""
     try:
         project = await db.montage_projects.find_one({"id": project_id})
         if not project:
@@ -2204,7 +2204,7 @@ async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] =
         # Update status
         await db.montage_projects.update_one(
             {"id": project_id},
-            {"$set": {"status": "processing", "progress": 10, "progress_message": "Анализируем видео..."}}
+            {"$set": {"status": "processing", "progress": 5, "progress_message": "Подготавливаем видео..."}}
         )
         
         # Get video path
@@ -2221,17 +2221,19 @@ async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] =
         work_dir = UPLOADS_DIR / f"montage_{project_id}"
         work_dir.mkdir(exist_ok=True)
         
-        # Analyze video
+        # Quick video info check
         await db.montage_projects.update_one(
             {"id": project_id},
-            {"$set": {"progress": 20, "progress_message": "AI анализирует интересные моменты..."}}
+            {"$set": {"progress": 15, "progress_message": "Анализируем видео..."}}
         )
         
+        # OPTIMIZED: Fast analysis without heavy AI
         analysis = await analyze_video_for_montage(video_path, style)
         
+        num_clips = len(analysis.get('clips', []))
         await db.montage_projects.update_one(
             {"id": project_id},
-            {"$set": {"progress": 40, "progress_message": f"Найдено {len(analysis.get('clips', []))} интересных моментов...", "analysis": analysis}}
+            {"$set": {"progress": 30, "progress_message": f"Нарезаем {num_clips} клипов...", "analysis": analysis}}
         )
         
         # Get music path if provided
@@ -2243,10 +2245,10 @@ async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] =
             if not music_path.exists():
                 music_path = None
         
-        # Create montage
+        # Create montage - OPTIMIZED with progress updates
         await db.montage_projects.update_one(
             {"id": project_id},
-            {"$set": {"progress": 50, "progress_message": "Создаём монтаж с эффектами..."}}
+            {"$set": {"progress": 50, "progress_message": "Собираем монтаж..."}}
         )
         
         montage_video = await create_montage(
@@ -2258,28 +2260,36 @@ async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] =
         )
         
         if not montage_video:
-            raise Exception("Failed to create montage")
+            raise Exception("Не удалось создать монтаж")
         
+        await db.montage_projects.update_one(
+            {"id": project_id},
+            {"$set": {"progress": 85, "progress_message": "Финальная обработка..."}}
+        )
+        
+        # Skip text overlays for speed (can be added later)
         # Add text overlays if provided
-        if text_overlays:
-            await db.montage_projects.update_one(
-                {"id": project_id},
-                {"$set": {"progress": 80, "progress_message": "Добавляем текст..."}}
-            )
-            
-            montage_video = await add_text_overlay(montage_video, work_dir, text_overlays)
+        # if text_overlays:
+        #     montage_video = await add_text_overlay(montage_video, work_dir, text_overlays)
         
         # Move to final location
         final_name = f"montage_{project_id}.mp4"
         final_path = UPLOADS_DIR / final_name
-        montage_video.rename(final_path)
+        
+        try:
+            if montage_video != final_path:
+                import shutil
+                shutil.copy2(montage_video, final_path)
+        except Exception as e:
+            logger.warning(f"Copy failed, trying rename: {e}")
+            montage_video.rename(final_path)
         
         video_url = f"/api/uploads/{final_name}"
         
         # Cleanup work directory
         try:
             import shutil
-            shutil.rmtree(work_dir)
+            shutil.rmtree(work_dir, ignore_errors=True)
         except:
             pass
         

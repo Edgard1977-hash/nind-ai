@@ -91,23 +91,44 @@ export const MontagePage = () => {
       return;
     }
     
+    // Check file size - warn if large
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB > 100) {
+      toast.warning(`Большой файл (${fileSizeMB.toFixed(0)} MB) — загрузка может занять время`);
+    }
+    
     setVideoFile(file);
     setVideoPreview(URL.createObjectURL(file));
     
-    // Upload video
+    // Upload video with progress tracking
     setIsUploading(true);
+    setProgress(0);
+    setProgressMessage("Загружаем видео...");
+    
     const formData = new FormData();
     formData.append("file", file);
     
     try {
       const response = await axios.post(`${API}/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 300000, // 5 min timeout for large files
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setProgress(percentCompleted);
+          setProgressMessage(`Загружаем видео... ${percentCompleted}%`);
+        }
       });
       setVideoUrl(response.data.url);
-      toast.success("Видео загружено");
+      setProgress(0);
+      setProgressMessage("");
+      toast.success("Видео загружено!");
     } catch (error) {
       console.error("Video upload failed:", error);
-      toast.error("Ошибка загрузки видео");
+      if (error.code === 'ECONNABORTED') {
+        toast.error("Таймаут загрузки. Попробуйте файл меньшего размера.");
+      } else {
+        toast.error("Ошибка загрузки видео");
+      }
       setVideoFile(null);
       setVideoPreview(null);
     } finally {
