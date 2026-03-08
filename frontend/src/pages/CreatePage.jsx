@@ -47,6 +47,20 @@ export const CreatePage = () => {
   const logoInputRef = useRef(null);
   const stars = useMemo(() => generateStars(100), []);
 
+  // Prevent leaving page during upload
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (uploadProgress > 0 || isLoading) {
+        e.preventDefault();
+        e.returnValue = 'Загрузка в процессе! Если вы уйдёте, загрузка прервётся.';
+        return e.returnValue;
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [uploadProgress, isLoading]);
+
   // Detect if prompt is about product advertisement
   const isProductAd = useMemo(() => {
     const productKeywords = ['реклам', 'товар', 'продукт', 'product', 'advertis', 'showcase', 'commercial', 'macbook', 'iphone'];
@@ -367,7 +381,13 @@ export const CreatePage = () => {
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-4">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => {
+            if (uploadProgress > 0 || isLoading) {
+              toast.warning("Дождитесь завершения загрузки!");
+              return;
+            }
+            navigate("/");
+          }}
           className="p-2 rounded-full glass-ios"
           data-testid="back-button"
         >
