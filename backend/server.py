@@ -101,7 +101,8 @@ class VideoGenerateRequest(BaseModel):
 
 class MontageRequest(BaseModel):
     video_url: str  # URL to uploaded video
-    style: str = "tiktok"  # tiktok, youtube, meme, cinematic
+    prompt: Optional[str] = None  # User's instruction for montage
+    style: str = "auto"  # auto, tiktok, youtube, meme, cinematic
     music_url: Optional[str] = None  # URL to uploaded music
     text_overlays: Optional[List[Dict]] = None  # Optional text overlays
 
@@ -111,6 +112,7 @@ class MontageProject(BaseModel):
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     source_video_url: str
+    prompt: Optional[str] = None
     style: str
     music_url: Optional[str] = None
     status: str = "pending"
@@ -2283,7 +2285,7 @@ async def get_montage_styles():
 
 @api_router.post("/montage/create")
 async def create_montage_project(request: MontageRequest, background_tasks: BackgroundTasks):
-    """Start montage creation from uploaded video"""
+    """Start montage creation from uploaded video with AI prompt analysis"""
     
     # Validate video exists
     video_url = request.video_url
@@ -2296,9 +2298,23 @@ async def create_montage_project(request: MontageRequest, background_tasks: Back
     if not video_path.exists():
         raise HTTPException(status_code=404, detail="Video not found. Please upload again.")
     
+    # Detect style from prompt if auto
+    style = request.style
+    if style == "auto" and request.prompt:
+        prompt_lower = request.prompt.lower()
+        if any(kw in prompt_lower for kw in ["мем", "мемы", "смешн", "funny", "meme", "comedy"]):
+            style = "meme"
+        elif any(kw in prompt_lower for kw in ["кино", "cinematic", "элегант", "film"]):
+            style = "cinematic"
+        elif any(kw in prompt_lower for kw in ["youtube", "длинн", "обзор"]):
+            style = "youtube"
+        else:
+            style = "tiktok"  # default for dynamic/fast content
+    
     project = MontageProject(
         source_video_url=video_url,
-        style=request.style,
+        prompt=request.prompt,
+        style=style,
         music_url=request.music_url
     )
     
@@ -2309,9 +2325,9 @@ async def create_montage_project(request: MontageRequest, background_tasks: Back
     await db.montage_projects.insert_one(doc)
     
     # Start background processing
-    background_tasks.add_task(process_montage, project.id, request.text_overlays)
+    background_tasks.add_task(process_montage, project.id, request.prompt, request.text_overlays)
     
-    return {"id": project.id, "status": "pending"}
+    return {"id": project.id, "status": "pending", "style": style}
 
 
 @api_router.get("/montage/{montage_id}")
@@ -2325,8 +2341,8 @@ async def get_montage_status(montage_id: str):
     return project
 
 
-async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] = None):
-    """Background task to process montage creation - OPTIMIZED for speed"""
+async def process_montage(project_id: str, prompt: Optional[str] = None, text_overlays: Optional[List[Dict]] = None):
+    """Background task to process montage creation with AI prompt analysis"""
     try:
         project = await db.montage_projects.find_one({"id": project_id})
         if not project:
@@ -2335,7 +2351,7 @@ async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] =
         # Update status
         await db.montage_projects.update_one(
             {"id": project_id},
-            {"$set": {"status": "processing", "progress": 5, "progress_message": "Подготавливаем видео..."}}
+            {"$set": {"status": "processing", "progress": 5, "progress_message": "AI анализирует ваш запрос..."}}
         )
         
         # Get video path

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Image, Video, Send, X, Sparkles, Plus, Package, Tag } from "lucide-react";
+import { ArrowLeft, Image, Video, Send, X, Sparkles, Plus, Package, Tag, Film, Music, Loader2, Check, Download } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -26,13 +26,24 @@ export const CreatePage = () => {
   
   const [prompt, setPrompt] = useState("");
   const [mediaFiles, setMediaFiles] = useState([]); // Product images
+  const [videoFile, setVideoFile] = useState(null); // Video for montage
+  const [videoUrl, setVideoUrl] = useState(null); // Uploaded video URL
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [musicFile, setMusicFile] = useState(null);
+  const [musicUrl, setMusicUrl] = useState(null);
   const [logoFile, setLogoFile] = useState(null); // Brand logo
   const [brandName, setBrandName] = useState(""); // Brand name
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState("");
   const [showProductOptions, setShowProductOptions] = useState(false);
+  const [montageResult, setMontageResult] = useState(null);
+  const [montageProgress, setMontageProgress] = useState(0);
+  const [montageMessage, setMontageMessage] = useState("");
   
   const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const musicInputRef = useRef(null);
   const logoInputRef = useRef(null);
   const stars = useMemo(() => generateStars(100), []);
 
@@ -42,6 +53,134 @@ export const CreatePage = () => {
     return productKeywords.some(kw => prompt.toLowerCase().includes(kw));
   }, [prompt]);
 
+  // Chunked upload for large files
+  const uploadFileChunked = async (file, onProgress) => {
+    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    
+    const initResponse = await axios.post(`${API}/upload/init`, {
+      filename: file.name,
+      total_size: file.size,
+      total_chunks: totalChunks
+    });
+    
+    const uploadId = initResponse.data.upload_id;
+    
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+      
+      const arrayBuffer = await chunk.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      
+      await axios.post(`${API}/upload/chunk`, {
+        upload_id: uploadId,
+        chunk_index: i,
+        data: base64
+      });
+      
+      if (onProgress) {
+        onProgress(Math.round(((i + 1) / totalChunks) * 100), `Часть ${i + 1}/${totalChunks}`);
+      }
+    }
+    
+    const completeResponse = await axios.post(`${API}/upload/complete?upload_id=${uploadId}`);
+    return completeResponse.data.url;
+  };
+
+  // Handle video file selection for montage
+  const handleVideoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith("video/")) {
+      toast.error("Пожалуйста, выберите видео файл");
+      return;
+    }
+    
+    const fileSizeMB = file.size / (1024 * 1024);
+    setVideoFile(file);
+    setVideoPreview(URL.createObjectURL(file));
+    setUploadProgress(0);
+    
+    try {
+      if (fileSizeMB > 5) {
+        setUploadMessage(`Загружаем ${fileSizeMB.toFixed(0)} MB...`);
+        const url = await uploadFileChunked(file, (progress, msg) => {
+          setUploadProgress(progress);
+          setUploadMessage(msg);
+        });
+        setVideoUrl(url);
+      } else {
+        setUploadMessage("Загружаем видео...");
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const response = await axios.post(`${API}/upload`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 300000,
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percent);
+          }
+        });
+        setVideoUrl(response.data.url);
+      }
+      
+      setUploadProgress(0);
+      setUploadMessage("");
+      toast.success("Видео загружено!");
+    } catch (error) {
+      console.error("Video upload failed:", error);
+      toast.error("Ошибка загрузки видео");
+      setVideoFile(null);
+      setVideoPreview(null);
+    }
+  };
+
+  // Handle music file selection
+  const handleMusicSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith("audio/")) {
+      toast.error("Пожалуйста, выберите аудио файл");
+      return;
+    }
+    
+    setMusicFile(file);
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    try {
+      const response = await axios.post(`${API}/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setMusicUrl(response.data.url);
+      toast.success("Музыка загружена");
+    } catch (error) {
+      console.error("Music upload failed:", error);
+      toast.error("Ошибка загрузки музыки");
+      setMusicFile(null);
+    }
+  };
+
+  const removeVideo = () => {
+    if (videoPreview) URL.revokeObjectURL(videoPreview);
+    setVideoFile(null);
+    setVideoPreview(null);
+    setVideoUrl(null);
+    setMontageResult(null);
+  };
+
+  const removeMusic = () => {
+    setMusicFile(null);
+    setMusicUrl(null);
+  };
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -129,14 +268,58 @@ export const CreatePage = () => {
     }
 
     setIsLoading(true);
+    
     try {
+      // If video is uploaded, create montage with AI
+      if (videoUrl) {
+        setMontageMessage("AI анализирует ваше видео...");
+        setMontageProgress(10);
+        
+        const response = await axios.post(`${API}/montage/create`, {
+          video_url: videoUrl,
+          prompt: prompt.trim(),
+          music_url: musicUrl,
+          style: "auto" // AI will determine style from prompt
+        });
+        
+        const montageId = response.data.id;
+        
+        // Poll for progress
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusRes = await axios.get(`${API}/montage/${montageId}`);
+            const data = statusRes.data;
+            
+            setMontageProgress(data.progress || 0);
+            setMontageMessage(data.progress_message || "Обрабатываем...");
+            
+            if (data.status === "completed") {
+              clearInterval(pollInterval);
+              setMontageResult(`${BACKEND_URL}${data.video_url}`);
+              setMontageProgress(100);
+              setMontageMessage("Готово!");
+              setIsLoading(false);
+              toast.success("Монтаж готов!");
+            } else if (data.status === "error") {
+              clearInterval(pollInterval);
+              setIsLoading(false);
+              toast.error(`Ошибка: ${data.error}`);
+            }
+          } catch (e) {
+            console.error("Poll error:", e);
+          }
+        }, 2000);
+        
+        return;
+      }
+      
+      // Standard video generation (no video uploaded)
       const requestData = {
         prompt: prompt.trim(),
-        format_id: "auto",  // Smart auto-detection
+        format_id: "auto",
         language: "auto"
       };
       
-      // Add product advertisement data if available
       if (mediaFiles.length > 0) {
         requestData.product_images = mediaFiles.map(f => f.url);
       }
@@ -155,8 +338,16 @@ export const CreatePage = () => {
       console.error("Failed to start generation:", error);
       toast.error("Ошибка при запуске генерации");
     } finally {
-      setIsLoading(false);
+      if (!videoUrl) setIsLoading(false);
     }
+  };
+
+  const resetMontage = () => {
+    setMontageResult(null);
+    setMontageProgress(0);
+    setMontageMessage("");
+    removeVideo();
+    setPrompt("");
   };
 
   return (
@@ -198,8 +389,100 @@ export const CreatePage = () => {
 
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center min-h-[60vh] px-4">
-        {/* Product Images Preview */}
-        {mediaFiles.length > 0 ? (
+        
+        {/* Montage Result */}
+        {montageResult ? (
+          <div className="w-full max-w-md" data-testid="montage-result">
+            <div className="flex items-center gap-2 mb-3">
+              <Check className="w-5 h-5 text-green-400" />
+              <span className="text-white font-medium">Ваш монтаж готов!</span>
+            </div>
+            <div className="glass-ios rounded-2xl overflow-hidden">
+              <video
+                src={montageResult}
+                className="w-full aspect-video"
+                controls
+                autoPlay
+              />
+            </div>
+            <div className="flex gap-3 mt-4">
+              <a
+                href={montageResult}
+                download
+                className="flex-1 py-3 rounded-xl glass-ios hover:bg-white/10 transition-colors flex items-center justify-center gap-2 font-medium"
+                data-testid="download-montage"
+              >
+                <Download className="w-5 h-5" />
+                Скачать
+              </a>
+              <button
+                onClick={resetMontage}
+                className="flex-1 py-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 transition-colors flex items-center justify-center gap-2 font-medium"
+                data-testid="new-montage"
+              >
+                <Sparkles className="w-5 h-5" />
+                Создать ещё
+              </button>
+            </div>
+          </div>
+        ) : montageProgress > 0 ? (
+          /* Montage Progress */
+          <div className="w-full max-w-md" data-testid="montage-progress">
+            <div className="glass-ios rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+                <span className="text-white">{montageMessage}</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
+                  style={{ width: `${montageProgress}%` }}
+                />
+              </div>
+              <p className="text-center text-white/40 text-sm mt-2">{montageProgress}%</p>
+            </div>
+          </div>
+        ) : videoPreview ? (
+          /* Video Preview for Montage */
+          <div className="w-full max-w-md" data-testid="video-preview">
+            <div className="flex items-center gap-2 mb-3">
+              <Film className="w-5 h-5 text-purple-400" />
+              <span className="text-white/60 text-sm">Видео для монтажа</span>
+            </div>
+            <div className="relative glass-ios rounded-2xl overflow-hidden">
+              <video
+                src={videoPreview}
+                className="w-full aspect-video object-cover"
+                controls
+              />
+              <button
+                onClick={removeVideo}
+                className="absolute top-2 right-2 p-2 rounded-full bg-black/60 hover:bg-black/80 transition-colors"
+                data-testid="remove-video"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Music option */}
+            <button
+              onClick={() => musicInputRef.current.click()}
+              className={`w-full mt-3 py-3 rounded-xl glass-ios flex items-center justify-center gap-2 transition-colors ${
+                musicFile ? 'bg-green-500/20' : 'hover:bg-white/10'
+              }`}
+              data-testid="add-music"
+            >
+              <Music className="w-5 h-5" />
+              <span>{musicFile ? musicFile.name : "Добавить музыку (опционально)"}</span>
+              {musicFile && <Check className="w-4 h-4 text-green-400" />}
+            </button>
+            
+            <p className="text-white/40 text-sm text-center mt-3">
+              Напишите что сделать с видео и нажмите отправить
+            </p>
+          </div>
+        ) : mediaFiles.length > 0 ? (
+          /* Product Images Preview */
           <div className="w-full max-w-md">
             <div className="flex items-center gap-2 mb-3">
               <Package className="w-5 h-5 text-white/60" />
@@ -272,7 +555,7 @@ export const CreatePage = () => {
               Опишите что хотите создать
             </p>
             <p className="text-white/30 text-sm mt-2">
-              или добавьте фото/видео продукта
+              или загрузите видео для AI монтажа
             </p>
           </div>
         )}
@@ -286,7 +569,7 @@ export const CreatePage = () => {
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
-            <p className="text-center text-white/40 text-xs mt-1">Загрузка {uploadProgress}%</p>
+            <p className="text-center text-white/40 text-xs mt-1">{uploadMessage || `Загрузка ${uploadProgress}%`}</p>
           </div>
         )}
       </main>
@@ -342,17 +625,15 @@ export const CreatePage = () => {
                 fileInputRef.current.click();
               }}
               className="p-3 rounded-full hover:bg-white/10 transition-colors"
+              title="Добавить изображения"
               data-testid="add-image-btn"
             >
               <Image className="w-5 h-5 text-white/60" />
             </button>
             <button
-              onClick={() => {
-                fileInputRef.current.accept = "video/*";
-                fileInputRef.current.multiple = false;
-                fileInputRef.current.click();
-              }}
-              className="p-3 rounded-full hover:bg-white/10 transition-colors"
+              onClick={() => videoInputRef.current.click()}
+              className={`p-3 rounded-full hover:bg-white/10 transition-colors ${videoFile ? 'bg-purple-500/20' : ''}`}
+              title="Загрузить видео для монтажа"
               data-testid="add-video-btn"
             >
               <Video className="w-5 h-5 text-white/60" />
@@ -363,9 +644,10 @@ export const CreatePage = () => {
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Опишите ваше видео..."
+              placeholder={videoFile ? "Что сделать с видео? (напр: динамичный монтаж с мемами)" : "Опишите ваше видео..."}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 py-2"
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSubmit()}
+              disabled={isLoading}
               data-testid="prompt-input"
             />
             
@@ -392,6 +674,22 @@ export const CreatePage = () => {
           onChange={handleFileSelect}
           className="hidden"
           data-testid="file-input"
+        />
+        <input
+          type="file"
+          ref={videoInputRef}
+          onChange={handleVideoSelect}
+          accept="video/*"
+          className="hidden"
+          data-testid="video-input"
+        />
+        <input
+          type="file"
+          ref={musicInputRef}
+          onChange={handleMusicSelect}
+          accept="audio/*"
+          className="hidden"
+          data-testid="music-input"
         />
         <input
           type="file"
