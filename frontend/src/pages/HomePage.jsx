@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, Image, Home, Compass, User, HelpCircle, Crown } from "lucide-react";
+import { Video, Image, Home, Compass, User, HelpCircle, Crown, Film } from "lucide-react";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -62,22 +62,30 @@ export const HomePage = () => {
         
         {/* Action Buttons */}
         <div className="absolute bottom-8 left-0 right-0 px-6">
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={() => navigate("/create?type=video")}
-              className="flex-1 glass-button py-4 rounded-[40px] flex items-center justify-center gap-3"
+              className="flex-1 glass-button py-4 rounded-[40px] flex items-center justify-center gap-2"
               data-testid="create-video-btn"
             >
               <Video className="w-5 h-5" />
-              <span className="font-semibold">Сделать видео</span>
+              <span className="font-semibold text-sm">Видео</span>
+            </button>
+            <button
+              onClick={() => navigate("/montage")}
+              className="flex-1 glass-button py-4 rounded-[40px] flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500/30 to-pink-500/30"
+              data-testid="montage-btn"
+            >
+              <Film className="w-5 h-5" />
+              <span className="font-semibold text-sm">Монтаж</span>
             </button>
             <button
               onClick={() => navigate("/create?type=photo")}
-              className="flex-1 glass-button py-4 rounded-[40px] flex items-center justify-center gap-3"
+              className="flex-1 glass-button py-4 rounded-[40px] flex items-center justify-center gap-2"
               data-testid="create-photo-btn"
             >
               <Image className="w-5 h-5" />
-              <span className="font-semibold">Сделать фото</span>
+              <span className="font-semibold text-sm">Фото</span>
             </button>
           </div>
         </div>

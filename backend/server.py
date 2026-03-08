@@ -41,6 +41,14 @@ from animation_renderer import (
     render_product_advertisement
 )
 
+# Import montage service
+from montage_service import (
+    analyze_video_for_montage,
+    create_montage,
+    add_text_overlay,
+    MONTAGE_STYLES
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -89,6 +97,30 @@ class VideoGenerateRequest(BaseModel):
     product_images: Optional[List[str]] = None  # URLs to uploaded product images
     logo_url: Optional[str] = None  # URL to uploaded logo
     brand_name: Optional[str] = None  # Brand name for logo animation
+
+
+class MontageRequest(BaseModel):
+    video_url: str  # URL to uploaded video
+    style: str = "tiktok"  # tiktok, youtube, meme, cinematic
+    music_url: Optional[str] = None  # URL to uploaded music
+    text_overlays: Optional[List[Dict]] = None  # Optional text overlays
+
+
+class MontageProject(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    source_video_url: str
+    style: str
+    music_url: Optional[str] = None
+    status: str = "pending"
+    progress: int = 0
+    progress_message: str = "Инициализация..."
+    analysis: Optional[Dict] = None
+    video_url: Optional[str] = None
+    error: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class VideoScene(BaseModel):
     text: str
@@ -2099,6 +2131,182 @@ async def stripe_webhook(request: Request):
     except Exception as e:
         logger.error(f"Stripe webhook error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ==================== MONTAGE ENDPOINTS ====================
+
+@api_router.get("/montage/styles")
+async def get_montage_styles():
+    """Get available montage styles"""
+    styles = []
+    for style_id, config in MONTAGE_STYLES.items():
+        styles.append({
+            "id": style_id,
+            "name": config["name"],
+            "name_ru": config["name_ru"],
+            "clip_duration": config["clip_duration"],
+            "transitions": config["transitions"]
+        })
+    return {"styles": styles}
+
+
+@api_router.post("/montage/create")
+async def create_montage_project(request: MontageRequest, background_tasks: BackgroundTasks):
+    """Start montage creation from uploaded video"""
+    
+    # Validate video exists
+    video_url = request.video_url
+    if not video_url.startswith("/api/uploads/"):
+        raise HTTPException(status_code=400, detail="Invalid video URL. Please upload a video first.")
+    
+    video_filename = video_url.split("/")[-1]
+    video_path = UPLOADS_DIR / video_filename
+    
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found. Please upload again.")
+    
+    project = MontageProject(
+        source_video_url=video_url,
+        style=request.style,
+        music_url=request.music_url
+    )
+    
+    # Save to DB
+    doc = project.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    doc['updated_at'] = doc['updated_at'].isoformat()
+    await db.montage_projects.insert_one(doc)
+    
+    # Start background processing
+    background_tasks.add_task(process_montage, project.id, request.text_overlays)
+    
+    return {"id": project.id, "status": "pending"}
+
+
+@api_router.get("/montage/{montage_id}")
+async def get_montage_status(montage_id: str):
+    """Get montage project status"""
+    project = await db.montage_projects.find_one({"id": montage_id}, {"_id": 0})
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Montage project not found")
+    
+    return project
+
+
+async def process_montage(project_id: str, text_overlays: Optional[List[Dict]] = None):
+    """Background task to process montage creation"""
+    try:
+        project = await db.montage_projects.find_one({"id": project_id})
+        if not project:
+            return
+        
+        # Update status
+        await db.montage_projects.update_one(
+            {"id": project_id},
+            {"$set": {"status": "processing", "progress": 10, "progress_message": "Анализируем видео..."}}
+        )
+        
+        # Get video path
+        video_url = project["source_video_url"]
+        video_filename = video_url.split("/")[-1]
+        video_path = UPLOADS_DIR / video_filename
+        
+        if not video_path.exists():
+            raise Exception("Source video not found")
+        
+        style = project.get("style", "tiktok")
+        
+        # Create work directory
+        work_dir = UPLOADS_DIR / f"montage_{project_id}"
+        work_dir.mkdir(exist_ok=True)
+        
+        # Analyze video
+        await db.montage_projects.update_one(
+            {"id": project_id},
+            {"$set": {"progress": 20, "progress_message": "AI анализирует интересные моменты..."}}
+        )
+        
+        analysis = await analyze_video_for_montage(video_path, style)
+        
+        await db.montage_projects.update_one(
+            {"id": project_id},
+            {"$set": {"progress": 40, "progress_message": f"Найдено {len(analysis.get('clips', []))} интересных моментов...", "analysis": analysis}}
+        )
+        
+        # Get music path if provided
+        music_path = None
+        music_url = project.get("music_url")
+        if music_url and music_url.startswith("/api/uploads/"):
+            music_filename = music_url.split("/")[-1]
+            music_path = UPLOADS_DIR / music_filename
+            if not music_path.exists():
+                music_path = None
+        
+        # Create montage
+        await db.montage_projects.update_one(
+            {"id": project_id},
+            {"$set": {"progress": 50, "progress_message": "Создаём монтаж с эффектами..."}}
+        )
+        
+        montage_video = await create_montage(
+            video_path,
+            work_dir,
+            style=style,
+            music_path=music_path,
+            analysis=analysis
+        )
+        
+        if not montage_video:
+            raise Exception("Failed to create montage")
+        
+        # Add text overlays if provided
+        if text_overlays:
+            await db.montage_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 80, "progress_message": "Добавляем текст..."}}
+            )
+            
+            montage_video = await add_text_overlay(montage_video, work_dir, text_overlays)
+        
+        # Move to final location
+        final_name = f"montage_{project_id}.mp4"
+        final_path = UPLOADS_DIR / final_name
+        montage_video.rename(final_path)
+        
+        video_url = f"/api/uploads/{final_name}"
+        
+        # Cleanup work directory
+        try:
+            import shutil
+            shutil.rmtree(work_dir)
+        except:
+            pass
+        
+        # Update project
+        await db.montage_projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "status": "completed",
+                "progress": 100,
+                "progress_message": "Готово!",
+                "video_url": video_url,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        logger.info(f"Montage completed: {project_id}")
+        
+    except Exception as e:
+        logger.error(f"Montage processing failed: {e}")
+        await db.montage_projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "status": "error",
+                "error": str(e),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
 
 
 # Include the router in the main app
