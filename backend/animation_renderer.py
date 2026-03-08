@@ -640,15 +640,15 @@ async def render_apple_text_animation(
                     color1 = hex_to_rgb(gradient_colors[0])
                     color2 = hex_to_rgb(gradient_colors[1])
                     
-                    # Calculate character start index for this word
-                    char_start_idx = sum(len(words[j]) + 1 for j in range(i))
-                    total_chars = len(text.replace(" ", ""))
+                    logger.info(f"Applying gradient: {gradient_colors} to word '{word}'")
                     
+                    # For single word, use character position within that word
                     char_x = current_x
+                    word_len = len(word)
+                    
                     for ci, char in enumerate(word):
-                        # Interpolate color
-                        global_char_idx = char_start_idx + ci
-                        t = global_char_idx / max(total_chars - 1, 1)
+                        # Interpolate color based on position in word
+                        t = ci / max(word_len - 1, 1)
                         
                         r = int(color1[0] + (color2[0] - color1[0]) * t)
                         g = int(color1[1] + (color2[1] - color1[1]) * t)
@@ -659,7 +659,8 @@ async def render_apple_text_animation(
                         
                         char_bbox = draw.textbbox((0, 0), char, font=font_large)
                         char_x += char_bbox[2] - char_bbox[0]
-                except:
+                except Exception as e:
+                    logger.warning(f"Gradient rendering failed: {e}")
                     draw.text((current_x, word_y), word, fill=default_text_color + (word_opacity,), font=font_large)
             else:
                 # Solid color
