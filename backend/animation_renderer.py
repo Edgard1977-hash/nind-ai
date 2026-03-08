@@ -532,6 +532,8 @@ async def render_apple_text_animation(
         {"text": "Just like Apple.", "bg": "black"},
     ])
     
+    logger.info(f"Apple text animation - phrases received: {phrases}")
+    
     # Timing configuration
     PHRASE_DURATION = 2.2  # Time per phrase
     WORD_APPEAR_DURATION = 0.15  # 150ms per word

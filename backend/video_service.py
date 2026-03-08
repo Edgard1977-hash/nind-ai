@@ -339,9 +339,28 @@ async def concatenate_videos(video_paths: List[Path], output_path: Path) -> Opti
 
 
 async def add_audio_to_video(video_path: Path, audio_path: Path, output_path: Path) -> Optional[Path]:
-    """Add audio track to video"""
+    """Add audio track to video - video length is preserved, audio loops if needed"""
     output_file = output_path / f"with_audio_{uuid.uuid4().hex[:8]}.mp4"
     
+    # Get video duration
+    probe_cmd = [
+        "ffprobe", "-v", "error", "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1", str(video_path)
+    ]
+    
+    video_duration = 5.0  # Default
+    try:
+        probe_process = await asyncio.create_subprocess_exec(
+            *probe_cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, _ = await probe_process.communicate()
+        video_duration = float(stdout.decode().strip())
+    except:
+        pass
+    
+    # Add audio to video - keep video duration, don't cut
     cmd = [
         "ffmpeg", "-y",
         "-i", str(video_path),
@@ -350,7 +369,7 @@ async def add_audio_to_video(video_path: Path, audio_path: Path, output_path: Pa
         "-c:a", "aac",
         "-map", "0:v:0",
         "-map", "1:a:0",
-        "-shortest",
+        "-t", str(video_duration),  # Keep video duration
         str(output_file)
     ]
     
