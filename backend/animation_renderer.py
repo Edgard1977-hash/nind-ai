@@ -880,13 +880,14 @@ async def render_kinetic_typography(
 
 async def render_logo_animation(
     script_data: dict,
-    output_path: Path
+    output_path: Path,
+    logo_image_path: Path = None
 ) -> Optional[Path]:
     """
     Render logo/brand animation.
     
     Animation sequence:
-    1. Logo icon appears in center (fade + scale)
+    1. Logo icon appears in center (fade + scale) - uses uploaded image if provided
     2. Logo slides to the left
     3. Brand name appears to the right of logo (where logo was)
     4. Optional tagline fades in below
@@ -899,6 +900,16 @@ async def render_logo_animation(
     tagline = script_data.get("tagline", "")
     bg_color = hex_to_rgb(script_data.get("bg_color", "#7289da"))
     text_color = hex_to_rgb(script_data.get("text_color", "#ffffff"))
+    
+    # Load uploaded logo image if provided
+    logo_img = None
+    if logo_image_path and logo_image_path.exists():
+        try:
+            logo_img = Image.open(logo_image_path).convert("RGBA")
+            logger.info(f"Loaded logo image: {logo_image_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load logo image: {e}")
+            logo_img = None
     
     total_duration = 5.0
     total_frames = int(total_duration * FPS)
@@ -973,27 +984,50 @@ async def render_logo_animation(
                 logo_scale = 1.0
                 logo_opacity = 255
         
-        # Draw logo (circle with glow effect)
+        # Draw logo (uploaded image or circle with glow effect)
         if logo_scale > 0:
             scaled_size = int(logo_size * logo_scale)
             
-            # Glow effect
-            if logo_opacity > 100:
-                for glow_layer in range(4, 0, -1):
-                    glow_size = scaled_size + glow_layer * 12
-                    glow_alpha = int(20 * (logo_opacity / 255) / glow_layer)
-                    draw.ellipse(
-                        (int(logo_x) - glow_size, int(logo_y) - glow_size,
-                         int(logo_x) + glow_size, int(logo_y) + glow_size),
-                        fill=text_color + (glow_alpha,)
-                    )
-            
-            # Main logo circle
-            draw.ellipse(
-                (int(logo_x) - scaled_size, int(logo_y) - scaled_size,
-                 int(logo_x) + scaled_size, int(logo_y) + scaled_size),
-                fill=text_color + (logo_opacity,)
-            )
+            if logo_img is not None:
+                # Use uploaded logo image
+                logo_display_size = scaled_size * 2
+                resized_logo = logo_img.resize(
+                    (logo_display_size, logo_display_size),
+                    Image.Resampling.LANCZOS
+                )
+                
+                # Apply opacity
+                if logo_opacity < 255:
+                    alpha = resized_logo.split()[3] if resized_logo.mode == 'RGBA' else None
+                    if alpha:
+                        alpha = alpha.point(lambda p: int(p * logo_opacity / 255))
+                        resized_logo.putalpha(alpha)
+                
+                # Center the logo
+                paste_x = int(logo_x) - logo_display_size // 2
+                paste_y = int(logo_y) - logo_display_size // 2
+                
+                # Paste logo onto frame
+                img.paste(resized_logo, (paste_x, paste_y), resized_logo)
+            else:
+                # Fallback: Draw circle with glow effect
+                # Glow effect
+                if logo_opacity > 100:
+                    for glow_layer in range(4, 0, -1):
+                        glow_size = scaled_size + glow_layer * 12
+                        glow_alpha = int(20 * (logo_opacity / 255) / glow_layer)
+                        draw.ellipse(
+                            (int(logo_x) - glow_size, int(logo_y) - glow_size,
+                             int(logo_x) + glow_size, int(logo_y) + glow_size),
+                            fill=text_color + (glow_alpha,)
+                        )
+                
+                # Main logo circle
+                draw.ellipse(
+                    (int(logo_x) - scaled_size, int(logo_y) - scaled_size,
+                     int(logo_x) + scaled_size, int(logo_y) + scaled_size),
+                    fill=text_color + (logo_opacity,)
+                )
         
         # Phase 2: Brand name appears
         if current_sec >= TEXT_APPEAR_START:

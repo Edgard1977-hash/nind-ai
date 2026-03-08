@@ -1497,8 +1497,26 @@ async def process_video_generation(project_id: str):
                 {"$set": {"progress": 30, "progress_message": "Рендерим анимацию логотипа..."}}
             )
             
-            # Use professional PIL renderer
-            final_video = await render_logo_animation(script_data, work_dir)
+            # Get uploaded logo if available
+            logo_path = None
+            logo_url = project.get("logo_url")
+            if logo_url and logo_url.startswith("/api/uploads/"):
+                logo_path = UPLOADS_DIR / logo_url.split("/")[-1]
+                if not logo_path.exists():
+                    logo_path = None
+            
+            # Also check product_images for logo (user might upload logo there)
+            if not logo_path:
+                product_images = project.get("product_images", [])
+                if product_images and len(product_images) > 0:
+                    first_img = product_images[0]
+                    if first_img.startswith("/api/uploads/"):
+                        logo_path = UPLOADS_DIR / first_img.split("/")[-1]
+                        if not logo_path.exists():
+                            logo_path = None
+            
+            # Use professional PIL renderer with logo
+            final_video = await render_logo_animation(script_data, work_dir, logo_path)
             
             if final_video:
                 await db.video_projects.update_one(
