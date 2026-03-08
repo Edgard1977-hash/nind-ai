@@ -1886,11 +1886,20 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
 
 @api_router.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
-    """Upload a file (product image, logo, etc.)"""
-    # Validate file type
-    allowed_types = ["image/png", "image/jpeg", "image/jpg", "image/webp", "video/mp4"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail=f"File type not allowed. Allowed: {allowed_types}")
+    """Upload a file (product image, logo, video, audio)"""
+    # Validate file type - allow images, videos, and audio
+    allowed_image_types = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"]
+    allowed_video_types = ["video/mp4", "video/quicktime", "video/webm", "video/x-msvideo", "video/avi", "video/mov", "video/mpeg"]
+    allowed_audio_types = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/aac", "audio/x-m4a", "audio/mp4"]
+    allowed_types = allowed_image_types + allowed_video_types + allowed_audio_types
+    
+    # Also check by file extension as fallback (some browsers send wrong content_type)
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else ""
+    allowed_extensions = ["png", "jpg", "jpeg", "webp", "gif", "mp4", "mov", "webm", "avi", "mpeg", "mp3", "wav", "ogg", "aac", "m4a"]
+    
+    is_allowed = file.content_type in allowed_types or ext in allowed_extensions
+    if not is_allowed:
+        raise HTTPException(status_code=400, detail=f"File type not allowed. Content-Type: {file.content_type}, Extension: {ext}")
     
     # Generate unique filename
     ext = file.filename.split(".")[-1] if "." in file.filename else "png"
@@ -1931,18 +1940,24 @@ async def get_upload(filename: str):
         raise HTTPException(status_code=404, detail="File not found")
     
     # Determine media type based on extension
-    if filename.endswith(".png"):
-        media_type = "image/png"
-    elif filename.endswith(".jpg") or filename.endswith(".jpeg"):
-        media_type = "image/jpeg"
-    elif filename.endswith(".mp4"):
-        media_type = "video/mp4"
-    elif filename.endswith(".mp3"):
-        media_type = "audio/mpeg"
-    elif filename.endswith(".wav"):
-        media_type = "audio/wav"
-    else:
-        media_type = "application/octet-stream"
+    ext = filename.split(".")[-1].lower() if "." in filename else ""
+    media_types = {
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "webp": "image/webp",
+        "gif": "image/gif",
+        "mp4": "video/mp4",
+        "mov": "video/quicktime",
+        "webm": "video/webm",
+        "avi": "video/x-msvideo",
+        "mp3": "audio/mpeg",
+        "wav": "audio/wav",
+        "ogg": "audio/ogg",
+        "aac": "audio/aac",
+        "m4a": "audio/mp4"
+    }
+    media_type = media_types.get(ext, "application/octet-stream")
     
     return FileResponse(file_path, media_type=media_type)
 
