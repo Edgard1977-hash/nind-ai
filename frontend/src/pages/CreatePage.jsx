@@ -55,8 +55,10 @@ export const CreatePage = () => {
 
   // Chunked upload for large files
   const uploadFileChunked = async (file, onProgress) => {
-    const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks
+    const CHUNK_SIZE = 1 * 1024 * 1024; // 1MB chunks to bypass proxy limits
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    
+    console.log(`Starting chunked upload: ${file.size} bytes, ${totalChunks} chunks`);
     
     const initResponse = await axios.post(`${API}/upload/init`, {
       filename: file.name,
@@ -65,6 +67,7 @@ export const CreatePage = () => {
     });
     
     const uploadId = initResponse.data.upload_id;
+    console.log(`Upload ID: ${uploadId}`);
     
     for (let i = 0; i < totalChunks; i++) {
       const start = i * CHUNK_SIZE;
@@ -80,14 +83,16 @@ export const CreatePage = () => {
         upload_id: uploadId,
         chunk_index: i,
         data: base64
-      });
+      }, { timeout: 60000 });
       
       if (onProgress) {
         onProgress(Math.round(((i + 1) / totalChunks) * 100), `Часть ${i + 1}/${totalChunks}`);
       }
+      console.log(`Uploaded chunk ${i + 1}/${totalChunks}`);
     }
     
     const completeResponse = await axios.post(`${API}/upload/complete?upload_id=${uploadId}`);
+    console.log(`Upload complete: ${completeResponse.data.url}`);
     return completeResponse.data.url;
   };
 
@@ -107,35 +112,22 @@ export const CreatePage = () => {
     setUploadProgress(0);
     
     try {
-      if (fileSizeMB > 5) {
-        setUploadMessage(`Загружаем ${fileSizeMB.toFixed(0)} MB...`);
-        const url = await uploadFileChunked(file, (progress, msg) => {
-          setUploadProgress(progress);
-          setUploadMessage(msg);
-        });
-        setVideoUrl(url);
-      } else {
-        setUploadMessage("Загружаем видео...");
-        const formData = new FormData();
-        formData.append("file", file);
-        
-        const response = await axios.post(`${API}/upload`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-          timeout: 300000,
-          onUploadProgress: (progressEvent) => {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percent);
-          }
-        });
-        setVideoUrl(response.data.url);
-      }
+      // ALWAYS use chunked upload for videos to bypass proxy size limits
+      setUploadMessage(`Загружаем ${fileSizeMB.toFixed(1)} MB по частям...`);
+      toast.info(`Загрузка ${fileSizeMB.toFixed(1)} MB видео...`);
+      
+      const url = await uploadFileChunked(file, (progress, msg) => {
+        setUploadProgress(progress);
+        setUploadMessage(msg);
+      });
+      setVideoUrl(url);
       
       setUploadProgress(0);
       setUploadMessage("");
       toast.success("Видео загружено!");
     } catch (error) {
       console.error("Video upload failed:", error);
-      toast.error("Ошибка загрузки видео");
+      toast.error(`Ошибка загрузки: ${error.message || 'Попробуйте ещё раз'}`);
       setVideoFile(null);
       setVideoPreview(null);
     }
