@@ -505,7 +505,7 @@ async def generate_apple_text_script(prompt: str, language: str) -> dict:
         chat = LlmChat(
             api_key=api_key,
             session_id=f"apple-text-{uuid.uuid4()}",
-            system_message="You follow user instructions EXACTLY. Never translate, never add extra content."
+            system_message="You follow user instructions EXACTLY. Never translate, never add extra content. Always return valid JSON."
         )
         chat.with_model("openai", "gpt-5.2")
         
@@ -513,68 +513,78 @@ async def generate_apple_text_script(prompt: str, language: str) -> dict:
 
 CRITICAL RULES:
 1. Use EXACTLY the text the user provides - DO NOT translate it
-2. DO NOT add text that user didn't ask for
-3. If user specifies colors (like "blue gradient", "голубой"), use those EXACT colors
-4. Keep the EXACT language user wrote in - if they wrote "Go make content", keep it as "Go make content"
+2. DO NOT add text that user didn't ask for  
+3. If user specifies colors (like "blue gradient", "голубой", "голубо-синий"), add "gradient_colors" to that phrase
+4. Keep the EXACT language user wrote in
 
-Style: Clean, bold, impactful. Like Apple keynotes.
-- Alternating white and black backgrounds
-- One underlined word for emphasis (optional)
-
-Color codes for gradients:
-- "голубо-синий" / "blue" = ["#00D4FF", "#0066FF"]
+GRADIENT COLORS (when user asks for gradient):
+- "голубо-синий" / "голубой" / "blue" / "синий" = ["#00D4FF", "#0066FF"]
 - "зелёный" / "green" = ["#00FF87", "#00D4AA"]  
 - "фиолетовый" / "purple" = ["#9D4EDD", "#7B2CBF"]
 - "оранжевый" / "orange" = ["#FF6B35", "#FF8C42"]
+- "красный" / "red" = ["#FF416C", "#FF4B2B"]
 
-Return JSON:
+IMPORTANT: When user says "переливнуть градиентом" or "gradient" for a specific text, you MUST add "gradient_colors" array to that phrase!
+
+Return ONLY valid JSON (no markdown, no explanation):
 {{
-    "title": "Title from user prompt",
+    "title": "Title",
     "phrases": [
-        {{"text": "EXACT user text phrase 1", "bg": "white"}},
-        {{"text": "EXACT user text phrase 2", "bg": "black"}},
-        {{"text": "Brand/Final text", "bg": "white", "gradient_colors": ["#color1", "#color2"]}}
+        {{"text": "First phrase", "bg": "white"}},
+        {{"text": "Second phrase with gradient", "bg": "black", "gradient_colors": ["#00D4FF", "#0066FF"]}}
     ],
     "full_script": "All text for TTS"
 }}
-
-If user asks for gradient on brand name at the end, add "gradient_colors" to that phrase.
 
 User prompt: {prompt}"""
         
         msg = UserMessage(text=system_prompt)
         response = await chat.send_message(msg)
         
+        logger.info(f"Apple text AI response: {response[:500]}")
+        
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
         if json_start != -1 and json_end > json_start:
-            return json.loads(response[json_start:json_end])
+            result = json.loads(response[json_start:json_end])
+            logger.info(f"Parsed Apple text script: {result}")
+            return result
     except Exception as e:
         logger.warning(f"Apple text script generation failed: {e}")
     
-    # Fallback
+    # Fallback - try to parse user prompt for gradient request
+    has_gradient = any(word in prompt.lower() for word in ['градиент', 'переливн', 'gradient', 'голубо', 'синий', 'blue'])
+    
     if is_russian:
-        return {
+        fallback = {
             "title": "Презентация",
             "phrases": [
                 {"text": "Давайте создадим", "bg": "white"},
                 {"text": "Что-то невероятное", "bg": "white"},
                 {"text": "Просто. Чисто.", "bg": "black"},
-                {"text": "Как Apple.", "bg": "white", "underline": "Apple"}
             ],
-            "full_script": "Давайте создадим что-то невероятное. Просто. Чисто. Как Apple."
+            "full_script": "Давайте создадим что-то невероятное. Просто. Чисто."
         }
+        if has_gradient:
+            fallback["phrases"].append({"text": "Бренд", "bg": "black", "gradient_colors": ["#00D4FF", "#0066FF"]})
+        else:
+            fallback["phrases"].append({"text": "Как Apple.", "bg": "white", "underline": "Apple"})
+        return fallback
     else:
-        return {
+        fallback = {
             "title": "Presentation",
             "phrases": [
                 {"text": "Let's create", "bg": "white"},
                 {"text": "Something amazing", "bg": "white"},
                 {"text": "Simple. Clean.", "bg": "black"},
-                {"text": "Like Apple.", "bg": "white", "underline": "Apple"}
             ],
-            "full_script": "Let's create something amazing. Simple. Clean. Like Apple."
+            "full_script": "Let's create something amazing. Simple. Clean."
         }
+        if has_gradient:
+            fallback["phrases"].append({"text": "Brand", "bg": "black", "gradient_colors": ["#00D4FF", "#0066FF"]})
+        else:
+            fallback["phrases"].append({"text": "Like Apple.", "bg": "white", "underline": "Apple"})
+        return fallback
 
 
 async def generate_kinetic_typography_script(prompt: str, language: str) -> dict:
