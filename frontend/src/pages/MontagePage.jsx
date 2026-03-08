@@ -50,6 +50,7 @@ export const MontagePage = () => {
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
   const [montageId, setMontageId] = useState(null);
+  const [resultVideoUrl, setResultVideoUrl] = useState(null);
   
   const videoInputRef = useRef(null);
   const musicInputRef = useRef(null);
@@ -204,9 +205,9 @@ export const MontagePage = () => {
         setIsProcessing(false);
         setMontageId(null);
         toast.success("Монтаж готов!");
-        // Navigate to video page or show download
+        // Save result URL for display
         if (data.video_url) {
-          window.open(`${BACKEND_URL}${data.video_url}`, '_blank');
+          setResultVideoUrl(`${BACKEND_URL}${data.video_url}`);
         }
       } else if (data.status === "error") {
         setIsProcessing(false);
@@ -411,6 +412,46 @@ export const MontagePage = () => {
             </>
           )}
         </button>
+
+        {/* Result Video */}
+        {resultVideoUrl && (
+          <div className="mt-6 glass-ios rounded-2xl p-4" data-testid="result-section">
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Check className="w-5 h-5 text-green-400" />
+              Ваш монтаж готов!
+            </h3>
+            <video
+              src={resultVideoUrl}
+              className="w-full rounded-xl mb-4"
+              controls
+              autoPlay
+            />
+            <div className="flex gap-3">
+              <a
+                href={resultVideoUrl}
+                download
+                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center gap-2 font-medium"
+                data-testid="download-btn"
+              >
+                <Film className="w-5 h-5" />
+                Скачать
+              </a>
+              <button
+                onClick={() => {
+                  setResultVideoUrl(null);
+                  setVideoFile(null);
+                  setVideoPreview(null);
+                  setVideoUrl(null);
+                }}
+                className="flex-1 py-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 transition-colors flex items-center justify-center gap-2 font-medium"
+                data-testid="new-montage-btn"
+              >
+                <Sparkles className="w-5 h-5" />
+                Новый монтаж
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
