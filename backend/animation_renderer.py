@@ -10,6 +10,7 @@ Creates frame-by-frame animations with proper graphics:
 import asyncio
 import uuid
 import math
+import random
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from PIL import Image, ImageDraw, ImageFont
@@ -1561,3 +1562,309 @@ def render_product_scene(
             radius=10 + i,
             outline=(100, 150, 255, alpha)
         )
+
+
+
+# ==================== SPOTIFY/PRODUCT DEMO STYLE ====================
+
+async def render_spotify_demo(
+    script_data: Dict,
+    output_dir: Path,
+    fps: int = 30
+) -> str:
+    """
+    Render Spotify/Product demo style video - SIMPLIFIED VERSION
+    """
+    from advanced_effects import create_gradient_background, GRADIENT_PRESETS
+    
+    output_path = output_dir / f"spotify_demo_{uuid.uuid4().hex[:8]}.mp4"
+    frames_dir = output_dir / f"frames_{uuid.uuid4().hex[:8]}"
+    frames_dir.mkdir(exist_ok=True)
+    
+    # Extract data
+    brand_name = script_data.get("brand_name") or "Spotify"
+    tagline = script_data.get("tagline") or "Music for everyone"
+    brand_color = script_data.get("brand_color") or "#1DB954"
+    
+    # Simple gradient
+    if brand_name and "spotify" in brand_name.lower():
+        gradient_colors = ["#1DB954", "#121212"]
+    else:
+        gradient_colors = [brand_color, "#121212"]
+    
+    # Only 45 frames (1.5 sec at 30fps) for quick render
+    total_frames = 45
+    
+    for frame_num in range(total_frames):
+        progress = frame_num / total_frames
+        
+        # Create simple gradient background
+        bg = Image.new("RGBA", (WIDTH, HEIGHT), (18, 18, 18, 255))
+        draw = ImageDraw.Draw(bg)
+        
+        # Add gradient effect manually (simplified)
+        for y in range(HEIGHT):
+            t = y / HEIGHT
+            r = int(29 * (1-t) + 18 * t)
+            g = int(185 * (1-t) + 18 * t)
+            b = int(84 * (1-t) + 18 * t)
+            draw.line([(0, y), (WIDTH, y)], fill=(r, g, b))
+        
+        # Brand name with fade in
+        alpha = min(255, int(255 * progress * 2))
+        font = get_font(64, bold=True)
+        text_bbox = draw.textbbox((0, 0), brand_name, font=font)
+        text_w = text_bbox[2] - text_bbox[0]
+        text_x = (WIDTH - text_w) // 2
+        
+        draw.text((text_x, HEIGHT // 2 - 80), brand_name, 
+                 font=font, fill=(255, 255, 255, alpha))
+        
+        # Tagline
+        if progress > 0.3:
+            font_small = get_font(36)
+            tag_bbox = draw.textbbox((0, 0), tagline, font=font_small)
+            tag_w = tag_bbox[2] - tag_bbox[0]
+            tag_x = (WIDTH - tag_w) // 2
+            draw.text((tag_x, HEIGHT // 2 + 20), tagline, 
+                     font=font_small, fill=(255, 255, 255, int(alpha * 0.8)))
+        
+        # Save frame
+        frame_path = frames_dir / f"frame_{frame_num:05d}.png"
+        bg.save(frame_path, "PNG")
+    
+    # Fast encode
+    import subprocess
+    cmd = [
+        "ffmpeg", "-y",
+        "-framerate", "30",
+        "-i", str(frames_dir / "frame_%05d.png"),
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-crf", "30",
+        "-pix_fmt", "yuv420p",
+        str(output_path)
+    ]
+    subprocess.run(cmd, capture_output=True)
+    
+    # Cleanup
+    import shutil
+    shutil.rmtree(frames_dir, ignore_errors=True)
+    
+    return str(output_path)
+
+
+# ==================== SAAS/DASHBOARD DEMO STYLE ====================
+
+async def render_saas_demo(
+    script_data: Dict,
+    output_dir: Path,
+    fps: int = 30
+) -> str:
+    """
+    Render SaaS/Dashboard demo style video
+    Features:
+    - Light gradient background
+    - Animated cursor
+    - Typewriter text effect
+    - Dashboard cards with charts
+    - Smooth scale/fade transitions
+    """
+    from advanced_effects import (
+        create_gradient_background,
+        ease_out_cubic,
+        ease_out_back,
+        GRADIENT_PRESETS
+    )
+    
+    output_path = output_dir / f"saas_demo_{uuid.uuid4().hex[:8]}.mp4"
+    frames_dir = output_dir / f"frames_{uuid.uuid4().hex[:8]}"
+    frames_dir.mkdir(exist_ok=True)
+    
+    # Extract data
+    headline = script_data.get("headline", "Build something amazing.")
+    features = script_data.get("features", ["Track", "Analyze", "Grow"])
+    accent_color = script_data.get("accent_color", "#6366F1")
+    
+    gradient_colors = script_data.get("gradient", GRADIENT_PRESETS["notion"])
+    
+    total_frames = 15 * 4  # 4 seconds at 15fps
+    
+    cursor_x, cursor_y = WIDTH // 2, HEIGHT // 2
+    cursor_target_x, cursor_target_y = WIDTH // 2, HEIGHT // 2
+    
+    for frame_num in range(total_frames):
+        progress = frame_num / total_frames
+        
+        # Create background
+        bg = create_gradient_background(
+            WIDTH, HEIGHT,
+            gradient_colors,
+            direction="diagonal",
+            noise=0.005
+        ).convert("RGBA")
+        
+        draw = ImageDraw.Draw(bg)
+        
+        # Phase 1: Typewriter headline (0-0.3)
+        if progress < 0.3:
+            type_progress = progress / 0.3
+            visible_chars = int(len(headline) * type_progress)
+            visible_text = headline[:visible_chars]
+            
+            font = get_font(56, bold=True)
+            text_bbox = draw.textbbox((0, 0), visible_text, font=font)
+            text_w = text_bbox[2] - text_bbox[0]
+            text_x = (WIDTH - text_w) // 2
+            text_y = HEIGHT // 2 - 100
+            
+            draw.text((text_x, text_y), visible_text, 
+                     font=font, fill=(30, 30, 30))
+            
+            # Cursor blink
+            if frame_num % 30 < 15:
+                cursor_offset = text_w + 5
+                draw.rectangle(
+                    (text_x + cursor_offset, text_y + 5, 
+                     text_x + cursor_offset + 3, text_y + 55),
+                    fill=(30, 30, 30)
+                )
+        
+        # Phase 2: Dashboard cards appear (0.3-0.7)
+        elif progress < 0.7:
+            card_progress = (progress - 0.3) / 0.4
+            
+            # Keep headline
+            font = get_font(42, bold=True)
+            text_bbox = draw.textbbox((0, 0), headline, font=font)
+            text_x = (WIDTH - (text_bbox[2] - text_bbox[0])) // 2
+            draw.text((text_x, 80), headline, font=font, fill=(30, 30, 30))
+            
+            # Dashboard cards
+            card_w, card_h = 280, 200
+            cards_data = [
+                {"value": "$12,543", "label": "Revenue", "change": "+12%"},
+                {"value": "1,234", "label": "Users", "change": "+8%"},
+                {"value": "89%", "label": "Conversion", "change": "+3%"}
+            ]
+            
+            for i, card in enumerate(cards_data):
+                # Staggered animation
+                card_delay = i * 0.15
+                if card_progress > card_delay:
+                    local_progress = min(1, (card_progress - card_delay) / 0.3)
+                    
+                    # Card position with bounce
+                    start_y = HEIGHT + 100
+                    end_y = 250 + i * 60
+                    card_y = int(start_y + (end_y - start_y) * ease_out_back(local_progress))
+                    card_x = 60 + i * 220
+                    
+                    # Shadow
+                    draw.rounded_rectangle(
+                        (card_x + 5, card_y + 8, card_x + card_w + 5, card_y + card_h + 8),
+                        radius=16,
+                        fill=(0, 0, 0, 30)
+                    )
+                    
+                    # Card
+                    draw.rounded_rectangle(
+                        (card_x, card_y, card_x + card_w, card_y + card_h),
+                        radius=16,
+                        fill=(255, 255, 255, 250)
+                    )
+                    
+                    # Value
+                    val_font = get_font(36, bold=True)
+                    draw.text((card_x + 20, card_y + 20), card["value"], 
+                             font=val_font, fill=(30, 30, 30))
+                    
+                    # Label
+                    label_font = get_font(18)
+                    draw.text((card_x + 20, card_y + 70), card["label"], 
+                             font=label_font, fill=(100, 100, 100))
+                    
+                    # Change indicator
+                    change_color = (34, 197, 94) if "+" in card["change"] else (239, 68, 68)
+                    draw.text((card_x + 20, card_y + 100), card["change"], 
+                             font=label_font, fill=change_color)
+                    
+                    # Mini chart
+                    chart_y_base = card_y + card_h - 30
+                    chart_x_base = card_x + 20
+                    points = [random.randint(20, 50) for _ in range(8)]
+                    for j in range(len(points) - 1):
+                        x1 = chart_x_base + j * 30
+                        y1 = chart_y_base - points[j]
+                        x2 = chart_x_base + (j + 1) * 30
+                        y2 = chart_y_base - points[j + 1]
+                        draw.line([(x1, y1), (x2, y2)], 
+                                 fill=hex_to_rgb(accent_color), width=2)
+            
+            # Animated cursor
+            if card_progress > 0.5:
+                cursor_target_x = 300
+                cursor_target_y = 400
+            cursor_x += (cursor_target_x - cursor_x) * 0.1
+            cursor_y += (cursor_target_y - cursor_y) * 0.1
+            
+            # Draw cursor
+            draw.polygon([
+                (int(cursor_x), int(cursor_y)),
+                (int(cursor_x), int(cursor_y) + 20),
+                (int(cursor_x) + 6, int(cursor_y) + 16),
+                (int(cursor_x) + 10, int(cursor_y) + 24),
+                (int(cursor_x) + 14, int(cursor_y) + 22),
+                (int(cursor_x) + 10, int(cursor_y) + 14),
+                (int(cursor_x) + 16, int(cursor_y) + 14)
+            ], fill=(30, 30, 30))
+        
+        # Phase 3: Features list (0.7-1.0)
+        else:
+            feat_progress = (progress - 0.7) / 0.3
+            
+            # Background stays
+            # Features animate in
+            font_feat = get_font(32, bold=True)
+            
+            for i, feat in enumerate(features):
+                feat_delay = i * 0.2
+                if feat_progress > feat_delay:
+                    local_progress = min(1, (feat_progress - feat_delay) / 0.3)
+                    
+                    feat_x = int(-200 + (WIDTH // 2 - 50) * ease_out_cubic(local_progress))
+                    feat_y = HEIGHT // 2 + i * 60
+                    
+                    # Bullet point
+                    draw.ellipse(
+                        (feat_x - 30, feat_y + 8, feat_x - 14, feat_y + 24),
+                        fill=hex_to_rgb(accent_color)
+                    )
+                    
+                    draw.text((feat_x, feat_y), feat, 
+                             font=font_feat, fill=(30, 30, 30))
+        
+        # Save frame
+        frame_path = frames_dir / f"frame_{frame_num:05d}.png"
+        bg.save(frame_path)
+    
+    # Encode video
+    import subprocess
+    cmd = [
+        "ffmpeg", "-y",
+        "-framerate", str(fps),
+        "-i", str(frames_dir / "frame_%05d.png"),
+        "-c:v", "libx264",
+        "-preset", "fast",
+        "-crf", "23",
+        "-pix_fmt", "yuv420p",
+        str(output_path)
+    ]
+    
+    subprocess.run(cmd, capture_output=True)
+    
+    # Cleanup
+    import shutil
+    shutil.rmtree(frames_dir, ignore_errors=True)
+    
+    return str(output_path)

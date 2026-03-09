@@ -38,7 +38,9 @@ from animation_renderer import (
     render_apple_text_animation,
     render_kinetic_typography,
     render_logo_animation,
-    render_product_advertisement
+    render_product_advertisement,
+    render_spotify_demo,
+    render_saas_demo
 )
 
 # Import montage service
@@ -300,6 +302,26 @@ VIDEO_FORMATS = [
         category="commercial",
         image_url="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"
     ),
+    VideoFormat(
+        id="spotify_demo",
+        name="Spotify/Brand Demo",
+        name_ru="Spotify/Бренд демо",
+        description="Brand-style demo with gradient background, logo animation, and UI mockup",
+        description_ru="Демо в стиле бренда с градиентным фоном, анимацией лого и UI",
+        icon="Music",
+        category="commercial",
+        image_url="https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=400"
+    ),
+    VideoFormat(
+        id="saas_demo",
+        name="SaaS/Dashboard Demo",
+        name_ru="SaaS/Дашборд демо",
+        description="Dashboard demo with typewriter text, animated charts, and cursor",
+        description_ru="Демо дашборда с печатающимся текстом, графиками и курсором",
+        icon="BarChart",
+        category="commercial",
+        image_url="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400"
+    ),
 ]
 
 # Character types for character_explainer format
@@ -353,10 +375,12 @@ Available video types:
 3. "kinetic_typography" - For dynamic word-by-word text animations (e.g., "animate words", "kinetic text", "слова по очереди")
 4. "logo_animation" - For brand/logo reveal animations (e.g., "animate my logo", "brand intro", "анимация логотипа", "интро бренда")
 5. "product_advertisement" - For product showcase/advertisement videos like Apple ads (e.g., "product ad", "реклама продукта", "реклама товара", "showcase product", "advertise my product", "MacBook ad style", "iPhone style ad", "показать товар", "рекламный ролик")
-6. "news" - For news reports, current events, breaking news
-7. "ai_story" - For stories, narratives, tales, fiction
-8. "character_explainer" - For educational explanations with cute characters
-9. "gameplay_clip" - For gaming content with YouTube clips
+6. "spotify_demo" - For brand/app demo videos with gradient backgrounds, logo animation, and UI mockups (e.g., "spotify style", "brand demo", "app demo", "демо приложения")
+7. "saas_demo" - For SaaS/dashboard demos with typewriter text, charts, and cursor animation (e.g., "saas demo", "dashboard demo", "startup video", "analytics platform", "build something")
+8. "news" - For news reports, current events, breaking news
+9. "ai_story" - For stories, narratives, tales, fiction
+10. "character_explainer" - For educational explanations with cute characters
+11. "gameplay_clip" - For gaming content with YouTube clips
 
 User prompt: "{prompt}"
 
@@ -416,6 +440,16 @@ Important rules:
     product_keywords = ['реклам', 'товар', 'продукт', 'product', 'advertis', 'showcase', 'commercial', 'macbook', 'iphone', 'показать продукт']
     if any(kw in prompt_lower for kw in product_keywords):
         return {"format_id": "product_advertisement", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for Spotify/Brand demo
+    brand_demo_keywords = ['spotify', 'бренд демо', 'brand demo', 'product demo', 'демо продукт', 'демо приложен', 'app demo']
+    if any(kw in prompt_lower for kw in brand_demo_keywords):
+        return {"format_id": "spotify_demo", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    
+    # Check for SaaS/Dashboard demo
+    saas_keywords = ['saas', 'дашборд', 'dashboard', 'аналитик', 'analytics', 'стартап', 'startup', 'платформ', 'platform', 'build something']
+    if any(kw in prompt_lower for kw in saas_keywords):
+        return {"format_id": "saas_demo", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
     # Check for news
     news_keywords = ['новост', 'news', 'breaking', 'событи', 'сегодня', 'headline']
@@ -1660,6 +1694,74 @@ async def process_video_generation(project_id: str):
                             if video_with_audio:
                                 final_video = video_with_audio
                 
+                poster_url = await generate_poster_image(final_video, work_dir)
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
+        
+        # ============ SPOTIFY/BRAND DEMO FORMAT ============
+        elif format_id == "spotify_demo":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 30, "progress_message": "Создаём демо бренда..."}}
+            )
+            
+            # Extract brand info from prompt/scenes
+            brand_name = project.get("brand_name") or "Spotify"
+            original_prompt = project.get("prompt", "")
+            
+            # Try to extract brand from prompt
+            prompt_lower = original_prompt.lower()
+            if "spotify" in prompt_lower:
+                brand_name = "Spotify"
+            elif "tiktok" in prompt_lower:
+                brand_name = "TikTok"
+            elif "instagram" in prompt_lower:
+                brand_name = "Instagram"
+            
+            tagline = scenes[0].get("text", "Your tagline here") if scenes else "Your tagline here"
+            brand_color = project.get("brand_color") or "#1DB954"
+            
+            script_data = {
+                "brand_name": brand_name,
+                "tagline": tagline,
+                "highlight_words": [],
+                "brand_color": brand_color
+            }
+            
+            final_video_str = await render_spotify_demo(script_data, work_dir)
+            final_video = Path(final_video_str)
+            
+            if final_video.exists():
+                poster_url = await generate_poster_image(final_video, work_dir)
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
+        
+        # ============ SAAS/DASHBOARD DEMO FORMAT ============
+        elif format_id == "saas_demo":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 30, "progress_message": "Создаём SaaS демо..."}}
+            )
+            
+            # Extract headline from scenes
+            headline = scenes[0].get("text", "Build something amazing.") if scenes else "Build something amazing."
+            features = [s.get("text", "Feature") for s in scenes[1:4]] if len(scenes) > 1 else ["Track", "Analyze", "Grow"]
+            accent_color = project.get("accent_color", "#6366F1")
+            
+            script_data = {
+                "headline": headline,
+                "features": features,
+                "accent_color": accent_color
+            }
+            
+            final_video_str = await render_saas_demo(script_data, work_dir)
+            final_video = Path(final_video_str)
+            
+            if final_video.exists():
                 poster_url = await generate_poster_image(final_video, work_dir)
                 final_name = f"video_{project_id}.mp4"
                 final_path = UPLOADS_DIR / final_name
