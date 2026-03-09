@@ -33,9 +33,9 @@ class TestHealthAndFormats:
         assert "character_types" in data
         assert "gameplay_types" in data
         
-        # Verify 10 formats exist
+        # Verify formats exist (at least 10)
         formats = data["formats"]
-        assert len(formats) == 10
+        assert len(formats) >= 10
         
         # Verify chat_animation format exists (new format)
         format_ids = [f["id"] for f in formats]

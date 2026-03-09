@@ -51,6 +51,7 @@ from exact_effects import (
     render_spotify_exact,
     render_imessage_exact
 )
+from universal_effects import render_universal_video
 
 # Import montage service
 from montage_service import (
@@ -379,17 +380,14 @@ async def detect_video_type(prompt: str) -> dict:
         detection_prompt = f"""Analyze this user prompt and determine the best video type to create.
 
 Available video types:
-1. "chat_animation" - For dialog/conversation/messages animations (e.g., "make animation of chat with client", "show dialog between...", "animate our conversation", "переписка", "диалог", "сообщения")
-2. "apple_text" - For minimalist text presentations like Apple style (e.g., "make text like Apple", "simple text animation", "презентация текста")
-3. "kinetic_typography" - For dynamic word-by-word text animations (e.g., "animate words", "kinetic text", "слова по очереди")
-4. "logo_animation" - For brand/logo reveal animations (e.g., "animate my logo", "brand intro", "анимация логотипа", "интро бренда")
-5. "product_advertisement" - For product showcase/advertisement videos like Apple ads (e.g., "product ad", "реклама продукта", "реклама товара", "showcase product", "advertise my product", "MacBook ad style", "iPhone style ad", "показать товар", "рекламный ролик")
-6. "spotify_demo" - For brand/app demo videos with gradient backgrounds, logo animation, and UI mockups (e.g., "spotify style", "brand demo", "app demo", "демо приложения")
-7. "saas_demo" - For SaaS/dashboard demos with typewriter text, charts, and cursor animation (e.g., "saas demo", "dashboard demo", "startup video", "analytics platform", "build something")
-8. "news" - For news reports, current events, breaking news
-9. "ai_story" - For stories, narratives, tales, fiction
-10. "character_explainer" - For educational explanations with cute characters
-11. "gameplay_clip" - For gaming content with YouTube clips
+1. "chat_animation" - ONLY for dialog/conversation/messages animations (e.g., "make animation of chat", "show dialog between...", "переписка", "диалог", "сообщения")
+2. "product_advertisement" - ONLY for advertising physical products (e.g., "реклама продукта", "showcase product", "advertise my product")
+3. "universal" - DEFAULT for everything else - dynamic AI effects including:
+   - Gradient backgrounds and aurora effects
+   - Text animations (popup, typewriter, word-by-word)
+   - Gradient text with shimmer
+   - Cards and UI elements
+   - ANY creative video request
 
 User prompt: "{prompt}"
 
@@ -402,12 +400,11 @@ Respond ONLY with a JSON object:
     "extracted_data": {{}}
 }}
 
-Important rules:
-- If user mentions dialog, chat, conversation, messages, or provides a conversation in brackets [] or quotes, choose "chat_animation"
-- If user mentions Apple, minimalist text, presentation, choose "apple_text"
-- If user mentions word animation, kinetic, dynamic text, choose "kinetic_typography"
-- If user mentions logo, brand, intro, choose "logo_animation"
-- If user mentions product ad, product advertisement, товар, реклама, showcase, commercial, or wants to advertise a physical product, choose "product_advertisement"
+CRITICAL RULES:
+- Use "chat_animation" ONLY if user explicitly asks for chat/dialog/messages
+- Use "product_advertisement" ONLY if user wants to advertise a physical product
+- For EVERYTHING ELSE (gradients, text effects, brand demos, startups, stories, etc.) use "universal"
+- When in doubt, use "universal" - it handles any creative request
 """
         
         msg = UserMessage(text=detection_prompt)
@@ -450,28 +447,190 @@ Important rules:
     if any(kw in prompt_lower for kw in product_keywords):
         return {"format_id": "product_advertisement", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
-    # Check for Spotify/Brand demo
-    brand_demo_keywords = ['spotify', 'бренд демо', 'brand demo', 'product demo', 'демо продукт', 'демо приложен', 'app demo']
-    if any(kw in prompt_lower for kw in brand_demo_keywords):
-        return {"format_id": "spotify_demo", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
-    # Check for SaaS/Dashboard demo
-    saas_keywords = ['saas', 'дашборд', 'dashboard', 'аналитик', 'analytics', 'стартап', 'startup', 'платформ', 'platform', 'build something']
-    if any(kw in prompt_lower for kw in saas_keywords):
-        return {"format_id": "saas_demo", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
     # Check for news
-    news_keywords = ['новост', 'news', 'breaking', 'событи', 'сегодня', 'headline']
+    news_keywords = ['новост', 'news', 'breaking', 'событи', 'headline']
     if any(kw in prompt_lower for kw in news_keywords):
         return {"format_id": "news", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
-    # Check for story
-    story_keywords = ['истор', 'story', 'расскажи', 'tell', 'tale', 'сказк']
-    if any(kw in prompt_lower for kw in story_keywords):
-        return {"format_id": "ai_story", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    # Default to universal AI system for everything else
+    # This allows dynamic effect generation based on prompt
+    return {"format_id": "universal", "confidence": 0.9, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+
+
+
+async def generate_universal_script(prompt: str, language: str) -> dict:
+    """
+    AI generates dynamic video script with effects based on user prompt.
+    This is the SMART engine that decides what effects to use.
+    """
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    # Default to ai_story
-    return {"format_id": "ai_story", "confidence": 0.5, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"universal-{uuid.uuid4()}",
+            system_message="You are an expert video effects designer. Create dynamic, engaging video scripts with modern effects."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        lang = "Russian" if is_russian else "English"
+        
+        system_prompt = f"""Create a video script with dynamic effects based on this prompt.
+Language: {lang}
+
+AVAILABLE EFFECTS:
+
+1. BACKGROUND TYPES:
+   - "aurora" - Animated gradient waves (best for modern, tech, emotional content)
+   - "linear" - Simple top-to-bottom gradient
+   - "radial" - Center-outward gradient
+   - "solid" - Solid color
+
+2. ELEMENT TYPES:
+   - "text" - Large text with animation
+     effects: "scale_up" (pop), "slide_up", "fade", "bounce", "elastic"
+   - "typewriter" - Text appears char by char with cursor
+   - "word_by_word" - Words appear one by one (great for quotes)
+   - "gradient_text" - Text with color gradient, optional shimmer
+   - "chat" - Message bubbles dialog
+     styles: "imessage", "whatsapp", "telegram", "modern"
+   - "card" - UI cards with icon, title, subtitle
+
+RULES:
+- Create 3-6 elements for variety
+- Use timing (start_time) to sequence elements
+- Match effects to content mood
+- For dialogs/chats, use "chat" element
+- For motivational/quotes, use "word_by_word"
+- For tech/brand content, use gradient backgrounds + gradient_text
+- Keep total duration 8-15 seconds
+
+Return ONLY valid JSON:
+{{
+    "title": "Video title",
+    "background": {{
+        "type": "aurora",
+        "colors": [[r,g,b], [r,g,b], [r,g,b]]
+    }},
+    "elements": [
+        {{
+            "type": "text",
+            "content": "Text content",
+            "start_time": 0.0,
+            "duration": 3.0,
+            "effect": "scale_up",
+            "position": "center",
+            "font_size": 72,
+            "color": [255, 255, 255]
+        }},
+        {{
+            "type": "chat",
+            "start_time": 2.0,
+            "duration": 6.0,
+            "style": "imessage",
+            "messages": [
+                {{"text": "Message 1", "sender": true}},
+                {{"text": "Response", "sender": false}}
+            ]
+        }}
+    ],
+    "duration": 10.0
+}}
+
+User prompt: {prompt}"""
+        
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        # Parse JSON
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            result = json.loads(response[json_start:json_end])
+            logger.info(f"Generated universal script: {result.get('title', 'No title')}")
+            return result
+    except Exception as e:
+        logger.warning(f"Universal script generation failed: {e}")
+    
+    # Fallback script based on prompt analysis
+    prompt_lower = prompt.lower()
+    
+    # Detect chat/dialog intent
+    chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation']
+    is_chat = any(kw in prompt_lower for kw in chat_keywords)
+    
+    # Detect gradient intent
+    gradient_keywords = ['градиент', 'перелив', 'gradient', 'aurora', 'shimmer']
+    wants_gradient = any(kw in prompt_lower for kw in gradient_keywords)
+    
+    if is_chat:
+        return {
+            "title": "Диалог" if is_russian else "Dialog",
+            "background": {
+                "type": "linear",
+                "colors": [[30, 30, 35], [50, 50, 60]]
+            },
+            "elements": [
+                {
+                    "type": "chat",
+                    "start_time": 0.5,
+                    "duration": 8.0,
+                    "style": "imessage",
+                    "messages": [
+                        {"text": "Привет! 👋" if is_russian else "Hey! 👋", "sender": True},
+                        {"text": "Привет, как дела?" if is_russian else "Hi, how are you?", "sender": False},
+                        {"text": "Отлично! 😊" if is_russian else "Great! 😊", "sender": True},
+                    ]
+                }
+            ],
+            "duration": 10.0
+        }
+    elif wants_gradient:
+        return {
+            "title": prompt[:30],
+            "background": {
+                "type": "aurora",
+                "colors": [[100, 50, 200], [50, 150, 255], [100, 255, 200]]
+            },
+            "elements": [
+                {
+                    "type": "gradient_text",
+                    "content": prompt[:50] if prompt else "Amazing",
+                    "start_time": 0.5,
+                    "duration": 4.0,
+                    "font_size": 80,
+                    "gradient_colors": [[0, 200, 255], [255, 100, 200]],
+                    "shimmer": True,
+                    "position": "center"
+                }
+            ],
+            "duration": 8.0
+        }
+    else:
+        return {
+            "title": prompt[:30],
+            "background": {
+                "type": "aurora",
+                "colors": [[40, 40, 60], [80, 60, 120], [60, 100, 150]]
+            },
+            "elements": [
+                {
+                    "type": "text",
+                    "content": prompt[:60] if prompt else "Hello World",
+                    "start_time": 0.5,
+                    "duration": 4.0,
+                    "effect": "scale_up",
+                    "font_size": 64,
+                    "color": [255, 255, 255],
+                    "position": "center"
+                }
+            ],
+            "duration": 8.0
+        }
+
 
 
 async def generate_chat_animation_script(prompt: str, language: str) -> dict:
@@ -1471,55 +1630,57 @@ async def process_video_generation(project_id: str):
         audio_url = None
         poster_url = None
         
-        # ============ CHAT_ANIMATION FORMAT ============
+        # ============ CHAT_ANIMATION FORMAT (Universal) ============
         if format_id == "chat_animation":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём ТОЧНУЮ копию iMessage..."}}
+                {"$set": {"progress": 30, "progress_message": "Создаём анимацию сообщений..."}}
             )
             
-            # Extract messages for EXACT iMessage style
+            # Build universal script for chat
             messages = []
             if "messages" in script_data:
-                for i, msg in enumerate(script_data["messages"][:6]):
+                for msg in script_data["messages"][:8]:
                     messages.append({
                         "text": msg.get("text", ""),
-                        "sender": i % 2 == 0
+                        "sender": msg.get("sender", 0) == 1 or msg.get("sender") == True
                     })
             
             if not messages:
                 messages = [
-                    {"text": "Hey, are you free?", "sender": True},
-                    {"text": "Let me check...", "sender": False},
+                    {"text": "Привет! 👋", "sender": True},
+                    {"text": "Привет, как дела?", "sender": False},
+                    {"text": "Отлично! Что нового?", "sender": True},
+                    {"text": "Много всего интересного! 😊", "sender": False},
                 ]
             
-            # Use EXACT iMessage renderer
-            imessage_data = {"messages": messages}
-            final_video_str = await render_imessage_exact(imessage_data, work_dir)
-            final_video = Path(final_video_str)
+            # Universal script format
+            universal_script = {
+                "background": {
+                    "type": "linear",
+                    "colors": [[20, 20, 25], [40, 40, 50]]
+                },
+                "elements": [
+                    {
+                        "type": "chat",
+                        "start_time": 0.3,
+                        "duration": 10.0,
+                        "style": "imessage",
+                        "messages": messages
+                    }
+                ],
+                "duration": 12.0
+            }
+            
+            # Render with universal system
+            final_video_str = await render_universal_video(universal_script, work_dir)
+            final_video = Path(final_video_str) if final_video_str else None
             
             if final_video and final_video.exists():
                 await db.video_projects.update_one(
                     {"id": project_id},
-                    {"$set": {"progress": 70, "progress_message": "Генерируем озвучку..."}}
+                    {"$set": {"progress": 80, "progress_message": "Финализируем видео..."}}
                 )
-                
-                # Generate TTS for narration
-                full_script = script_data.get("full_script", "")
-                if full_script:
-                    audio_url = await generate_tts(full_script)
-                    
-                    if audio_url:
-                        await db.video_projects.update_one(
-                            {"id": project_id},
-                            {"$set": {"progress": 85, "progress_message": "Добавляем озвучку..."}}
-                        )
-                        
-                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
-                        if audio_path.exists():
-                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
-                            if video_with_audio:
-                                final_video = video_with_audio
                 
                 # Generate poster
                 poster_url = await generate_poster_image(final_video, work_dir)
@@ -1834,99 +1995,39 @@ async def process_video_generation(project_id: str):
                     final_video.rename(final_path)
                     video_url = f"/api/uploads/{final_name}"
         
-        # ============ OTHER FORMATS (with images) ============
+        # ============ UNIVERSAL AI-POWERED FORMAT ============
         else:
-            # Generate images and create video scenes
-            scene_videos = []
-            total_scenes = len(scenes)
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 25, "progress_message": "AI анализирует и создаёт эффекты..."}}
+            )
             
-            for i, scene in enumerate(scenes):
-                progress = 20 + int((i / max(total_scenes, 1)) * 40)
+            # Generate universal script with AI
+            universal_script = await generate_universal_script(project["prompt"], project["language"])
+            
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 40, "progress_message": "Рендерим видео с эффектами..."}}
+            )
+            
+            # Render with universal effects system
+            final_video_str = await render_universal_video(universal_script, work_dir)
+            final_video = Path(final_video_str) if final_video_str else None
+            
+            if final_video and final_video.exists():
                 await db.video_projects.update_one(
                     {"id": project_id},
-                    {"$set": {"progress": progress, "progress_message": f"Генерируем сцену {i+1}/{total_scenes}..."}}
+                    {"$set": {"progress": 85, "progress_message": "Финализируем видео..."}}
                 )
                 
-                # Generate image
-                image_url = await generate_image(scene.get("image_prompt", scene.get("text", "")))
-                scene["image_url"] = image_url
+                # Generate poster
+                poster_url = await generate_poster_image(final_video, work_dir)
                 
-                # Create video from image with Ken Burns effect
-                if image_url:
-                    full_image_url = f"http://localhost:8001{image_url}"
-                    scene_video = await create_image_video(
-                        full_image_url, 
-                        work_dir, 
-                        duration=scene.get("duration", 4.0),
-                        animation=scene.get("animation", "zoom_in")
-                    )
-                    if scene_video:
-                        scene_videos.append(scene_video)
-                
-                await asyncio.sleep(0.5)
-            
-            # Concatenate all scene videos
-            if scene_videos:
-                await db.video_projects.update_one(
-                    {"id": project_id},
-                    {"$set": {"progress": 65, "progress_message": "Собираем видео..."}}
-                )
-                
-                concat_video = await concatenate_videos(scene_videos, work_dir)
-                
-                if concat_video:
-                    # Add subtitles
-                    await db.video_projects.update_one(
-                        {"id": project_id},
-                        {"$set": {"progress": 75, "progress_message": "Добавляем субтитры..."}}
-                    )
-                    
-                    # Create subtitle timing based on scenes
-                    subtitles = []
-                    current_time = 0
-                    for scene in scenes:
-                        duration = scene.get("duration", 4.0)
-                        subtitles.append({
-                            "text": scene.get("text", ""),
-                            "timestamp_start": current_time,
-                            "timestamp_end": current_time + duration,
-                            "highlight": scene.get("highlight", False)
-                        })
-                        current_time += duration
-                    
-                    subtitled_video = await add_subtitles_to_video(concat_video, subtitles, work_dir)
-                    final_video = subtitled_video or concat_video
-                    
-                    # Generate TTS
-                    await db.video_projects.update_one(
-                        {"id": project_id},
-                        {"$set": {"progress": 85, "progress_message": "Генерируем озвучку..."}}
-                    )
-                    
-                    full_script = script_data.get("full_script", " ".join([s.get("text", "") for s in scenes]))
-                    audio_url = await generate_tts(full_script)
-                    
-                    # Add audio to video
-                    if audio_url:
-                        await db.video_projects.update_one(
-                            {"id": project_id},
-                            {"$set": {"progress": 92, "progress_message": "Добавляем озвучку к видео..."}}
-                        )
-                        
-                        audio_path = UPLOADS_DIR / audio_url.split("/")[-1]
-                        if audio_path.exists():
-                            video_with_audio = await add_audio_to_video(final_video, audio_path, work_dir)
-                            if video_with_audio:
-                                final_video = video_with_audio
-                    
-                    # Generate poster
-                    poster_url = await generate_poster_image(final_video, work_dir)
-                    
-                    # Move to uploads
-                    final_name = f"video_{project_id}.mp4"
-                    final_path = UPLOADS_DIR / final_name
-                    final_video.rename(final_path)
-                    video_url = f"/api/uploads/{final_name}"
+                # Move to uploads
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
         
         # Cleanup work directory
         cleanup_work_dir(work_dir)
