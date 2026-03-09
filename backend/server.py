@@ -47,6 +47,10 @@ from pro_effects import (
     render_imessage_style,
     render_dashboard_style
 )
+from exact_effects import (
+    render_spotify_exact,
+    render_imessage_exact
+)
 
 # Import montage service
 from montage_service import (
@@ -1471,10 +1475,10 @@ async def process_video_generation(project_id: str):
         if format_id == "chat_animation":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Рендерим iMessage анимацию..."}}
+                {"$set": {"progress": 30, "progress_message": "Создаём ТОЧНУЮ копию iMessage..."}}
             )
             
-            # Extract messages for PRO iMessage style
+            # Extract messages for EXACT iMessage style
             messages = []
             if "messages" in script_data:
                 for i, msg in enumerate(script_data["messages"][:6]):
@@ -1489,9 +1493,9 @@ async def process_video_generation(project_id: str):
                     {"text": "Let me check...", "sender": False},
                 ]
             
-            # Use PRO iMessage renderer with typing indicator
+            # Use EXACT iMessage renderer
             imessage_data = {"messages": messages}
-            final_video_str = await render_imessage_style(imessage_data, work_dir)
+            final_video_str = await render_imessage_exact(imessage_data, work_dir)
             final_video = Path(final_video_str)
             
             if final_video and final_video.exists():
@@ -1722,24 +1726,21 @@ async def process_video_generation(project_id: str):
                 final_video.rename(final_path)
                 video_url = f"/api/uploads/{final_name}"
         
-        # ============ SPOTIFY/BRAND DEMO FORMAT (PRO) ============
+        # ============ SPOTIFY/BRAND DEMO FORMAT (EXACT) ============
         elif format_id == "spotify_demo":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём демо бренда с Aurora эффектом..."}}
+                {"$set": {"progress": 30, "progress_message": "Создаём ТОЧНУЮ копию Spotify эффектов..."}}
             )
             
             original_prompt = project.get("prompt", "")
             brand_name = "Spotify"
             
-            # Detect brand from prompt
             prompt_lower = original_prompt.lower()
             if "spotify" in prompt_lower:
                 brand_name = "Spotify"
             elif "tiktok" in prompt_lower:
                 brand_name = "TikTok"
-            elif "instagram" in prompt_lower:
-                brand_name = "Instagram"
             
             tagline = scenes[0].get("text", "Music for everyone") if scenes else "Music for everyone"
             
@@ -1748,8 +1749,8 @@ async def process_video_generation(project_id: str):
                 "tagline": tagline
             }
             
-            # Use PRO renderer with aurora gradient
-            final_video_str = await render_spotify_style(script_data, work_dir)
+            # Use EXACT renderer with aurora gradient and UI cards
+            final_video_str = await render_spotify_exact(script_data, work_dir)
             final_video = Path(final_video_str)
             
             if final_video.exists():
