@@ -42,6 +42,11 @@ from animation_renderer import (
     render_spotify_demo,
     render_saas_demo
 )
+from pro_effects import (
+    render_spotify_style,
+    render_imessage_style,
+    render_dashboard_style
+)
 
 # Import montage service
 from montage_service import (
@@ -1466,13 +1471,30 @@ async def process_video_generation(project_id: str):
         if format_id == "chat_animation":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Рендерим анимацию диалога..."}}
+                {"$set": {"progress": 30, "progress_message": "Рендерим iMessage анимацию..."}}
             )
             
-            # Use professional PIL renderer
-            final_video = await render_chat_animation(script_data, work_dir)
+            # Extract messages for PRO iMessage style
+            messages = []
+            if "messages" in script_data:
+                for i, msg in enumerate(script_data["messages"][:6]):
+                    messages.append({
+                        "text": msg.get("text", ""),
+                        "sender": i % 2 == 0
+                    })
             
-            if final_video:
+            if not messages:
+                messages = [
+                    {"text": "Hey, are you free?", "sender": True},
+                    {"text": "Let me check...", "sender": False},
+                ]
+            
+            # Use PRO iMessage renderer with typing indicator
+            imessage_data = {"messages": messages}
+            final_video_str = await render_imessage_style(imessage_data, work_dir)
+            final_video = Path(final_video_str)
+            
+            if final_video and final_video.exists():
                 await db.video_projects.update_one(
                     {"id": project_id},
                     {"$set": {"progress": 70, "progress_message": "Генерируем озвучку..."}}
@@ -1700,18 +1722,17 @@ async def process_video_generation(project_id: str):
                 final_video.rename(final_path)
                 video_url = f"/api/uploads/{final_name}"
         
-        # ============ SPOTIFY/BRAND DEMO FORMAT ============
+        # ============ SPOTIFY/BRAND DEMO FORMAT (PRO) ============
         elif format_id == "spotify_demo":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём демо бренда..."}}
+                {"$set": {"progress": 30, "progress_message": "Создаём демо бренда с Aurora эффектом..."}}
             )
             
-            # Extract brand info from prompt/scenes
-            brand_name = project.get("brand_name") or "Spotify"
             original_prompt = project.get("prompt", "")
+            brand_name = "Spotify"
             
-            # Try to extract brand from prompt
+            # Detect brand from prompt
             prompt_lower = original_prompt.lower()
             if "spotify" in prompt_lower:
                 brand_name = "Spotify"
@@ -1720,17 +1741,15 @@ async def process_video_generation(project_id: str):
             elif "instagram" in prompt_lower:
                 brand_name = "Instagram"
             
-            tagline = scenes[0].get("text", "Your tagline here") if scenes else "Your tagline here"
-            brand_color = project.get("brand_color") or "#1DB954"
+            tagline = scenes[0].get("text", "Music for everyone") if scenes else "Music for everyone"
             
             script_data = {
                 "brand_name": brand_name,
-                "tagline": tagline,
-                "highlight_words": [],
-                "brand_color": brand_color
+                "tagline": tagline
             }
             
-            final_video_str = await render_spotify_demo(script_data, work_dir)
+            # Use PRO renderer with aurora gradient
+            final_video_str = await render_spotify_style(script_data, work_dir)
             final_video = Path(final_video_str)
             
             if final_video.exists():
@@ -1740,25 +1759,21 @@ async def process_video_generation(project_id: str):
                 final_video.rename(final_path)
                 video_url = f"/api/uploads/{final_name}"
         
-        # ============ SAAS/DASHBOARD DEMO FORMAT ============
+        # ============ SAAS/DASHBOARD DEMO FORMAT (PRO) ============
         elif format_id == "saas_demo":
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"progress": 30, "progress_message": "Создаём SaaS демо..."}}
+                {"$set": {"progress": 30, "progress_message": "Создаём SaaS демо с 3D карточками..."}}
             )
             
-            # Extract headline from scenes
-            headline = scenes[0].get("text", "Build something amazing.") if scenes else "Build something amazing."
-            features = [s.get("text", "Feature") for s in scenes[1:4]] if len(scenes) > 1 else ["Track", "Analyze", "Grow"]
-            accent_color = project.get("accent_color", "#6366F1")
+            headline = scenes[0].get("text", "Build something.") if scenes else "Build something."
             
             script_data = {
-                "headline": headline,
-                "features": features,
-                "accent_color": accent_color
+                "headline": headline
             }
             
-            final_video_str = await render_saas_demo(script_data, work_dir)
+            # Use PRO renderer with 3D cards and gradient
+            final_video_str = await render_dashboard_style(script_data, work_dir)
             final_video = Path(final_video_str)
             
             if final_video.exists():

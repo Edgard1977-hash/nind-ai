@@ -86,17 +86,18 @@ AI сервис для создания контент-видео. Пользо�
 - ffmpeg требует переустановки при рестарте контейнера
 
 ## Recent Fixes (March 9, 2026)
-- ✅ **Новые форматы анимаций на основе анализа 5 референсных видео:**
-  - `spotify_demo` - Демо в стиле Spotify с градиентным фоном и анимацией бренда
-  - `saas_demo` - SaaS/Dashboard демо с графиками и typewriter текстом
-- ✅ **Создан advanced_effects.py** — библиотека продвинутых эффектов:
-  - Градиенты (radial, diagonal, linear)
-  - Easing функции (elastic, bounce, back)
-  - Floating cards с тенями
-  - Glitch эффект, scan lines
-  - iPhone/MacBook device frames
-- ✅ **Монтаж интегрирован в /create** — загрузка видео + промт
-- ✅ **Chunked Upload** — большие файлы загружаются частями по 1MB
+- ✅ **Профессиональные эффекты на основе анализа референсных видео:**
+  - **Aurora Gradient** — переливающийся градиент как в Spotify видео (анимированные волны)
+  - **3D Cards** — карточки с тенью, perspective transform, bounce анимация
+  - **iMessage Bubbles** — синие/серые пузыри с хвостиками, typing indicator (три точки)
+  - **Typewriter Text** — печатающийся текст с мигающим курсором
+  - **Gradient Text** — текст с радужным/градиентным заполнением
+  - **Device Mockups** — iPhone/MacBook frames с тенями
+- ✅ **Новые PRO форматы:**
+  - `spotify_demo` — Aurora gradient + лого + UI карточки + tagline
+  - `saas_demo` — Пастельный градиент + typewriter + 3D dashboard карточки
+  - `chat_animation` — iMessage стиль с анимацией появления сообщений
+- ✅ **Файл pro_effects.py** — библиотека профессиональных эффектов
 
 ## Pending User Verification
 - [ ] Apple Text Animation — исправлена обрезка видео (убран флаг `-shortest`)
