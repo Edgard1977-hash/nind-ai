@@ -551,7 +551,7 @@ def draw_gradient_text(
 
 
 # =============================================================
-# LOGO ANIMATION - Discord style
+# LOGO ANIMATION - Discord style (CORRECT)
 # =============================================================
 
 async def render_logo_animation(
@@ -560,13 +560,13 @@ async def render_logo_animation(
     bg_color: Tuple[int, int, int],
     output_dir: Path,
     fps: int = 30,
-    duration: float = 4.0
+    duration: float = 3.0
 ) -> str:
     """
-    Professional logo animation:
-    1. Logo appears with rotation + scale (ease-out-back)
-    2. Logo settles
-    3. Brand name reveals with vertical wipe / fade
+    Professional logo animation based on Discord reference:
+    Phase 1 (0-0.5s): Logo appears from scale 0, rotation -90° → 0° with overshoot
+    Phase 2 (0.5-1.5s): Logo bounces/settles (overshoot scale 1.2 → 1.0)
+    Phase 3 (1.5-2.5s): Text appears with rotation -90° → 0° and scale up
     """
     output_path = output_dir / f"logo_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"frames_{uuid.uuid4().hex[:8]}"
@@ -577,99 +577,131 @@ async def render_logo_animation(
     # Load logo
     try:
         logo = Image.open(logo_path).convert("RGBA")
-        max_size = 350
+        max_size = 300
         ratio = min(max_size / logo.width, max_size / logo.height)
         new_size = (int(logo.width * ratio), int(logo.height * ratio))
         logo = logo.resize(new_size, Image.Resampling.LANCZOS)
     except Exception as e:
         logger.error(f"Failed to load logo: {e}")
-        # Create placeholder logo
-        logo = Image.new("RGBA", (350, 350), (255, 255, 255, 255))
+        logo = Image.new("RGBA", (300, 300), (255, 255, 255, 255))
         draw = ImageDraw.Draw(logo)
-        draw.ellipse((50, 50, 300, 300), fill=(200, 200, 200, 255))
+        draw.ellipse((30, 30, 270, 270), fill=(200, 200, 200, 255))
     
-    # Determine text color (contrast with background)
+    # Text color (white on dark, black on light)
     brightness = (bg_color[0] * 299 + bg_color[1] * 587 + bg_color[2] * 114) / 1000
     text_color = (255, 255, 255) if brightness < 128 else (0, 0, 0)
     
     for frame_num in range(total_frames):
-        progress = frame_num / total_frames
+        time_sec = frame_num / fps
         
-        # Create background
         bg = create_solid_bg(WIDTH, HEIGHT, bg_color).convert("RGBA")
         
-        # === LOGO ANIMATION (0 - 0.5) ===
-        logo_progress = min(1.0, progress * 2.5)  # 0 to 1 in first 40% of video
+        # =============================================
+        # PHASE 1 & 2: LOGO ANIMATION (0 - 1.5s)
+        # =============================================
         
-        # Rotation: starts at -10°, goes to +5°, settles at 0°
-        if logo_progress < 0.6:
-            rotation = -10 + 15 * ease_out_back(logo_progress / 0.6)
+        if time_sec < 1.5:
+            # Phase 1: Initial appearance (0 - 0.5s)
+            if time_sec < 0.5:
+                t = time_sec / 0.5  # 0 to 1
+                
+                # Rotation: -90° → 0° with overshoot to +10°
+                rotation = -90 + 100 * ease_out_back(t)  # Goes to +10° overshoot
+                
+                # Scale: 0 → 1.2 (overshoot)
+                scale = 1.2 * ease_out_back(t)
+                
+                # Alpha: 0 → 1
+                logo_alpha = ease_out_quad(t)
+            
+            # Phase 2: Settle (0.5 - 1.5s)
+            else:
+                settle_time = (time_sec - 0.5) / 1.0  # 0 to 1
+                
+                # Rotation settles from +10° to 0°
+                rotation = 10 * (1 - ease_out_quad(settle_time))
+                
+                # Scale settles from 1.2 to 1.0
+                scale = 1.2 - 0.2 * ease_out_quad(settle_time)
+                
+                logo_alpha = 1.0
         else:
-            settle_progress = (logo_progress - 0.6) / 0.4
-            rotation = 5 * (1 - ease_out_quad(settle_progress))
+            # Logo is settled
+            rotation = 0
+            scale = 1.0
+            logo_alpha = 1.0
         
-        # Scale: 0.5 -> 1.0 with overshoot
-        scale = 0.5 + 0.5 * ease_out_back(min(1, logo_progress * 1.2))
-        
-        # Alpha
-        logo_alpha = ease_out_quad(min(1, logo_progress * 2))
-        
-        # Apply transformations
-        scaled_w = int(logo.width * scale)
-        scaled_h = int(logo.height * scale)
-        
-        if scaled_w > 0 and scaled_h > 0:
-            # Scale
-            scaled_logo = logo.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
+        # Apply logo transformations
+        if scale > 0.01:
+            scaled_w = int(logo.width * scale)
+            scaled_h = int(logo.height * scale)
             
-            # Rotate
-            rotated_logo = scaled_logo.rotate(rotation, expand=True, resample=Image.Resampling.BICUBIC)
-            
-            # Apply alpha
-            r, g, b, a = rotated_logo.split()
-            a = a.point(lambda p: int(p * logo_alpha))
-            rotated_logo = Image.merge("RGBA", (r, g, b, a))
-            
-            # Position - center, slightly above middle
-            logo_x = (WIDTH - rotated_logo.width) // 2
-            logo_y = (HEIGHT - rotated_logo.height) // 2 - 200
-            
-            bg.paste(rotated_logo, (logo_x, logo_y), rotated_logo)
+            if scaled_w > 0 and scaled_h > 0:
+                scaled_logo = logo.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
+                rotated_logo = scaled_logo.rotate(rotation, expand=True, resample=Image.Resampling.BICUBIC)
+                
+                # Apply alpha
+                r, g, b, a = rotated_logo.split()
+                a = a.point(lambda p: int(p * logo_alpha))
+                rotated_logo = Image.merge("RGBA", (r, g, b, a))
+                
+                # Center position, slightly above middle
+                logo_x = (WIDTH - rotated_logo.width) // 2
+                logo_y = (HEIGHT - rotated_logo.height) // 2 - 150
+                
+                bg.paste(rotated_logo, (logo_x, logo_y), rotated_logo)
         
-        # === BRAND NAME ANIMATION (0.4 - 1.0) ===
-        if progress > 0.35 and brand_name:
-            text_progress = (progress - 0.35) / 0.45
-            text_progress = min(1.0, text_progress)
+        # =============================================
+        # PHASE 3: TEXT ANIMATION (1.0 - 2.5s)
+        # =============================================
+        
+        if time_sec > 1.0 and brand_name:
+            text_time = (time_sec - 1.0) / 1.5  # 0 to 1 over 1.5 seconds
+            text_time = min(1.0, text_time)
             
             layer = Image.new("RGBA", bg.size, (0, 0, 0, 0))
-            draw = ImageDraw.Draw(layer)
             
-            font_size = 90
+            font_size = 80
             font = get_font(font_size, "bold")
             
-            bbox = draw.textbbox((0, 0), brand_name, font=font)
+            # Measure text
+            temp_draw = ImageDraw.Draw(layer)
+            bbox = temp_draw.textbbox((0, 0), brand_name, font=font)
             text_w = bbox[2] - bbox[0]
             text_h = bbox[3] - bbox[1]
             
-            text_x = (WIDTH - text_w) // 2
-            text_y = HEIGHT // 2 + 100
+            # Create text image
+            text_img = Image.new("RGBA", (text_w + 20, text_h + 20), (0, 0, 0, 0))
+            text_draw = ImageDraw.Draw(text_img)
             
-            # Animation: slide up + fade + scale
-            offset_y = int((1 - ease_out_back(text_progress)) * 80)
-            text_alpha = int(255 * ease_out_quad(text_progress))
-            text_scale = 0.9 + 0.1 * ease_out_back(text_progress)
+            # Text animation: rotation -90° → 0°, scale 0 → 1, slide up
+            text_rotation = -90 * (1 - ease_out_back(text_time))
+            text_scale = ease_out_back(text_time)
+            text_alpha = int(255 * ease_out_quad(min(1, text_time * 2)))
+            slide_y = int(50 * (1 - ease_out_quad(text_time)))
             
-            scaled_font_size = int(font_size * text_scale)
-            scaled_font = get_font(scaled_font_size, "bold")
+            # Draw text
+            text_draw.text((10, 10), brand_name, font=font, fill=(*text_color, 255))
             
-            bbox = draw.textbbox((0, 0), brand_name, font=scaled_font)
-            actual_w = bbox[2] - bbox[0]
-            actual_h = bbox[3] - bbox[1]
-            
-            tx = (WIDTH - actual_w) // 2
-            ty = text_y + offset_y
-            
-            draw.text((tx, ty), brand_name, font=scaled_font, fill=(*text_color, text_alpha))
+            # Scale
+            if text_scale > 0.01:
+                new_w = max(1, int(text_img.width * text_scale))
+                new_h = max(1, int(text_img.height * text_scale))
+                text_img = text_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                
+                # Rotate
+                text_img = text_img.rotate(text_rotation, expand=True, resample=Image.Resampling.BICUBIC)
+                
+                # Apply alpha
+                r, g, b, a = text_img.split()
+                a = a.point(lambda p: int(p * text_alpha / 255))
+                text_img = Image.merge("RGBA", (r, g, b, a))
+                
+                # Position below logo
+                tx = (WIDTH - text_img.width) // 2
+                ty = HEIGHT // 2 + 100 + slide_y
+                
+                layer.paste(text_img, (tx, ty), text_img)
             
             bg = Image.alpha_composite(bg, layer)
         
@@ -677,7 +709,7 @@ async def render_logo_animation(
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
         bg.convert("RGB").save(frame_path, "PNG", optimize=True)
     
-    # Encode video
+    # Encode
     logger.info("Encoding logo animation...")
     cmd = [
         "ffmpeg", "-y",
