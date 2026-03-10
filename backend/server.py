@@ -478,54 +478,34 @@ async def generate_universal_script(prompt: str, language: str) -> dict:
         
         lang = "Russian" if is_russian else "English"
         
-        system_prompt = f"""Create a professional video with SEQUENTIAL SCENES (like Airbnb, Notion, Cal.com ads).
-Language: {lang}
+        system_prompt = f"""Create EXACTLY what user asks. Return JSON.
 
-CRITICAL RULES:
-1. Each scene appears ONE AT A TIME (not simultaneously!)
-2. Use appropriate backgrounds: black for text, light gradient for UI
-3. Large, clean fonts
-4. IMPORTANT: Keep scenes SHORT - 1.5-2.5 seconds each for text, 3 seconds for UI
-5. TOTAL video should be 6-10 seconds MAX
+STRICT RULES:
+1. DO NOT add extra scenes or content
+2. Show ONLY what user requests
+3. Keep text TOGETHER - do NOT split words
+4. 2 seconds per scene
 
-SCENE TYPES:
+TYPES:
+- "text": {{"type":"text","content":"Text","duration":2}}
+- "gradient_text": {{"type":"gradient_text","content":"Text","duration":2,"gradient_colors":[[0,150,255],[100,200,255]]}}
+- "ui_form": {{"type":"ui_form","duration":3,"fields":["Field"],"button_text":"Button"}}
+- "chat": {{"type":"chat","messages":[{{"text":"Msg","sender":true}}],"duration":2}}
 
-1. "text" - Clean white/colored text on black background
-   {{"type": "text", "content": "Text here", "duration": 2.5, "font_size": 90, "color": [255,255,255]}}
+If user says "Hello World" return ONLY:
+{{"elements":[{{"type":"text","content":"Hello World","duration":2}}]}}
 
-2. "gradient_text" - Text with animated color gradient shimmer
-   {{"type": "gradient_text", "content": "Text", "duration": 2.5, "font_size": 90, "gradient_colors": [[0,150,255], [100,200,255]], "shimmer": true}}
-   
-   Common gradients:
-   - Blue shimmer: [[0,150,255], [100,200,255]]
-   - Purple-pink: [[180,100,255], [255,100,180]]
-   - Red: [[255,80,80], [255,150,100]]
-   - Orange: [[255,150,50], [255,200,100]]
-   - Green: [[50,200,100], [100,255,150]]
+If user says "Can you Fly? then We can! blue gradient then form with fields and Skying red gradient":
+{{"elements":[
+{{"type":"text","content":"Can you Fly?","duration":2}},
+{{"type":"gradient_text","content":"We can!","duration":2,"gradient_colors":[[0,180,255],[100,220,255]]}},
+{{"type":"ui_form","duration":3,"fields":["Destination","Date"],"button_text":"Book now!"}},
+{{"type":"gradient_text","content":"Skying","duration":2,"gradient_colors":[[255,60,60],[255,120,80]]}}
+]}}
 
-3. "word_by_word" - Words appear one by one with highlights
-   {{"type": "word_by_word", "content": "No more back and forths", "duration": 3.0, "font_size": 60, "color": [0,0,0], "highlight_words": [2,3,4], "highlight_colors": [[180,100,255]]}}
+RETURN ONLY JSON. NO EXTRA CONTENT.
 
-4. "ui_form" - Form with input fields and button (light background)
-   {{"type": "ui_form", "duration": 4.0, "fields": ["Name", "Email", "Phone"], "button_text": "Submit", "button_color": [0,122,255]}}
-
-5. "chat" - iMessage dialog (light background)
-   {{"type": "chat", "duration": 6.0, "messages": [{{"text": "Hi!", "sender": true}}, {{"text": "Hello!", "sender": false}}]}}
-
-EXAMPLE for "Can you Fly? → We can! → Form → Skying":
-{{
-    "title": "Skying Ad",
-    "elements": [
-        {{"type": "text", "content": "Can you Fly?", "duration": 2.5, "font_size": 95}},
-        {{"type": "gradient_text", "content": "We can!", "duration": 2.5, "font_size": 95, "gradient_colors": [[0,180,255], [100,220,255]], "shimmer": true}},
-        {{"type": "ui_form", "duration": 4.0, "fields": ["Destination", "Date", "Passengers"], "button_text": "Fly to go!", "button_color": [0,122,255]}},
-        {{"type": "gradient_text", "content": "Skying", "duration": 3.0, "font_size": 110, "gradient_colors": [[255,60,60], [255,120,80]], "shimmer": true}}
-    ]
-}}
-
-Return ONLY valid JSON with "elements" array.
-
-User prompt: {prompt}"""
+User: {prompt}"""
         
         msg = UserMessage(text=system_prompt)
         response = await chat.send_message(msg)
