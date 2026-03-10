@@ -460,8 +460,8 @@ CRITICAL RULES:
 
 async def generate_universal_script(prompt: str, language: str) -> dict:
     """
-    AI generates dynamic video script with effects based on user prompt.
-    This is the SMART engine that decides what effects to use.
+    AI generates dynamic video script with Apple-style effects.
+    Creates smooth word-by-word animations with alternating backgrounds.
     """
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     
@@ -472,40 +472,49 @@ async def generate_universal_script(prompt: str, language: str) -> dict:
         chat = LlmChat(
             api_key=api_key,
             session_id=f"universal-{uuid.uuid4()}",
-            system_message="You are an expert video effects designer. Create dynamic, engaging video scripts with modern effects."
+            system_message="You create Apple-style text animation scripts. Clean, minimal, professional."
         )
         chat.with_model("openai", "gpt-5.2")
         
-        lang = "Russian" if is_russian else "English"
-        
-        system_prompt = f"""Create EXACTLY what user asks. Return JSON.
+        system_prompt = f"""Create Apple-style video animation script. Return ONLY valid JSON.
 
-STRICT RULES:
-1. DO NOT add extra scenes or content
-2. Show ONLY what user requests
-3. Keep text TOGETHER - do NOT split words
-4. 2 seconds per scene
+ANIMATION STYLE (like Apple presentations):
+- Each phrase on separate scene
+- Alternating white/black backgrounds for contrast
+- Word-by-word reveal animation
+- Optional underline for emphasis
+- Gradient text for brand names
 
-TYPES:
-- "text": {{"type":"text","content":"Text","duration":2}}
-- "gradient_text": {{"type":"gradient_text","content":"Text","duration":2,"gradient_colors":[[0,150,255],[100,200,255]]}}
-- "ui_form": {{"type":"ui_form","duration":3,"fields":["Field"],"button_text":"Button"}}
-- "chat": {{"type":"chat","messages":[{{"text":"Msg","sender":true}}],"duration":2}}
+SCENE TYPES:
+1. "text" - White bg, black text, word-by-word animation
+   {{"type":"text","content":"Let's create","duration":2.5,"underline":"create"}}
 
-If user says "Hello World" return ONLY:
-{{"elements":[{{"type":"text","content":"Hello World","duration":2}}]}}
+2. "gradient_text" - Black bg, gradient colored text with shimmer
+   {{"type":"gradient_text","content":"Brand Name","duration":2.5,"gradient_colors":[[0,180,255],[100,220,255]]}}
 
-If user says "Can you Fly? then We can! blue gradient then form with fields and Skying red gradient":
+3. "ui_form" - White bg, animated form fields
+   {{"type":"ui_form","duration":3,"fields":["Email","Password"],"button_text":"Sign up"}}
+
+4. "chat" - Message bubbles animation
+   {{"type":"chat","messages":[{{"text":"Hello","sender":true}},{{"text":"Hi!","sender":false}}]}}
+
+RULES:
+- Keep phrases SHORT (3-5 words max per scene)
+- Alternate backgrounds: white -> black -> white
+- Add "underline" to emphasize key words
+- Use gradient_colors for brand/product names on black bg
+- Duration: 2-2.5 seconds per scene
+
+EXAMPLE for "Let's create Some silky smooth text Just like Apple":
 {{"elements":[
-{{"type":"text","content":"Can you Fly?","duration":2}},
-{{"type":"gradient_text","content":"We can!","duration":2,"gradient_colors":[[0,180,255],[100,220,255]]}},
-{{"type":"ui_form","duration":3,"fields":["Destination","Date"],"button_text":"Book now!"}},
-{{"type":"gradient_text","content":"Skying","duration":2,"gradient_colors":[[255,60,60],[255,120,80]]}}
+  {{"type":"text","content":"Let's create","duration":2.5}},
+  {{"type":"text","content":"Some silky smooth text","duration":2.5,"underline":"silky"}},
+  {{"type":"text","content":"Just like Apple.","duration":2.5,"underline":"Apple"}}
 ]}}
 
-RETURN ONLY JSON. NO EXTRA CONTENT.
+User prompt: {prompt}
 
-User: {prompt}"""
+Return ONLY JSON, no explanations."""
         
         msg = UserMessage(text=system_prompt)
         response = await chat.send_message(msg)
@@ -1735,6 +1744,9 @@ async def process_video_generation(project_id: str):
                 {"$set": {"progress": 30, "progress_message": "Рендерим анимацию логотипа..."}}
             )
             
+            # Import the new logo animation function
+            from universal_effects import render_logo_animation as render_logo_anim_new
+            
             # Get uploaded logo if available
             logo_path = None
             logo_url = project.get("logo_url")
@@ -1753,8 +1765,48 @@ async def process_video_generation(project_id: str):
                         if not logo_path.exists():
                             logo_path = None
             
-            # Use professional PIL renderer with logo
-            final_video = await render_logo_animation(script_data, work_dir, logo_path)
+            # Get brand name and bg color from script
+            brand_name = script_data.get("brand_name", project.get("brand_name", "Brand"))
+            bg_color_hex = script_data.get("bg_color", "#5865F2")
+            
+            # Parse hex color
+            try:
+                bg_color_hex = bg_color_hex.lstrip("#")
+                bg_color = tuple(int(bg_color_hex[i:i+2], 16) for i in (0, 2, 4))
+            except:
+                bg_color = (88, 101, 242)  # Discord blue default
+            
+            # Use the new professional logo animation
+            if logo_path and logo_path.exists():
+                final_video_path = await render_logo_anim_new(
+                    logo_path=str(logo_path),
+                    brand_name=brand_name,
+                    bg_color=bg_color,
+                    output_dir=work_dir,
+                    fps=30,
+                    duration=4.0
+                )
+                final_video = Path(final_video_path) if final_video_path else None
+            else:
+                # No logo uploaded - create text-only brand animation using universal effects
+                logger.warning("No logo uploaded, creating brand text animation")
+                from universal_effects import render_professional_video
+                scenes = [
+                    {
+                        "type": "gradient_text",
+                        "duration": 3.0,
+                        "trans_in": 0.3,
+                        "trans_out": 0.2,
+                        "background": "black",
+                        "content": {
+                            "text": brand_name,
+                            "colors": [[bg_color[0], bg_color[1], bg_color[2]], [min(255, bg_color[0]+50), min(255, bg_color[1]+50), min(255, bg_color[2]+50)]],
+                            "shimmer": True
+                        }
+                    }
+                ]
+                final_video_path = await render_professional_video(scenes, work_dir, fps=30)
+                final_video = Path(final_video_path) if final_video_path else None
             
             if final_video:
                 await db.video_projects.update_one(
