@@ -368,92 +368,25 @@ async def detect_video_type(prompt: str) -> dict:
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     api_key = os.getenv("EMERGENT_LLM_KEY")
-    
-    try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"detect-{uuid.uuid4()}",
-            system_message="You are a smart content classifier for video generation."
-        )
-        chat.with_model("openai", "gpt-5.2")
-        
-        detection_prompt = f"""Analyze this user prompt and determine the best video type to create.
-
-Available video types:
-1. "chat_animation" - ONLY for dialog/conversation/messages animations (e.g., "make animation of chat", "show dialog between...", "переписка", "диалог", "сообщения")
-2. "product_advertisement" - ONLY for advertising physical products (e.g., "реклама продукта", "showcase product", "advertise my product")
-3. "universal" - DEFAULT for everything else - dynamic AI effects including:
-   - Gradient backgrounds and aurora effects
-   - Text animations (popup, typewriter, word-by-word)
-   - Gradient text with shimmer
-   - Cards and UI elements
-   - ANY creative video request
-
-User prompt: "{prompt}"
-
-Respond ONLY with a JSON object:
-{{
-    "format_id": "the_best_matching_type",
-    "confidence": 0.0-1.0,
-    "reason": "brief explanation",
-    "detected_language": "ru" or "en",
-    "extracted_data": {{}}
-}}
-
-CRITICAL RULES:
-- Use "chat_animation" ONLY if user explicitly asks for chat/dialog/messages
-- Use "product_advertisement" ONLY if user wants to advertise a physical product
-- For EVERYTHING ELSE (gradients, text effects, brand demos, startups, stories, etc.) use "universal"
-- When in doubt, use "universal" - it handles any creative request
-"""
-        
-        msg = UserMessage(text=detection_prompt)
-        response = await chat.send_message(msg)
-        
-        # Parse JSON
-        json_start = response.find('{')
-        json_end = response.rfind('}') + 1
-        if json_start != -1 and json_end > json_start:
-            result = json.loads(response[json_start:json_end])
-            return result
-    except Exception as e:
-        logger.warning(f"Auto-detection failed, using fallback: {e}")
-    
-    # Fallback detection based on keywords
     prompt_lower = prompt.lower()
+    
+    # FIRST: Check keywords BEFORE LLM to ensure specific formats are caught
+    # Check for logo/brand FIRST (high priority)
+    logo_keywords = ['лого', 'logo', 'бренд анимац', 'brand animat', 'интро', 'intro', 'логотип']
+    if any(kw in prompt_lower for kw in logo_keywords):
+        return {"format_id": "logo_animation", "confidence": 0.9, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
     # Check for chat/dialog keywords
     chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation', 'беседа']
     if any(kw in prompt_lower for kw in chat_keywords) or '[' in prompt or '«' in prompt:
         return {"format_id": "chat_animation", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
-    # Check for Apple/minimalist text
-    apple_keywords = ['apple', 'минимал', 'презентац', 'текст простой', 'simple text']
-    if any(kw in prompt_lower for kw in apple_keywords):
-        return {"format_id": "apple_text", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
-    # Check for kinetic typography
-    kinetic_keywords = ['kinetic', 'кинетик', 'слово за слов', 'word by word', 'динамич', 'типограф']
-    if any(kw in prompt_lower for kw in kinetic_keywords):
-        return {"format_id": "kinetic_typography", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
-    # Check for logo
-    logo_keywords = ['лого', 'logo', 'бренд', 'brand', 'интро', 'intro']
-    if any(kw in prompt_lower for kw in logo_keywords):
-        return {"format_id": "logo_animation", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
     # Check for product advertisement
     product_keywords = ['реклам', 'товар', 'продукт', 'product', 'advertis', 'showcase', 'commercial', 'macbook', 'iphone', 'показать продукт']
     if any(kw in prompt_lower for kw in product_keywords):
         return {"format_id": "product_advertisement", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
     
-    # Check for news
-    news_keywords = ['новост', 'news', 'breaking', 'событи', 'headline']
-    if any(kw in prompt_lower for kw in news_keywords):
-        return {"format_id": "news", "confidence": 0.7, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
-    # Default to universal AI system for everything else
-    # This allows dynamic effect generation based on prompt
+    # For everything else - use universal (handles shapes, text, gradients, etc.)
     return {"format_id": "universal", "confidence": 0.9, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
 
 
