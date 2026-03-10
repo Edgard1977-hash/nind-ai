@@ -478,63 +478,41 @@ async def generate_universal_script(prompt: str, language: str) -> dict:
         
         lang = "Russian" if is_russian else "English"
         
-        system_prompt = f"""Create a professional video script with dynamic effects.
+        system_prompt = f"""Create an Apple-style video with SEQUENTIAL SCENES.
 Language: {lang}
 
-AVAILABLE EFFECTS:
+CRITICAL RULES:
+1. Each scene appears ONE AT A TIME (not simultaneously!)
+2. Black background (Apple minimalism)
+3. Large, clean text
+4. Smooth transitions between scenes
 
-1. BACKGROUNDS:
-   - "aurora" - Animated gradient waves (modern, emotional)
-   - "solid" - Simple gradient
+SCENE TYPES:
 
-2. TEXT ANIMATIONS (Apple-style):
-   - "scale_up" - Text scales up with bounce
-   - "wave_down" - Letters fall from top like Apple keynote
-   - "wave_up" - Letters rise from bottom
-   - "fade_blur" - Fade in from blur
+1. "text" - Simple white text
+   {{"type": "text", "content": "Text here", "duration": 3.0, "font_size": 90, "color": [255,255,255], "effect": "scale"}}
 
-3. ELEMENT TYPES:
-   - "text" - Animated text (use effects above)
-   - "gradient_text" - Text with shimmer gradient colors
-   - "chat" - iMessage-style dialog with morphing bubbles
+2. "gradient_text" - Text with color gradient (shimmer effect)
+   {{"type": "gradient_text", "content": "Text", "duration": 3.0, "font_size": 90, "gradient_colors": [[0,150,255], [100,200,255]], "shimmer": true}}
 
-FOR CHAT DIALOGS:
-- Messages appear one by one with typing indicator that morphs into bubble
-- Use "sender": true for blue bubbles (right), false for gray (left)
-- Keep messages SHORT (under 40 chars each)
-- 4-6 messages max
+3. "ui_form" - Form with input fields and button
+   {{"type": "ui_form", "duration": 4.0, "fields": ["Name", "Email", "Phone"], "button_text": "Submit", "button_color": [0,122,255]}}
 
-Return ONLY valid JSON:
+4. "chat" - iMessage dialog
+   {{"type": "chat", "duration": 6.0, "messages": [{{"text": "Hi!", "sender": true}}, {{"text": "Hello!", "sender": false}}]}}
+
+EXAMPLE for "Can you Fly? → We can! → Form → Skying":
 {{
-    "title": "Title",
-    "background": {{
-        "type": "aurora",
-        "colors": [[40, 30, 70], [70, 50, 120], [50, 80, 130]]
-    }},
+    "title": "Skying Ad",
     "elements": [
-        {{
-            "type": "text",
-            "content": "Welcome!",
-            "start_time": 0.5,
-            "duration": 3.0,
-            "effect": "wave_down",
-            "font_size": 80,
-            "color": [255, 255, 255]
-        }}
-    ],
-    "duration": 10.0
-}}
-
-For chat dialog:
-{{
-    "type": "chat",
-    "start_time": 0.5,
-    "duration": 10.0,
-    "messages": [
-        {{"text": "Hey! 👋", "sender": true}},
-        {{"text": "Hi there!", "sender": false}}
+        {{"type": "text", "content": "Can you Fly?", "duration": 2.5, "font_size": 100, "color": [255,255,255], "effect": "scale"}},
+        {{"type": "gradient_text", "content": "We can!", "duration": 2.5, "font_size": 100, "gradient_colors": [[0,180,255], [100,220,255]], "shimmer": true}},
+        {{"type": "ui_form", "duration": 4.0, "fields": ["Destination", "Date", "Passengers"], "button_text": "Fly to go!", "button_color": [0,122,255]}},
+        {{"type": "gradient_text", "content": "Skying", "duration": 3.0, "font_size": 120, "gradient_colors": [[255,50,50], [255,100,100]], "shimmer": true}}
     ]
 }}
+
+Return ONLY valid JSON with "elements" array. Each element is a SEPARATE SCENE.
 
 User prompt: {prompt}"""
         
