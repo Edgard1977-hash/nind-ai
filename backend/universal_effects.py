@@ -173,12 +173,12 @@ def create_soft_gradient(
         colors = [(255, 245, 240), (255, 230, 220)]  # Soft pink/peach
     
     # Create gradient with slight animation wave
+    draw = ImageDraw.Draw(img)
+    
     for y in range(height):
-        # Add subtle wave animation
         wave = math.sin(y / height * math.pi + time * math.pi * 2) * 0.03
         t = max(0, min(1, y / height + wave))
         
-        # Multi-color interpolation
         num_colors = len(colors)
         segment = t * (num_colors - 1)
         idx = min(int(segment), num_colors - 2)
@@ -191,10 +191,10 @@ def create_soft_gradient(
         g = int(c1[1] * (1 - local_t) + c2[1] * local_t)
         b = int(c1[2] * (1 - local_t) + c2[2] * local_t)
         
-        for x in range(width):
-            img.putpixel((x, y), (r, g, b))
+        # OPTIMIZED: Draw horizontal line instead of pixel-by-pixel
+        draw.line((0, y, width, y), fill=(r, g, b))
     
-    # Add subtle glow in center
+    # Simplified glow (faster)
     glow = Image.new("RGBA", (width, height), (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow)
     center_x, center_y = width // 2, height // 2
@@ -350,14 +350,13 @@ def draw_text_gradient(
     wobble: bool = False,
     wobble_amount: float = 0
 ) -> Image.Image:
-    """Text with animated gradient fill (like in videos)"""
+    """Text with animated gradient fill - OPTIMIZED"""
     if gradient_colors is None:
-        gradient_colors = [(180, 100, 255), (255, 100, 180)]  # Purple to pink
+        gradient_colors = [(180, 100, 255), (255, 100, 180)]
     
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     font = get_font(font_size, bold=True)
     
-    # Measure
     temp_draw = ImageDraw.Draw(layer)
     bbox = temp_draw.textbbox((0, 0), text, font=font)
     text_w = bbox[2] - bbox[0]
@@ -366,15 +365,14 @@ def draw_text_gradient(
     x = center[0] - text_w // 2
     y = center[1] - text_h // 2
     
-    # Apply wobble
     if wobble and wobble_amount > 0:
         y += int(math.sin(wobble_amount * math.pi * 4) * 10 * (1 - progress))
     
-    # Create gradient strip
+    # OPTIMIZED: Create gradient using line drawing instead of pixel-by-pixel
     gradient_img = Image.new("RGBA", (text_w + 20, text_h + 20), (0, 0, 0, 0))
+    gradient_draw = ImageDraw.Draw(gradient_img)
     
     for px in range(text_w + 20):
-        # Shimmer animation
         t = ((px / (text_w + 20)) + shimmer_offset) % 1.0
         
         num_colors = len(gradient_colors)
@@ -389,8 +387,8 @@ def draw_text_gradient(
         g = int(c1[1] * (1 - local_t) + c2[1] * local_t)
         b = int(c1[2] * (1 - local_t) + c2[2] * local_t)
         
-        for py in range(text_h + 20):
-            gradient_img.putpixel((px, py), (r, g, b, 255))
+        # Draw vertical line instead of pixel-by-pixel
+        gradient_draw.line((px, 0, px, text_h + 20), fill=(r, g, b, 255))
     
     # Create mask
     mask = Image.new("L", (text_w + 20, text_h + 20), 0)
@@ -899,7 +897,7 @@ async def render_professional_video(
             
             btn_progress = max(0, min(1, (visibility * (len(fields) + 1) - len(fields)) / 1.0))
             if btn_progress > 0:
-                bg = draw_button(bg, x, current_y + 15, field_w, 70, button_text, button_color, progress=btn_progress, shimmer=True, shimmer_offset=global_progress * 2)
+                bg = draw_button(bg, x, current_y + 15, field_w, 70, button_text, button_color, progress=btn_progress, shimmer=False)
         
         elif scene_type == "chat":
             messages = content.get("messages", [])

@@ -485,7 +485,8 @@ CRITICAL RULES:
 1. Each scene appears ONE AT A TIME (not simultaneously!)
 2. Use appropriate backgrounds: black for text, light gradient for UI
 3. Large, clean fonts
-4. 2-4 second per scene
+4. IMPORTANT: Keep scenes SHORT - 1.5-2.5 seconds each for text, 3 seconds for UI
+5. TOTAL video should be 6-10 seconds MAX
 
 SCENE TYPES:
 
