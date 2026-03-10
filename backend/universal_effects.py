@@ -552,7 +552,7 @@ def draw_gradient_text(
 
 # =============================================================
 # LOGO ANIMATION - HORIZONTAL layout
-# Text LEFT, Logo RIGHT - on SAME LINE
+# LOGO LEFT, TEXT RIGHT - on SAME LINE
 # NO ROTATION - smooth only
 # =============================================================
 
@@ -565,11 +565,11 @@ async def render_logo_animation(
     duration: float = 3.0
 ) -> str:
     """
-    Logo animation - HORIZONTAL layout, NO ROTATION:
-    1. Logo appears in CENTER (smooth scale, no rotation)
-    2. Logo moves smoothly to the RIGHT
-    3. Text appears on the LEFT (smooth fade)
-    4. Final: Text LEFT + Logo RIGHT on SAME horizontal line
+    Logo animation - HORIZONTAL layout:
+    1. Logo appears in CENTER
+    2. Logo moves to the LEFT
+    3. Text appears on the RIGHT
+    4. Final: LOGO LEFT + TEXT RIGHT on SAME horizontal line
     """
     output_path = output_dir / f"logo_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"frames_{uuid.uuid4().hex[:8]}"
@@ -605,19 +605,22 @@ async def render_logo_animation(
     text_w = text_bbox[2] - text_bbox[0]
     text_h = text_bbox[3] - text_bbox[1]
     
-    # Final positions (text LEFT, logo RIGHT, same line)
+    # Final positions: LOGO LEFT, TEXT RIGHT
     gap = 30
-    total_w = text_w + gap + logo.width
+    total_w = logo.width + gap + text_w
     
     start_x = (WIDTH - total_w) // 2
     center_y = HEIGHT // 2
     
-    final_text_x = start_x
-    final_text_y = center_y - text_h // 2
-    final_logo_x = start_x + text_w + gap
+    # LOGO on LEFT
+    final_logo_x = start_x
     final_logo_y = center_y - logo.height // 2
     
-    # Logo center position
+    # TEXT on RIGHT
+    final_text_x = start_x + logo.width + gap
+    final_text_y = center_y - text_h // 2
+    
+    # Logo center position (where it starts)
     logo_center_x = (WIDTH - logo.width) // 2
     
     for frame_num in range(total_frames):
@@ -631,30 +634,27 @@ async def render_logo_animation(
         if time_sec < 0.8:
             t = time_sec / 0.8
             
-            # Smooth scale up, NO rotation
             logo_scale = ease_out_cubic(t)
             logo_alpha = ease_out_quad(t)
             logo_x = logo_center_x
             logo_y = center_y - int(logo.height * logo_scale) // 2
             
             text_alpha = 0
-            text_x = final_text_x
         
         # =============================================
-        # PHASE 2 (0.8s - 1.8s): Logo moves RIGHT, text appears
+        # PHASE 2 (0.8s - 1.8s): Logo moves LEFT, text appears RIGHT
         # =============================================
         elif time_sec < 1.8:
             t = (time_sec - 0.8) / 1.0
             
             logo_scale = 1.0
             logo_alpha = 1.0
-            # Smooth move to right
+            # Move from center to LEFT
             logo_x = int(logo_center_x + (final_logo_x - logo_center_x) * ease_out_cubic(t))
             logo_y = final_logo_y
             
-            # Text fades in smoothly
+            # Text fades in
             text_alpha = ease_out_cubic(t)
-            text_x = final_text_x
         
         # =============================================
         # PHASE 3 (1.8s+): Static
@@ -666,9 +666,8 @@ async def render_logo_animation(
             logo_y = final_logo_y
             
             text_alpha = 1.0
-            text_x = final_text_x
         
-        # Draw logo (NO rotation)
+        # Draw logo
         if logo_scale > 0.01 and logo_alpha > 0:
             scaled_w = int(logo.width * logo_scale)
             scaled_h = int(logo.height * logo_scale)
@@ -676,20 +675,19 @@ async def render_logo_animation(
             if scaled_w > 0 and scaled_h > 0:
                 scaled_logo = logo.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
                 
-                # Apply alpha
                 r, g, b, a = scaled_logo.split()
                 a = a.point(lambda p: int(p * logo_alpha))
                 scaled_logo = Image.merge("RGBA", (r, g, b, a))
                 
                 bg.paste(scaled_logo, (logo_x, logo_y), scaled_logo)
         
-        # Draw text
+        # Draw text on RIGHT
         if text_alpha > 0:
             text_layer = Image.new("RGBA", bg.size, (0, 0, 0, 0))
             text_draw = ImageDraw.Draw(text_layer)
             
             alpha_color = (*text_color, int(255 * text_alpha))
-            text_draw.text((text_x, final_text_y), brand_name, font=font, fill=alpha_color)
+            text_draw.text((final_text_x, final_text_y), brand_name, font=font, fill=alpha_color)
             
             bg = Image.alpha_composite(bg, text_layer)
         
