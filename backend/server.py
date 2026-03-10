@@ -478,41 +478,51 @@ async def generate_universal_script(prompt: str, language: str) -> dict:
         
         lang = "Russian" if is_russian else "English"
         
-        system_prompt = f"""Create an Apple-style video with SEQUENTIAL SCENES.
+        system_prompt = f"""Create a professional video with SEQUENTIAL SCENES (like Airbnb, Notion, Cal.com ads).
 Language: {lang}
 
 CRITICAL RULES:
 1. Each scene appears ONE AT A TIME (not simultaneously!)
-2. Black background (Apple minimalism)
-3. Large, clean text
-4. Smooth transitions between scenes
+2. Use appropriate backgrounds: black for text, light gradient for UI
+3. Large, clean fonts
+4. 2-4 second per scene
 
 SCENE TYPES:
 
-1. "text" - Simple white text
-   {{"type": "text", "content": "Text here", "duration": 3.0, "font_size": 90, "color": [255,255,255], "effect": "scale"}}
+1. "text" - Clean white/colored text on black background
+   {{"type": "text", "content": "Text here", "duration": 2.5, "font_size": 90, "color": [255,255,255]}}
 
-2. "gradient_text" - Text with color gradient (shimmer effect)
-   {{"type": "gradient_text", "content": "Text", "duration": 3.0, "font_size": 90, "gradient_colors": [[0,150,255], [100,200,255]], "shimmer": true}}
+2. "gradient_text" - Text with animated color gradient shimmer
+   {{"type": "gradient_text", "content": "Text", "duration": 2.5, "font_size": 90, "gradient_colors": [[0,150,255], [100,200,255]], "shimmer": true}}
+   
+   Common gradients:
+   - Blue shimmer: [[0,150,255], [100,200,255]]
+   - Purple-pink: [[180,100,255], [255,100,180]]
+   - Red: [[255,80,80], [255,150,100]]
+   - Orange: [[255,150,50], [255,200,100]]
+   - Green: [[50,200,100], [100,255,150]]
 
-3. "ui_form" - Form with input fields and button
+3. "word_by_word" - Words appear one by one with highlights
+   {{"type": "word_by_word", "content": "No more back and forths", "duration": 3.0, "font_size": 60, "color": [0,0,0], "highlight_words": [2,3,4], "highlight_colors": [[180,100,255]]}}
+
+4. "ui_form" - Form with input fields and button (light background)
    {{"type": "ui_form", "duration": 4.0, "fields": ["Name", "Email", "Phone"], "button_text": "Submit", "button_color": [0,122,255]}}
 
-4. "chat" - iMessage dialog
+5. "chat" - iMessage dialog (light background)
    {{"type": "chat", "duration": 6.0, "messages": [{{"text": "Hi!", "sender": true}}, {{"text": "Hello!", "sender": false}}]}}
 
 EXAMPLE for "Can you Fly? → We can! → Form → Skying":
 {{
     "title": "Skying Ad",
     "elements": [
-        {{"type": "text", "content": "Can you Fly?", "duration": 2.5, "font_size": 100, "color": [255,255,255], "effect": "scale"}},
-        {{"type": "gradient_text", "content": "We can!", "duration": 2.5, "font_size": 100, "gradient_colors": [[0,180,255], [100,220,255]], "shimmer": true}},
+        {{"type": "text", "content": "Can you Fly?", "duration": 2.5, "font_size": 95}},
+        {{"type": "gradient_text", "content": "We can!", "duration": 2.5, "font_size": 95, "gradient_colors": [[0,180,255], [100,220,255]], "shimmer": true}},
         {{"type": "ui_form", "duration": 4.0, "fields": ["Destination", "Date", "Passengers"], "button_text": "Fly to go!", "button_color": [0,122,255]}},
-        {{"type": "gradient_text", "content": "Skying", "duration": 3.0, "font_size": 120, "gradient_colors": [[255,50,50], [255,100,100]], "shimmer": true}}
+        {{"type": "gradient_text", "content": "Skying", "duration": 3.0, "font_size": 110, "gradient_colors": [[255,60,60], [255,120,80]], "shimmer": true}}
     ]
 }}
 
-Return ONLY valid JSON with "elements" array. Each element is a SEPARATE SCENE.
+Return ONLY valid JSON with "elements" array.
 
 User prompt: {prompt}"""
         
