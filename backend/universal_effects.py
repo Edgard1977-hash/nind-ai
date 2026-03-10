@@ -131,6 +131,208 @@ def create_gradient_bg(w: int, h: int, colors: List[Tuple[int, int, int]], time:
 
 
 # =============================================================
+# SHAPE ANIMATIONS - Circles, Rectangles, etc.
+# =============================================================
+
+def draw_gradient_circle(
+    img: Image.Image,
+    progress: float,
+    colors: List[Tuple[int, int, int]],
+    size: int = 400,
+    glow: bool = True
+) -> Image.Image:
+    """
+    Animated gradient circle with scale + glow effect
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    
+    if len(colors) < 2:
+        colors = [(255, 100, 150), (100, 150, 255)]
+    
+    # Animation: scale up with bounce
+    scale = ease_out_back(min(1, progress * 1.3))
+    alpha = int(255 * ease_out_quad(min(1, progress * 2)))
+    
+    actual_size = int(size * scale)
+    if actual_size < 10:
+        return img
+    
+    # Create gradient circle
+    circle = Image.new("RGBA", (actual_size, actual_size), (0, 0, 0, 0))
+    
+    center = actual_size // 2
+    
+    for y in range(actual_size):
+        for x in range(actual_size):
+            dx = x - center
+            dy = y - center
+            dist = math.sqrt(dx*dx + dy*dy)
+            
+            if dist <= center:
+                # Radial gradient
+                t = dist / center
+                idx = min(int(t * (len(colors) - 1)), len(colors) - 2)
+                local_t = (t * (len(colors) - 1)) - idx
+                
+                c1, c2 = colors[idx], colors[idx + 1]
+                r = int(c1[0] * (1 - local_t) + c2[0] * local_t)
+                g = int(c1[1] * (1 - local_t) + c2[1] * local_t)
+                b = int(c1[2] * (1 - local_t) + c2[2] * local_t)
+                
+                # Soft edge
+                edge_fade = 1.0
+                if dist > center * 0.85:
+                    edge_fade = 1 - ((dist - center * 0.85) / (center * 0.15))
+                
+                pixel_alpha = int(alpha * edge_fade)
+                circle.putpixel((x, y), (r, g, b, pixel_alpha))
+    
+    # Add glow effect
+    if glow and scale > 0.5:
+        glow_layer = circle.copy()
+        glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(radius=30))
+        # Make glow brighter
+        r, g, b, a = glow_layer.split()
+        a = a.point(lambda p: min(255, int(p * 0.6)))
+        glow_layer = Image.merge("RGBA", (r, g, b, a))
+        
+        glow_x = (WIDTH - glow_layer.width) // 2
+        glow_y = (HEIGHT - glow_layer.height) // 2
+        layer.paste(glow_layer, (glow_x, glow_y), glow_layer)
+    
+    # Paste circle
+    cx = (WIDTH - actual_size) // 2
+    cy = (HEIGHT - actual_size) // 2
+    layer.paste(circle, (cx, cy), circle)
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
+def draw_gradient_rect(
+    img: Image.Image,
+    progress: float,
+    colors: List[Tuple[int, int, int]],
+    width: int = 600,
+    height: int = 400,
+    corner_radius: int = 50,
+    rotation: float = 0
+) -> Image.Image:
+    """
+    Animated gradient rectangle with rounded corners
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    if len(colors) < 2:
+        colors = [(100, 200, 255), (200, 100, 255)]
+    
+    # Animation
+    scale = ease_out_back(min(1, progress * 1.3))
+    alpha = int(255 * ease_out_quad(min(1, progress * 2)))
+    
+    actual_w = int(width * scale)
+    actual_h = int(height * scale)
+    
+    if actual_w < 20 or actual_h < 20:
+        return img
+    
+    # Create gradient rectangle
+    rect = Image.new("RGBA", (actual_w, actual_h), (0, 0, 0, 0))
+    rect_draw = ImageDraw.Draw(rect)
+    
+    # Draw gradient lines
+    for y in range(actual_h):
+        t = y / actual_h
+        idx = min(int(t * (len(colors) - 1)), len(colors) - 2)
+        local_t = (t * (len(colors) - 1)) - idx
+        
+        c1, c2 = colors[idx], colors[idx + 1]
+        r = int(c1[0] * (1 - local_t) + c2[0] * local_t)
+        g = int(c1[1] * (1 - local_t) + c2[1] * local_t)
+        b = int(c1[2] * (1 - local_t) + c2[2] * local_t)
+        
+        rect_draw.line((0, y, actual_w, y), fill=(r, g, b, alpha))
+    
+    # Create rounded corners mask
+    mask = Image.new("L", (actual_w, actual_h), 0)
+    mask_draw = ImageDraw.Draw(mask)
+    radius = min(corner_radius, actual_w // 2, actual_h // 2)
+    mask_draw.rounded_rectangle((0, 0, actual_w - 1, actual_h - 1), radius=radius, fill=255)
+    
+    rect.putalpha(mask)
+    
+    # Rotate if needed
+    if rotation != 0:
+        rot_progress = ease_out_quad(min(1, progress * 1.5))
+        current_rot = rotation * (1 - rot_progress)
+        rect = rect.rotate(current_rot, expand=True, resample=Image.Resampling.BICUBIC)
+    
+    # Center position
+    rx = (WIDTH - rect.width) // 2
+    ry = (HEIGHT - rect.height) // 2
+    
+    layer.paste(rect, (rx, ry), rect)
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
+def draw_multiple_shapes(
+    img: Image.Image,
+    progress: float,
+    shapes: List[Dict]
+) -> Image.Image:
+    """
+    Draw multiple shapes with staggered animation
+    shapes: [{"type": "circle", "colors": [...], "size": 200, "x": 0, "y": -100}, ...]
+    """
+    result = img.convert("RGBA")
+    
+    for i, shape in enumerate(shapes):
+        # Staggered animation
+        shape_delay = i * 0.15
+        shape_progress = max(0, min(1, (progress - shape_delay) / (1 - shape_delay * len(shapes) / 2)))
+        
+        if shape_progress <= 0:
+            continue
+        
+        shape_type = shape.get("type", "circle")
+        colors = [tuple(c) for c in shape.get("colors", [[255, 100, 150], [100, 150, 255]])]
+        x_offset = shape.get("x", 0)
+        y_offset = shape.get("y", 0)
+        
+        if shape_type == "circle":
+            size = shape.get("size", 300)
+            # Create temp image for this shape
+            temp = Image.new("RGBA", result.size, (0, 0, 0, 0))
+            temp = draw_gradient_circle(temp, shape_progress, colors, size, glow=shape.get("glow", True))
+            
+            # Apply offset by shifting
+            if x_offset != 0 or y_offset != 0:
+                shifted = Image.new("RGBA", result.size, (0, 0, 0, 0))
+                shifted.paste(temp, (x_offset, y_offset), temp)
+                temp = shifted
+            
+            result = Image.alpha_composite(result, temp)
+        
+        elif shape_type == "rect":
+            w = shape.get("width", 400)
+            h = shape.get("height", 300)
+            radius = shape.get("radius", 30)
+            
+            temp = Image.new("RGBA", result.size, (0, 0, 0, 0))
+            temp = draw_gradient_rect(temp, shape_progress, colors, w, h, radius)
+            
+            if x_offset != 0 or y_offset != 0:
+                shifted = Image.new("RGBA", result.size, (0, 0, 0, 0))
+                shifted.paste(temp, (x_offset, y_offset), temp)
+                temp = shifted
+            
+            result = Image.alpha_composite(result, temp)
+    
+    return result
+
+
+# =============================================================
 # TEXT ANIMATIONS - Apple Style
 # =============================================================
 
@@ -812,6 +1014,27 @@ async def render_professional_video(
             color = tuple(content.get("color", [255, 255, 255]))
             bg = draw_text_scale_fade(bg, text, vis, color)
         
+        # === CIRCLE SHAPE ===
+        elif scene_type == "circle":
+            size = content.get("size", 400)
+            colors = [tuple(c) for c in content.get("colors", [[255, 100, 150], [100, 150, 255]])]
+            glow = content.get("glow", True)
+            bg = draw_gradient_circle(bg, vis, colors, size, glow)
+        
+        # === RECTANGLE SHAPE ===
+        elif scene_type == "rect":
+            width = content.get("width", 500)
+            height = content.get("height", 300)
+            radius = content.get("radius", 40)
+            colors = [tuple(c) for c in content.get("colors", [[100, 200, 255], [200, 100, 255]])]
+            rotation = content.get("rotation", 0)
+            bg = draw_gradient_rect(bg, vis, colors, width, height, radius, rotation)
+        
+        # === MULTIPLE SHAPES ===
+        elif scene_type == "shapes":
+            shapes = content.get("shapes", [])
+            bg = draw_multiple_shapes(bg, vis, shapes)
+        
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
         bg.convert("RGB").save(frame_path, "PNG", optimize=True)
@@ -851,30 +1074,27 @@ async def render_professional_video(
 # =============================================================
 
 async def render_universal_video(script_data: Dict, output_dir: Path, fps: int = 30) -> str:
-    """Convert script_data to scenes and render with Apple-style alternating backgrounds"""
+    """Convert script_data to scenes and render - supports ALL visual types"""
     elements = script_data.get("elements", [])
     scenes = []
-    
-    # Track background alternation for Apple-style
-    last_bg = None
     
     for idx, elem in enumerate(elements):
         t = elem.get("type", "text")
         dur = elem.get("duration", 2.5)
         
-        # Determine background - alternate for Apple style
-        if t == "gradient_text":
-            bg = "black"  # Gradient text always on dark
-        elif t == "scale_text":
-            bg = "black"
+        # Determine background based on content type
+        if t in ["gradient_text", "scale_text", "circle", "rect", "shapes"]:
+            bg = "black"  # Shapes look better on dark
         elif t == "text":
-            # Alternate white/black for text scenes (Apple style)
-            if last_bg == "white" or last_bg is None:
-                bg = "white"  # Start with white
-            else:
-                bg = "white"  # Could alternate here but white is cleaner
-        else:
             bg = "white"
+        else:
+            bg = elem.get("background", "white")
+        
+        # Override with explicit background if provided
+        if "background" in elem:
+            bg = elem["background"]
+        if "bg_colors" in elem:
+            bg = "gradient"
         
         scene = {
             "type": t,
@@ -882,9 +1102,11 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
             "trans_in": 0.25,
             "trans_out": 0.15,
             "background": bg,
+            "bg_colors": elem.get("bg_colors"),
             "content": {}
         }
         
+        # === TEXT TYPES ===
         if t == "text":
             text_color = [0, 0, 0] if bg == "white" else [255, 255, 255]
             scene["content"] = {
@@ -892,6 +1114,7 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
                 "color": elem.get("color", text_color),
                 "underline": elem.get("underline")
             }
+        
         elif t == "gradient_text":
             scene["content"] = {
                 "text": elem.get("content", ""),
@@ -899,6 +1122,40 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
                 "shimmer": elem.get("shimmer", True)
             }
             scene["background"] = "black"
+        
+        elif t == "scale_text":
+            scene["content"] = {
+                "text": elem.get("content", ""),
+                "color": elem.get("color", [255, 255, 255])
+            }
+            scene["background"] = "black"
+        
+        # === SHAPE TYPES ===
+        elif t == "circle":
+            scene["content"] = {
+                "size": elem.get("size", 400),
+                "colors": elem.get("colors", [[255, 100, 150], [100, 150, 255]]),
+                "glow": elem.get("glow", True)
+            }
+            scene["background"] = "black"
+        
+        elif t == "rect":
+            scene["content"] = {
+                "width": elem.get("width", 500),
+                "height": elem.get("height", 300),
+                "radius": elem.get("radius", 40),
+                "colors": elem.get("colors", [[100, 200, 255], [200, 100, 255]]),
+                "rotation": elem.get("rotation", 0)
+            }
+            scene["background"] = "black"
+        
+        elif t == "shapes":
+            scene["content"] = {
+                "shapes": elem.get("shapes", [])
+            }
+            scene["background"] = "black"
+        
+        # === UI TYPES ===
         elif t == "chat":
             msgs = elem.get("messages", [])
             for msg in msgs:
@@ -914,6 +1171,7 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
                     }
                 })
             continue
+        
         elif t == "ui_form":
             scene["content"] = {
                 "fields": elem.get("fields", ["Field"]),
@@ -921,15 +1179,8 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
                 "btn_color": elem.get("button_color", [0, 122, 255])
             }
             scene["background"] = "white"
-        elif t == "scale_text":
-            scene["content"] = {
-                "text": elem.get("content", ""),
-                "color": elem.get("color", [255, 255, 255])
-            }
-            scene["background"] = "black"
         
         scenes.append(scene)
-        last_bg = bg
     
     if not scenes:
         scenes = [{"type": "text", "duration": 2.5, "background": "white", "content": {"text": "Hello World"}}]

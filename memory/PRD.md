@@ -1,79 +1,89 @@
-# VidFlux AI - PRD
+# VidFlux AI - Product Requirements Document
 
 ## Original Problem Statement
-Создать AI сервис для генерации контент-видео с динамическими эффектами:
-- Градиенты и переливания (aurora-style)
-- Анимации текста (Apple-стиль: волна сверху/снизу, масштабирование)
-- Диалоги/сообщения в стиле iMessage
-- Универсальная система эффектов с AI-оркестрацией
+AI video generation service that creates professional-grade animations from text prompts.
+User requirements:
+- Apple-style text animations with word-by-word reveal
+- Shape animations (circles, rectangles, etc.) with gradients
+- Logo animations with rotation and scale effects
+- UI element rendering (forms, chat bubbles)
+- Professional motion graphics quality
 
-## Architecture
+## What's Been Implemented (March 10, 2026)
 
-### Backend (FastAPI)
-- `/app/backend/server.py` - Main API, AI orchestration
-- `/app/backend/universal_effects.py` - Universal effects rendering system (NEW)
-- `/app/backend/exact_effects.py` - Legacy exact effects (deprecated)
-- `/app/backend/uploads/` - Generated videos storage
+### Core Video Engine (`/app/backend/universal_effects.py`)
+- **Text Animations:**
+  - Word-by-word reveal with scale + fade + slide (Apple-style)
+  - Gradient text with shimmer effect
+  - Underline animations for emphasis
+  
+- **Shape Animations:**
+  - Gradient circles with glow effect
+  - Gradient rectangles with rounded corners
+  - Multiple shapes composition with staggered animation
+  
+- **UI Elements:**
+  - Chat message bubbles (iMessage-style)
+  - Form fields with animated appearance
+  - Buttons with shadow effects
 
-### Frontend (React)
-- `/app/frontend/src/pages/CreatePage.jsx` - Main creation page (prompt + video upload)
-- `/app/frontend/src/pages/VideoPage.jsx` - Video result display
-- `/app/frontend/src/pages/PricingPage.jsx` - Subscription plans
+- **Logo Animation:**
+  - Rotation (-10° to +5° settle) with ease-out-back
+  - Scale animation (0.5 to 1.0) with overshoot
+  - Brand name reveal with slide-up effect
 
-## Current Status
+### AI Script Generation (`/app/backend/server.py`)
+- Smart prompt analysis to detect intent (text vs shapes vs UI)
+- Automatic scene type selection
+- Support for all visual element types
 
-### Completed Features ✅
-- **Universal Effects System** - Dynamic AI-powered video generation
-- **Chat/Dialog Animation** - iMessage-style bubbles with:
-  - Large, readable text
-  - Proper rounded corners
-  - Message tails
-  - Typing indicator animation
-  - Morphing from typing to message bubble
-- **Text Animations** (Apple-style):
-  - Scale up with bounce
-  - Wave from top (letters fall)
-  - Wave from bottom (letters rise)
-  - Fade from blur
-- **Gradient Backgrounds** - Aurora/shimmer gradients
-- **Gradient Text** - Text with color gradients and shimmer
-- **Chunked File Upload** - Large video uploads support
-- **AI Format Detection** - Smart prompt analysis
-
-### What Works
-1. `POST /api/video/generate` - Creates videos with dynamic effects
-2. Chat dialogs render with proper iMessage styling
-3. Gradient backgrounds animate smoothly
-4. Text animations work (wave_down, wave_up, scale_up)
-5. Video playback on result page works
-6. Download functionality works
-
-### Known Issues
-1. **ffmpeg not persistent** - Need to reinstall after container restart
-2. **Rendering speed** - Complex videos may take 15-30 seconds
-3. **Morphing animation** - Can be smoother for chat bubbles
+### Technical Stack
+- Backend: FastAPI + Pillow (PIL) + ffmpeg
+- Frontend: React
+- Font: Inter (system-installed)
+- Video Format: 1080x1920 vertical, H.264 + AAC
 
 ## API Endpoints
+- `POST /api/video/generate` - Start video generation
+- `GET /api/video/{id}` - Get video status and URL
+- `POST /api/upload` - Upload files (logos, images)
+- `GET /api/uploads/{filename}` - Serve generated files
 
-### Video Generation
-- `POST /api/video/generate` - Generate video from prompt
-- `GET /api/video/{id}` - Get video status/result
-- `GET /api/uploads/{filename}` - Serve video file
+## Scene Types Supported
+1. `text` - Apple-style word-by-word animation
+2. `gradient_text` - Gradient colored text with shimmer
+3. `circle` - Gradient circle with glow
+4. `rect` - Gradient rectangle with rounded corners
+5. `shapes` - Multiple shapes composition
+6. `ui_form` - Form with input fields and button
+7. `chat` - Chat message bubbles
+8. `logo_animation` - Logo with rotation/scale + brand name
 
-### File Upload
-- `POST /api/upload/init` - Initialize chunked upload
-- `POST /api/upload/chunk` - Upload chunk
-- `POST /api/upload/complete` - Complete upload
+## Backlog / Future Tasks
 
-## Database Schema
-- Collection: `video_projects`
-- Fields: id, status, progress, prompt, format_id, video_url, etc.
+### P0 (High Priority)
+- [x] Apple-style text animations
+- [x] Shape rendering (circles, rectangles)
+- [x] Logo animations with uploaded logo
+- [ ] Camera movements (pan, zoom) - NOT YET IMPLEMENTED
+- [ ] Parallax effects - NOT YET IMPLEMENTED
 
-## Upcoming Tasks
-- P0: Sora 2 Integration for AI video clips
-- P1: Stock video search (Pexels)
-- P2: User authentication system
-- P3: Stripe live mode
+### P1 (Medium Priority)
+- [ ] Sora 2 AI video generation integration
+- [ ] Stock video search
+- [ ] More advanced easing curves
 
-## Last Updated
-2024-03-10 - Universal effects system v2 implemented with improved chat bubbles
+### P2 (Low Priority)
+- [ ] User authentication
+- [ ] Stripe subscriptions (currently in test mode)
+- [ ] Video template marketplace
+
+## Known Issues
+- ffmpeg and fonts-inter must be installed manually each session (environmental constraint)
+- Browser video playback may have issues when TTS audio is shorter than video duration
+
+## Files Reference
+- `/app/backend/universal_effects.py` - Main rendering engine
+- `/app/backend/server.py` - FastAPI app with all endpoints
+- `/app/frontend/src/pages/CreatePage.jsx` - Video creation UI
+- `/app/frontend/src/pages/VideoPage.jsx` - Video result display

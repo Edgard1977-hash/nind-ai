@@ -460,8 +460,8 @@ CRITICAL RULES:
 
 async def generate_universal_script(prompt: str, language: str) -> dict:
     """
-    AI generates dynamic video script with Apple-style effects.
-    Creates smooth word-by-word animations with alternating backgrounds.
+    AI generates dynamic video script with various visual elements.
+    Supports: text, shapes, gradients, UI elements, and more.
     """
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     
@@ -472,49 +472,67 @@ async def generate_universal_script(prompt: str, language: str) -> dict:
         chat = LlmChat(
             api_key=api_key,
             session_id=f"universal-{uuid.uuid4()}",
-            system_message="You create Apple-style text animation scripts. Clean, minimal, professional."
+            system_message="You create professional motion graphics scripts. Analyze what user wants and use appropriate visual elements."
         )
         chat.with_model("openai", "gpt-5.2")
         
-        system_prompt = f"""Create Apple-style video animation script. Return ONLY valid JSON.
+        system_prompt = f"""Create video animation script. Return ONLY valid JSON.
 
-ANIMATION STYLE (like Apple presentations):
-- Each phrase on separate scene
-- Alternating white/black backgrounds for contrast
-- Word-by-word reveal animation
-- Optional underline for emphasis
-- Gradient text for brand names
+AVAILABLE SCENE TYPES:
 
-SCENE TYPES:
-1. "text" - White bg, black text, word-by-word animation
-   {{"type":"text","content":"Let's create","duration":2.5,"underline":"create"}}
+1. "text" - Text with word-by-word animation (Apple-style)
+   {{"type":"text","content":"Hello World","duration":2.5,"color":[0,0,0],"underline":"World"}}
 
-2. "gradient_text" - Black bg, gradient colored text with shimmer
-   {{"type":"gradient_text","content":"Brand Name","duration":2.5,"gradient_colors":[[0,180,255],[100,220,255]]}}
+2. "gradient_text" - Gradient colored text with shimmer (on dark bg)
+   {{"type":"gradient_text","content":"Brand","duration":2.5,"gradient_colors":[[255,100,150],[100,150,255]]}}
 
-3. "ui_form" - White bg, animated form fields
-   {{"type":"ui_form","duration":3,"fields":["Email","Password"],"button_text":"Sign up"}}
+3. "circle" - Gradient circle shape with glow
+   {{"type":"circle","duration":2.5,"size":400,"colors":[[255,100,150],[100,150,255]],"glow":true}}
 
-4. "chat" - Message bubbles animation
+4. "rect" - Gradient rectangle with rounded corners
+   {{"type":"rect","duration":2.5,"width":500,"height":300,"radius":40,"colors":[[100,200,255],[200,100,255]]}}
+
+5. "shapes" - Multiple shapes composition
+   {{"type":"shapes","duration":3,"shapes":[
+     {{"type":"circle","size":200,"colors":[[255,0,100],[255,100,0]],"x":0,"y":-200}},
+     {{"type":"circle","size":150,"colors":[[0,200,255],[100,0,255]],"x":150,"y":100}},
+     {{"type":"rect","width":300,"height":100,"colors":[[100,255,100],[0,200,100]],"x":-100,"y":200}}
+   ]}}
+
+6. "ui_form" - Form with input fields and button
+   {{"type":"ui_form","duration":3,"fields":["Email","Password"],"button_text":"Sign up","button_color":[0,122,255]}}
+
+7. "chat" - Chat message bubbles
    {{"type":"chat","messages":[{{"text":"Hello","sender":true}},{{"text":"Hi!","sender":false}}]}}
 
-RULES:
-- Keep phrases SHORT (3-5 words max per scene)
-- Alternate backgrounds: white -> black -> white
-- Add "underline" to emphasize key words
-- Use gradient_colors for brand/product names on black bg
-- Duration: 2-2.5 seconds per scene
+BACKGROUND OPTIONS:
+- "white" or "black" (default based on content)
+- [r,g,b] - custom solid color
+- "gradient" with "bg_colors": [[r,g,b], [r,g,b]]
 
-EXAMPLE for "Let's create Some silky smooth text Just like Apple":
-{{"elements":[
-  {{"type":"text","content":"Let's create","duration":2.5}},
-  {{"type":"text","content":"Some silky smooth text","duration":2.5,"underline":"silky"}},
-  {{"type":"text","content":"Just like Apple.","duration":2.5,"underline":"Apple"}}
-]}}
+ANALYZE THE PROMPT:
+- If user asks for SHAPES/FIGURES → use "circle", "rect", "shapes"
+- If user asks for TEXT → use "text" or "gradient_text"
+- If user asks for UI → use "ui_form"
+- If user asks for CHAT → use "chat"
+- If user asks for COMPOSITION → use "shapes" with multiple elements
+
+EXAMPLES:
+1. "gradient circle" → {{"elements":[{{"type":"circle","duration":3,"size":500,"colors":[[255,50,150],[50,150,255]],"glow":true}}]}}
+
+2. "blue rectangle" → {{"elements":[{{"type":"rect","duration":3,"width":600,"height":400,"colors":[[0,100,255],[0,200,255]]}}]}}
+
+3. "Hello World text" → {{"elements":[{{"type":"text","content":"Hello World","duration":2.5}}]}}
+
+4. "3 circles" → {{"elements":[{{"type":"shapes","duration":4,"shapes":[
+  {{"type":"circle","size":250,"colors":[[255,0,0],[255,100,0]],"x":-200,"y":0}},
+  {{"type":"circle","size":250,"colors":[[0,255,0],[100,255,0]],"x":0,"y":0}},
+  {{"type":"circle","size":250,"colors":[[0,0,255],[0,100,255]],"x":200,"y":0}}
+]}}]}}
 
 User prompt: {prompt}
 
-Return ONLY JSON, no explanations."""
+Return ONLY JSON with "elements" array. Match the visual type to what user asked for."""
         
         msg = UserMessage(text=system_prompt)
         response = await chat.send_message(msg)
