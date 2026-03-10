@@ -553,6 +553,7 @@ def draw_gradient_text(
 # =============================================================
 # LOGO ANIMATION - HORIZONTAL layout
 # Text LEFT, Logo RIGHT - on SAME LINE
+# NO ROTATION - smooth only
 # =============================================================
 
 async def render_logo_animation(
@@ -564,10 +565,10 @@ async def render_logo_animation(
     duration: float = 3.0
 ) -> str:
     """
-    Logo animation - HORIZONTAL layout:
-    1. Logo appears in CENTER
-    2. Logo moves to the RIGHT
-    3. Text appears on the LEFT
+    Logo animation - HORIZONTAL layout, NO ROTATION:
+    1. Logo appears in CENTER (smooth scale, no rotation)
+    2. Logo moves smoothly to the RIGHT
+    3. Text appears on the LEFT (smooth fade)
     4. Final: Text LEFT + Logo RIGHT on SAME horizontal line
     """
     output_path = output_dir / f"logo_{uuid.uuid4().hex[:8]}.mp4"
@@ -579,22 +580,22 @@ async def render_logo_animation(
     # Load logo
     try:
         logo = Image.open(logo_path).convert("RGBA")
-        max_size = 180
+        max_size = 150
         ratio = min(max_size / logo.width, max_size / logo.height)
         new_size = (int(logo.width * ratio), int(logo.height * ratio))
         logo = logo.resize(new_size, Image.Resampling.LANCZOS)
     except Exception as e:
         logger.error(f"Failed to load logo: {e}")
-        logo = Image.new("RGBA", (180, 180), (255, 255, 255, 255))
+        logo = Image.new("RGBA", (150, 150), (255, 255, 255, 255))
         draw = ImageDraw.Draw(logo)
-        draw.ellipse((20, 20, 160, 160), fill=(200, 200, 200, 255))
+        draw.ellipse((15, 15, 135, 135), fill=(200, 200, 200, 255))
     
     # Text color
     brightness = (bg_color[0] * 299 + bg_color[1] * 587 + bg_color[2] * 114) / 1000
     text_color = (255, 255, 255) if brightness < 128 else (0, 0, 0)
     
     # Prepare text
-    font_size = 80
+    font_size = 70
     font = get_font(font_size, "bold")
     
     # Measure text
@@ -605,10 +606,9 @@ async def render_logo_animation(
     text_h = text_bbox[3] - text_bbox[1]
     
     # Final positions (text LEFT, logo RIGHT, same line)
-    gap = 40  # Gap between text and logo
+    gap = 30
     total_w = text_w + gap + logo.width
     
-    # Center the whole composition
     start_x = (WIDTH - total_w) // 2
     center_y = HEIGHT // 2
     
@@ -617,7 +617,7 @@ async def render_logo_animation(
     final_logo_x = start_x + text_w + gap
     final_logo_y = center_y - logo.height // 2
     
-    # Logo center position (where it starts)
+    # Logo center position
     logo_center_x = (WIDTH - logo.width) // 2
     
     for frame_num in range(total_frames):
@@ -626,47 +626,41 @@ async def render_logo_animation(
         bg = create_solid_bg(WIDTH, HEIGHT, bg_color).convert("RGBA")
         
         # =============================================
-        # PHASE 1 (0 - 1s): Logo appears in CENTER with rotation
+        # PHASE 1 (0 - 0.8s): Logo appears in CENTER
         # =============================================
-        if time_sec < 1.0:
-            t = time_sec / 1.0
+        if time_sec < 0.8:
+            t = time_sec / 0.8
             
-            # Logo appears with scale + rotation
-            logo_scale = ease_out_back(t)
-            logo_rotation = -15 * (1 - ease_out_quad(t))
-            logo_alpha = ease_out_quad(min(1, t * 2))
-            
-            # Logo stays in center
+            # Smooth scale up, NO rotation
+            logo_scale = ease_out_cubic(t)
+            logo_alpha = ease_out_quad(t)
             logo_x = logo_center_x
             logo_y = center_y - int(logo.height * logo_scale) // 2
             
-            # Text not visible yet
             text_alpha = 0
-            text_x = final_text_x - 100  # Starts off to the left
+            text_x = final_text_x
         
         # =============================================
-        # PHASE 2 (1s - 2s): Logo moves RIGHT, text appears LEFT
+        # PHASE 2 (0.8s - 1.8s): Logo moves RIGHT, text appears
         # =============================================
-        elif time_sec < 2.0:
-            t = (time_sec - 1.0) / 1.0
+        elif time_sec < 1.8:
+            t = (time_sec - 0.8) / 1.0
             
-            # Logo moves from center to right position
             logo_scale = 1.0
-            logo_rotation = 0
             logo_alpha = 1.0
-            logo_x = int(logo_center_x + (final_logo_x - logo_center_x) * ease_out_quad(t))
+            # Smooth move to right
+            logo_x = int(logo_center_x + (final_logo_x - logo_center_x) * ease_out_cubic(t))
             logo_y = final_logo_y
             
-            # Text fades in and slides in from left
-            text_alpha = ease_out_quad(t)
-            text_x = int((final_text_x - 100) + 100 * ease_out_quad(t))
+            # Text fades in smoothly
+            text_alpha = ease_out_cubic(t)
+            text_x = final_text_x
         
         # =============================================
-        # PHASE 3 (2s+): Static final position
+        # PHASE 3 (1.8s+): Static
         # =============================================
         else:
             logo_scale = 1.0
-            logo_rotation = 0
             logo_alpha = 1.0
             logo_x = final_logo_x
             logo_y = final_logo_y
@@ -674,7 +668,7 @@ async def render_logo_animation(
             text_alpha = 1.0
             text_x = final_text_x
         
-        # Draw logo
+        # Draw logo (NO rotation)
         if logo_scale > 0.01 and logo_alpha > 0:
             scaled_w = int(logo.width * logo_scale)
             scaled_h = int(logo.height * logo_scale)
@@ -682,19 +676,12 @@ async def render_logo_animation(
             if scaled_w > 0 and scaled_h > 0:
                 scaled_logo = logo.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
                 
-                if logo_rotation != 0:
-                    scaled_logo = scaled_logo.rotate(logo_rotation, expand=True, resample=Image.Resampling.BICUBIC)
-                
                 # Apply alpha
                 r, g, b, a = scaled_logo.split()
                 a = a.point(lambda p: int(p * logo_alpha))
                 scaled_logo = Image.merge("RGBA", (r, g, b, a))
                 
-                # Adjust position for rotation expansion
-                adj_x = logo_x - (scaled_logo.width - scaled_w) // 2
-                adj_y = logo_y - (scaled_logo.height - scaled_h) // 2
-                
-                bg.paste(scaled_logo, (adj_x, adj_y), scaled_logo)
+                bg.paste(scaled_logo, (logo_x, logo_y), scaled_logo)
         
         # Draw text
         if text_alpha > 0:
