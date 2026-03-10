@@ -1,111 +1,79 @@
 # VidFlux AI - PRD
 
-## Problem Statement
-AI сервис для создания контент-видео. Пользователь вводит промт, умный AI движок анализирует его и автоматически определяет тип видео. Создаёт видео с профессиональными анимациями в формате 9:16.
-
-## What's Implemented (March 2026)
-
-### Core Features ✅
-- Landing page с галереей видео
-- Умный движок авто-определения типа видео
-- **PIL/Pillow рендерер** для профессиональных анимаций
-- **Upload API** для загрузки изображений продуктов и логотипов
-- **Stripe Подписки** — 3 плана ($7.99, $19, $79)
-
-### Animation Formats (5 профессиональных форматов)
-
-| Format | Описание | Особенности |
-|--------|----------|-------------|
-| **chat_animation** | iMessage-стиль диалог | Scale-up + fade-in, мягкие тени, падающие деньги overlay, реакции-эмодзи |
-| **apple_text** | Apple презентация | Word-by-word появление, градиентный текст (синий→фиолетовый), подчёркивание |
-| **kinetic_typography** | Слово за словом | Плавное появление с easing |
-| **logo_animation** | Интро бренда | Glow эффект, scale animation, поддержка загруженного логотипа |
-| **product_advertisement** | Реклама продукта | Apple-стиль, руки, ракурсы, бренд reveal, gradient text |
-
-### AI Видеомонтаж ✅ NEW
-| Стиль | Описание | Переходы |
-|-------|----------|----------|
-| **TikTok/Reels** | Быстрый, динамичный | glitch, flash, zoom, shake |
-| **YouTube** | Плавный, профессиональный | fade, dissolve, slide |
-| **Мемы/Комедия** | Весёлый, мемный | hard_cut, zoom_in, shake, flash |
-| **Кинематографичный** | Элегантный, киношный | fade, dissolve, wipe |
-
-Функции монтажа:
-- AI анализирует видео и находит интересные моменты
-- Автоматические переходы между клипами
-- AI подбирает звуковые эффекты по контексту
-- Наложение фоновой музыки (загрузка пользователем)
-- Текстовые оверлеи
-
-### Subscription Plans ✅
-| План | Цена | Видео/месяц | Качество |
-|------|------|-------------|----------|
-| Starter | $7.99 | 10 | 720p |
-| Pro | $19.00 | 50 | 1080p |
-| Unlimited | $79.00 | ∞ | 4K |
-
-### Technical Implementation
-- **Рендерер:** PIL/Pillow (покадровый рендеринг)
-- **FPS:** 30
-- **Разрешение:** 1080x1920 (9:16 Full HD)
-- **Кодек:** H.264
-- **Анимации:** ease_out_cubic, ease_in_out_sine
-
-### Product Advertisement Feature (NEW)
-- **Загрузка изображений продукта** через `/api/upload`
-- **Загрузка логотипа** бренда
-- **AI-генерация** изображений если не загружены
-- **Сцены:**
-  1. Продукт крупным планом (опционально с руками)
-  2. Продукт с другого ракурса
-  3. Brand reveal (логотип + название с градиентом)
-  4. Tagline (опционально)
+## Original Problem Statement
+Создать AI сервис для генерации контент-видео с динамическими эффектами:
+- Градиенты и переливания (aurora-style)
+- Анимации текста (Apple-стиль: волна сверху/снизу, масштабирование)
+- Диалоги/сообщения в стиле iMessage
+- Универсальная система эффектов с AI-оркестрацией
 
 ## Architecture
-```
-/app/backend/
-├── server.py              # API + AI orchestration + Upload endpoint
-├── video_service.py       # Basic ffmpeg functions
-├── animation_renderer.py  # Professional PIL renderer (5 formats)
-└── uploads/               # Generated content + uploaded files
-```
+
+### Backend (FastAPI)
+- `/app/backend/server.py` - Main API, AI orchestration
+- `/app/backend/universal_effects.py` - Universal effects rendering system (NEW)
+- `/app/backend/exact_effects.py` - Legacy exact effects (deprecated)
+- `/app/backend/uploads/` - Generated videos storage
+
+### Frontend (React)
+- `/app/frontend/src/pages/CreatePage.jsx` - Main creation page (prompt + video upload)
+- `/app/frontend/src/pages/VideoPage.jsx` - Video result display
+- `/app/frontend/src/pages/PricingPage.jsx` - Subscription plans
+
+## Current Status
+
+### Completed Features ✅
+- **Universal Effects System** - Dynamic AI-powered video generation
+- **Chat/Dialog Animation** - iMessage-style bubbles with:
+  - Large, readable text
+  - Proper rounded corners
+  - Message tails
+  - Typing indicator animation
+  - Morphing from typing to message bubble
+- **Text Animations** (Apple-style):
+  - Scale up with bounce
+  - Wave from top (letters fall)
+  - Wave from bottom (letters rise)
+  - Fade from blur
+- **Gradient Backgrounds** - Aurora/shimmer gradients
+- **Gradient Text** - Text with color gradients and shimmer
+- **Chunked File Upload** - Large video uploads support
+- **AI Format Detection** - Smart prompt analysis
+
+### What Works
+1. `POST /api/video/generate` - Creates videos with dynamic effects
+2. Chat dialogs render with proper iMessage styling
+3. Gradient backgrounds animate smoothly
+4. Text animations work (wave_down, wave_up, scale_up)
+5. Video playback on result page works
+6. Download functionality works
+
+### Known Issues
+1. **ffmpeg not persistent** - Need to reinstall after container restart
+2. **Rendering speed** - Complex videos may take 15-30 seconds
+3. **Morphing animation** - Can be smoother for chat bubbles
 
 ## API Endpoints
-- `POST /api/video/generate` - format_id: "auto", "chat_animation", "product_advertisement", etc.
-- `POST /api/upload` - Upload product images or logos
-- `GET /api/video/{id}` - статус генерации
-- `GET /api/formats` - список форматов (15)
-- `GET /api/subscription/plans` - список планов подписки
-- `POST /api/subscription/checkout` - создать Stripe сессию
-- `GET /api/subscription/status/{session_id}` - статус оплаты
-- `POST /api/webhook/stripe` - Stripe webhook
 
-## Known Limitations
-- Emergent LLM Key бюджет (используются fallback скрипты)
-- yt-dlp заблокирован
-- ffmpeg требует переустановки при рестарте контейнера
+### Video Generation
+- `POST /api/video/generate` - Generate video from prompt
+- `GET /api/video/{id}` - Get video status/result
+- `GET /api/uploads/{filename}` - Serve video file
 
-## Recent Fixes (March 9, 2026)
-- ✅ **Профессиональные эффекты на основе анализа референсных видео:**
-  - **Aurora Gradient** — переливающийся градиент как в Spotify видео (анимированные волны)
-  - **3D Cards** — карточки с тенью, perspective transform, bounce анимация
-  - **iMessage Bubbles** — синие/серые пузыри с хвостиками, typing indicator (три точки)
-  - **Typewriter Text** — печатающийся текст с мигающим курсором
-  - **Gradient Text** — текст с радужным/градиентным заполнением
-  - **Device Mockups** — iPhone/MacBook frames с тенями
-- ✅ **Новые PRO форматы:**
-  - `spotify_demo` — Aurora gradient + лого + UI карточки + tagline
-  - `saas_demo` — Пастельный градиент + typewriter + 3D dashboard карточки
-  - `chat_animation` — iMessage стиль с анимацией появления сообщений
-- ✅ **Файл pro_effects.py** — библиотека профессиональных эффектов
+### File Upload
+- `POST /api/upload/init` - Initialize chunked upload
+- `POST /api/upload/chunk` - Upload chunk
+- `POST /api/upload/complete` - Complete upload
 
-## Pending User Verification
-- [ ] Apple Text Animation — исправлена обрезка видео (убран флаг `-shortest`)
-- [ ] Logo Animation — исправлена передача загруженного логотипа в рендерер
+## Database Schema
+- Collection: `video_projects`
+- Fields: id, status, progress, prompt, format_id, video_url, etc.
 
-## Next Steps (P1)
-- [ ] Интеграция Sora 2 для AI видео-генерации
-- [ ] Поиск стоковых видео (Pexels API)
-- [ ] Система аутентификации пользователей
-- [ ] Улучшить типографику (custom fonts)
-- [ ] Добавить 3D рендеринг продукта
+## Upcoming Tasks
+- P0: Sora 2 Integration for AI video clips
+- P1: Stock video search (Pexels)
+- P2: User authentication system
+- P3: Stripe live mode
+
+## Last Updated
+2024-03-10 - Universal effects system v2 implemented with improved chat bubbles

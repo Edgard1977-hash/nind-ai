@@ -478,66 +478,62 @@ async def generate_universal_script(prompt: str, language: str) -> dict:
         
         lang = "Russian" if is_russian else "English"
         
-        system_prompt = f"""Create a video script with dynamic effects based on this prompt.
+        system_prompt = f"""Create a professional video script with dynamic effects.
 Language: {lang}
 
 AVAILABLE EFFECTS:
 
-1. BACKGROUND TYPES:
-   - "aurora" - Animated gradient waves (best for modern, tech, emotional content)
-   - "linear" - Simple top-to-bottom gradient
-   - "radial" - Center-outward gradient
-   - "solid" - Solid color
+1. BACKGROUNDS:
+   - "aurora" - Animated gradient waves (modern, emotional)
+   - "solid" - Simple gradient
 
-2. ELEMENT TYPES:
-   - "text" - Large text with animation
-     effects: "scale_up" (pop), "slide_up", "fade", "bounce", "elastic"
-   - "typewriter" - Text appears char by char with cursor
-   - "word_by_word" - Words appear one by one (great for quotes)
-   - "gradient_text" - Text with color gradient, optional shimmer
-   - "chat" - Message bubbles dialog
-     styles: "imessage", "whatsapp", "telegram", "modern"
-   - "card" - UI cards with icon, title, subtitle
+2. TEXT ANIMATIONS (Apple-style):
+   - "scale_up" - Text scales up with bounce
+   - "wave_down" - Letters fall from top like Apple keynote
+   - "wave_up" - Letters rise from bottom
+   - "fade_blur" - Fade in from blur
 
-RULES:
-- Create 3-6 elements for variety
-- Use timing (start_time) to sequence elements
-- Match effects to content mood
-- For dialogs/chats, use "chat" element
-- For motivational/quotes, use "word_by_word"
-- For tech/brand content, use gradient backgrounds + gradient_text
-- Keep total duration 8-15 seconds
+3. ELEMENT TYPES:
+   - "text" - Animated text (use effects above)
+   - "gradient_text" - Text with shimmer gradient colors
+   - "chat" - iMessage-style dialog with morphing bubbles
+
+FOR CHAT DIALOGS:
+- Messages appear one by one with typing indicator that morphs into bubble
+- Use "sender": true for blue bubbles (right), false for gray (left)
+- Keep messages SHORT (under 40 chars each)
+- 4-6 messages max
 
 Return ONLY valid JSON:
 {{
-    "title": "Video title",
+    "title": "Title",
     "background": {{
         "type": "aurora",
-        "colors": [[r,g,b], [r,g,b], [r,g,b]]
+        "colors": [[40, 30, 70], [70, 50, 120], [50, 80, 130]]
     }},
     "elements": [
         {{
             "type": "text",
-            "content": "Text content",
-            "start_time": 0.0,
+            "content": "Welcome!",
+            "start_time": 0.5,
             "duration": 3.0,
-            "effect": "scale_up",
-            "position": "center",
-            "font_size": 72,
+            "effect": "wave_down",
+            "font_size": 80,
             "color": [255, 255, 255]
-        }},
-        {{
-            "type": "chat",
-            "start_time": 2.0,
-            "duration": 6.0,
-            "style": "imessage",
-            "messages": [
-                {{"text": "Message 1", "sender": true}},
-                {{"text": "Response", "sender": false}}
-            ]
         }}
     ],
     "duration": 10.0
+}}
+
+For chat dialog:
+{{
+    "type": "chat",
+    "start_time": 0.5,
+    "duration": 10.0,
+    "messages": [
+        {{"text": "Hey! 👋", "sender": true}},
+        {{"text": "Hi there!", "sender": false}}
+    ]
 }}
 
 User prompt: {prompt}"""
@@ -559,7 +555,7 @@ User prompt: {prompt}"""
     prompt_lower = prompt.lower()
     
     # Detect chat/dialog intent
-    chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation']
+    chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation', '[', ']']
     is_chat = any(kw in prompt_lower for kw in chat_keywords)
     
     # Detect gradient intent
@@ -567,44 +563,54 @@ User prompt: {prompt}"""
     wants_gradient = any(kw in prompt_lower for kw in gradient_keywords)
     
     if is_chat:
+        # Извлекаем сообщения из промпта если есть []
+        import re
+        bracket_msgs = re.findall(r'\[([^\]]+)\]', prompt)
+        
+        if bracket_msgs:
+            messages = []
+            for i, msg in enumerate(bracket_msgs[:6]):
+                messages.append({"text": msg.strip(), "sender": i % 2 == 0})
+        else:
+            messages = [
+                {"text": "Привет! 👋" if is_russian else "Hey! 👋", "sender": True},
+                {"text": "Привет!" if is_russian else "Hi!", "sender": False},
+                {"text": "Как дела?" if is_russian else "How are you?", "sender": True},
+                {"text": "Отлично! 😊" if is_russian else "Great! 😊", "sender": False},
+            ]
+        
         return {
             "title": "Диалог" if is_russian else "Dialog",
             "background": {
-                "type": "linear",
-                "colors": [[30, 30, 35], [50, 50, 60]]
+                "type": "solid",
+                "colors": [[25, 25, 30], [35, 35, 45]]
             },
             "elements": [
                 {
                     "type": "chat",
-                    "start_time": 0.5,
-                    "duration": 8.0,
-                    "style": "imessage",
-                    "messages": [
-                        {"text": "Привет! 👋" if is_russian else "Hey! 👋", "sender": True},
-                        {"text": "Привет, как дела?" if is_russian else "Hi, how are you?", "sender": False},
-                        {"text": "Отлично! 😊" if is_russian else "Great! 😊", "sender": True},
-                    ]
+                    "start_time": 0.3,
+                    "duration": len(messages) * 1.8 + 2,
+                    "messages": messages
                 }
             ],
-            "duration": 10.0
+            "duration": len(messages) * 1.8 + 3
         }
     elif wants_gradient:
         return {
             "title": prompt[:30],
             "background": {
                 "type": "aurora",
-                "colors": [[100, 50, 200], [50, 150, 255], [100, 255, 200]]
+                "colors": [[80, 40, 150], [50, 120, 200], [100, 180, 220]]
             },
             "elements": [
                 {
                     "type": "gradient_text",
-                    "content": prompt[:50] if prompt else "Amazing",
+                    "content": prompt[:40] if prompt else "Amazing",
                     "start_time": 0.5,
-                    "duration": 4.0,
-                    "font_size": 80,
-                    "gradient_colors": [[0, 200, 255], [255, 100, 200]],
-                    "shimmer": True,
-                    "position": "center"
+                    "duration": 5.0,
+                    "font_size": 85,
+                    "gradient_colors": [[0, 180, 255], [200, 80, 255]],
+                    "shimmer": True
                 }
             ],
             "duration": 8.0
@@ -614,23 +620,21 @@ User prompt: {prompt}"""
             "title": prompt[:30],
             "background": {
                 "type": "aurora",
-                "colors": [[40, 40, 60], [80, 60, 120], [60, 100, 150]]
+                "colors": [[40, 30, 70], [70, 50, 120], [50, 80, 140]]
             },
             "elements": [
                 {
                     "type": "text",
-                    "content": prompt[:60] if prompt else "Hello World",
+                    "content": prompt[:50] if prompt else "Hello World",
                     "start_time": 0.5,
                     "duration": 4.0,
-                    "effect": "scale_up",
-                    "font_size": 64,
-                    "color": [255, 255, 255],
-                    "position": "center"
+                    "effect": "wave_down",
+                    "font_size": 75,
+                    "color": [255, 255, 255]
                 }
             ],
             "duration": 8.0
         }
-
 
 
 async def generate_chat_animation_script(prompt: str, language: str) -> dict:

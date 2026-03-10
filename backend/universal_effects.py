@@ -1,7 +1,9 @@
 """
-UNIVERSAL EFFECTS SYSTEM
-Динамическая система эффектов для AI видео-генерации
-Текстовые эффекты, градиенты, сообщения, карточки
+UNIVERSAL EFFECTS SYSTEM v2
+Профессиональные анимации для AI видео-генерации
+- Крупные сообщения с плавной трансформацией
+- Apple-стиль анимации текста
+- Переливающиеся градиенты
 """
 
 import math
@@ -17,13 +19,13 @@ import asyncio
 
 logger = logging.getLogger(__name__)
 
-# Video dimensions (9:16 vertical)
+# Video dimensions (9:16 vertical) - Full HD
 WIDTH = 1080
 HEIGHT = 1920
 
 
 def get_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
-    """Get font with fallback"""
+    """Get system font with fallback"""
     font_paths = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
@@ -31,125 +33,52 @@ def get_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     for path in font_paths:
         try:
             return ImageFont.truetype(path, size)
-        except Exception:
+        except:
             continue
     return ImageFont.load_default()
 
 
 # =============================================================
-# EASING FUNCTIONS
+# EASING FUNCTIONS - Профессиональные кривые анимации
 # =============================================================
 
 def ease_out_cubic(t: float) -> float:
+    """Плавное замедление"""
     return 1 - pow(1 - t, 3)
 
+def ease_out_quart(t: float) -> float:
+    """Более плавное замедление"""
+    return 1 - pow(1 - t, 4)
+
 def ease_out_back(t: float) -> float:
+    """С небольшим перескоком назад"""
     c1 = 1.70158
     c3 = c1 + 1
     return 1 + c3 * pow(t - 1, 3) + c1 * pow(t - 1, 2)
 
-def ease_in_out_quad(t: float) -> float:
-    return 2 * t * t if t < 0.5 else 1 - pow(-2 * t + 2, 2) / 2
+def ease_in_out_cubic(t: float) -> float:
+    """Плавное начало и конец"""
+    if t < 0.5:
+        return 4 * t * t * t
+    else:
+        return 1 - pow(-2 * t + 2, 3) / 2
 
 def ease_out_elastic(t: float) -> float:
+    """Упругий эффект"""
     if t == 0 or t == 1:
         return t
     return pow(2, -10 * t) * math.sin((t * 10 - 0.75) * (2 * math.pi) / 3) + 1
 
-def ease_out_bounce(t: float) -> float:
-    n1 = 7.5625
-    d1 = 2.75
-    if t < 1 / d1:
-        return n1 * t * t
-    elif t < 2 / d1:
-        t -= 1.5 / d1
-        return n1 * t * t + 0.75
-    elif t < 2.5 / d1:
-        t -= 2.25 / d1
-        return n1 * t * t + 0.9375
-    else:
-        t -= 2.625 / d1
-        return n1 * t * t + 0.984375
+def spring_animation(t: float, damping: float = 0.5) -> float:
+    """Пружинная анимация"""
+    if t >= 1:
+        return 1
+    return 1 - math.exp(-6 * t) * math.cos(12 * t * (1 - damping))
 
 
 # =============================================================
 # GRADIENT BACKGROUNDS
 # =============================================================
-
-def create_gradient_background(
-    width: int, 
-    height: int, 
-    colors: List[Tuple[int, int, int]],
-    gradient_type: str = "linear",  # linear, radial, aurora
-    time: float = 0.0,  # For animated gradients
-    angle: float = 0.0  # For linear gradients
-) -> Image.Image:
-    """
-    Create animated gradient background
-    
-    gradient_type:
-    - linear: Top to bottom (or at angle)
-    - radial: Center outward
-    - aurora: Animated wavy aurora effect
-    - diagonal: Corner to corner
-    """
-    img = Image.new("RGB", (width, height))
-    draw = ImageDraw.Draw(img)
-    
-    if len(colors) < 2:
-        colors = [(30, 30, 30), (60, 60, 80)]
-    
-    if gradient_type == "aurora":
-        return create_aurora_gradient(width, height, colors, time)
-    
-    elif gradient_type == "radial":
-        # Radial gradient from center
-        center_x, center_y = width // 2, height // 2
-        max_dist = math.sqrt(center_x**2 + center_y**2)
-        
-        # Draw in bands for performance
-        num_bands = 50
-        for i in range(num_bands, 0, -1):
-            ratio = i / num_bands
-            t = 1 - ratio
-            
-            r = int(colors[0][0] * (1 - t) + colors[-1][0] * t)
-            g = int(colors[0][1] * (1 - t) + colors[-1][1] * t)
-            b = int(colors[0][2] * (1 - t) + colors[-1][2] * t)
-            
-            radius = int(max_dist * ratio)
-            draw.ellipse(
-                (center_x - radius, center_y - radius, 
-                 center_x + radius, center_y + radius),
-                fill=(r, g, b)
-            )
-    
-    elif gradient_type == "diagonal":
-        # Diagonal gradient
-        for y in range(height):
-            for x in range(0, width, 4):  # Step for performance
-                t = (x + y) / (width + height)
-                
-                r = int(colors[0][0] * (1 - t) + colors[-1][0] * t)
-                g = int(colors[0][1] * (1 - t) + colors[-1][1] * t)
-                b = int(colors[0][2] * (1 - t) + colors[-1][2] * t)
-                
-                draw.rectangle((x, y, x + 4, y + 1), fill=(r, g, b))
-    
-    else:  # linear (default)
-        # Vertical linear gradient
-        for y in range(height):
-            t = y / height
-            
-            # Interpolate between colors
-            r = int(colors[0][0] * (1 - t) + colors[-1][0] * t)
-            g = int(colors[0][1] * (1 - t) + colors[-1][1] * t)
-            b = int(colors[0][2] * (1 - t) + colors[-1][2] * t)
-            
-            draw.line((0, y, width, y), fill=(r, g, b))
-    
-    return img
-
 
 def create_aurora_gradient(
     width: int, 
@@ -157,36 +86,31 @@ def create_aurora_gradient(
     colors: List[Tuple[int, int, int]],
     time: float
 ) -> Image.Image:
-    """
-    Animated aurora/shimmer gradient effect
-    """
+    """Переливающийся aurora градиент"""
     img = Image.new("RGB", (width, height))
     draw = ImageDraw.Draw(img)
     
     if len(colors) < 2:
-        colors = [(100, 50, 200), (50, 150, 255), (100, 255, 200)]
+        colors = [(40, 20, 80), (80, 40, 140), (40, 80, 160)]
     
-    # Render in horizontal bands for speed
-    num_bands = 60
+    num_bands = 80
     band_height = height // num_bands
     
     for band_idx in range(num_bands):
         y_start = band_idx * band_height
         y_end = (band_idx + 1) * band_height
         
-        # Normalized position
         ny = band_idx / num_bands
         
-        # Animated waves
-        wave1 = math.sin(ny * 4 + time * math.pi * 2) * 0.2
-        wave2 = math.cos(ny * 3 + time * math.pi * 1.5) * 0.15
-        wave3 = math.sin(ny * 5 + time * math.pi * 2.5) * 0.1
+        # Многослойные волны для плавности
+        wave1 = math.sin(ny * 3 + time * math.pi * 2) * 0.15
+        wave2 = math.cos(ny * 2.5 + time * math.pi * 1.7) * 0.12
+        wave3 = math.sin(ny * 4 + time * math.pi * 2.3) * 0.08
         
-        # Combined position for color
         t = ny + wave1 + wave2 + wave3
         t = max(0, min(1, t))
         
-        # Multi-color interpolation
+        # Интерполяция между цветами
         num_colors = len(colors)
         segment = t * (num_colors - 1)
         idx = int(segment)
@@ -205,191 +129,199 @@ def create_aurora_gradient(
         
         draw.rectangle((0, y_start, width, y_end), fill=(r, g, b))
     
-    # Soft blur for smooth effect
-    img = img.filter(ImageFilter.GaussianBlur(radius=15))
+    # Мягкое размытие для плавности
+    img = img.filter(ImageFilter.GaussianBlur(radius=20))
+    
+    return img
+
+
+def create_solid_gradient(
+    width: int, 
+    height: int, 
+    colors: List[Tuple[int, int, int]]
+) -> Image.Image:
+    """Простой вертикальный градиент"""
+    img = Image.new("RGB", (width, height))
+    draw = ImageDraw.Draw(img)
+    
+    if len(colors) < 2:
+        colors = [(30, 30, 40), (50, 50, 70)]
+    
+    for y in range(height):
+        t = y / height
+        r = int(colors[0][0] * (1 - t) + colors[-1][0] * t)
+        g = int(colors[0][1] * (1 - t) + colors[-1][1] * t)
+        b = int(colors[0][2] * (1 - t) + colors[-1][2] * t)
+        draw.line((0, y, width, y), fill=(r, g, b))
     
     return img
 
 
 # =============================================================
-# TEXT EFFECTS
+# TEXT ANIMATIONS - Apple Style
 # =============================================================
 
-def draw_text_popup(
+def draw_text_scale_up(
     img: Image.Image,
     text: str,
-    position: Tuple[int, int],
-    font_size: int = 72,
-    color: Tuple[int, int, int] = (255, 255, 255),
-    animation_progress: float = 1.0,
-    effect: str = "scale_up"  # scale_up, slide_up, fade, bounce
+    center: Tuple[int, int],
+    font_size: int,
+    color: Tuple[int, int, int],
+    progress: float
 ) -> Image.Image:
-    """
-    Draw text with popup animation
-    
-    Effects:
-    - scale_up: Scale from 0 to 100%
-    - slide_up: Slide from bottom
-    - fade: Fade in
-    - bounce: Bounce in with overshoot
-    - elastic: Elastic spring effect
-    """
+    """Текст увеличивается из центра с bounce"""
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
     
-    x, y = position
+    # Анимация масштаба с overshoot
+    scale = ease_out_back(progress) if progress < 1 else 1.0
+    alpha = int(255 * min(1, progress * 2))
     
-    # Apply animation
-    if effect == "scale_up":
-        scale = ease_out_back(animation_progress)
-        actual_size = int(font_size * scale)
-        alpha = int(255 * animation_progress)
-    
-    elif effect == "slide_up":
-        offset = int((1 - ease_out_cubic(animation_progress)) * 200)
-        y += offset
-        actual_size = font_size
-        alpha = int(255 * ease_out_cubic(animation_progress))
-    
-    elif effect == "bounce":
-        scale = ease_out_bounce(animation_progress)
-        actual_size = int(font_size * scale)
-        alpha = 255
-    
-    elif effect == "elastic":
-        scale = ease_out_elastic(animation_progress)
-        actual_size = int(font_size * max(0.1, scale))
-        alpha = 255
-    
-    else:  # fade
-        actual_size = font_size
-        alpha = int(255 * ease_out_cubic(animation_progress))
-    
-    if actual_size < 10:
-        actual_size = 10
-    
+    actual_size = max(10, int(font_size * scale))
     font = get_font(actual_size, bold=True)
     
-    # Center text at position
     bbox = draw.textbbox((0, 0), text, font=font)
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
     
-    draw_x = x - text_w // 2
-    draw_y = y - text_h // 2
+    x = center[0] - text_w // 2
+    y = center[1] - text_h // 2
     
-    # Draw shadow
-    shadow_offset = max(2, actual_size // 20)
-    draw.text((draw_x + shadow_offset, draw_y + shadow_offset), text, 
-              font=font, fill=(0, 0, 0, alpha // 2))
-    
-    # Draw main text
-    draw.text((draw_x, draw_y), text, font=font, fill=(*color, alpha))
+    # Тень
+    draw.text((x + 4, y + 4), text, font=font, fill=(0, 0, 0, alpha // 3))
+    # Основной текст
+    draw.text((x, y), text, font=font, fill=(*color, alpha))
     
     return Image.alpha_composite(img.convert("RGBA"), layer)
 
 
-def draw_typewriter_text(
+def draw_text_wave_down(
     img: Image.Image,
     text: str,
-    position: Tuple[int, int],
-    font_size: int = 48,
-    color: Tuple[int, int, int] = (255, 255, 255),
-    chars_visible: int = 0,
-    show_cursor: bool = True,
-    cursor_blink: bool = True,
-    frame: int = 0
+    center: Tuple[int, int],
+    font_size: int,
+    color: Tuple[int, int, int],
+    progress: float
 ) -> Image.Image:
-    """
-    Typewriter effect - text appears character by character
-    """
-    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-    
-    font = get_font(font_size, bold=False)
-    visible_text = text[:chars_visible]
-    
-    x, y = position
-    
-    # Draw visible text
-    draw.text((x, y), visible_text, font=font, fill=(*color, 255))
-    
-    # Draw cursor
-    if show_cursor:
-        cursor_visible = True
-        if cursor_blink:
-            cursor_visible = (frame // 15) % 2 == 0
-        
-        if cursor_visible:
-            bbox = draw.textbbox((x, y), visible_text, font=font)
-            cursor_x = bbox[2] + 2
-            cursor_h = font_size
-            
-            draw.rectangle(
-                (cursor_x, y, cursor_x + 3, y + cursor_h),
-                fill=(*color, 255)
-            )
-    
-    return Image.alpha_composite(img.convert("RGBA"), layer)
-
-
-def draw_word_by_word(
-    img: Image.Image,
-    words: List[str],
-    position: Tuple[int, int],
-    font_size: int = 64,
-    color: Tuple[int, int, int] = (255, 255, 255),
-    words_visible: int = 0,
-    current_word_progress: float = 1.0,
-    highlight_current: bool = True,
-    highlight_color: Tuple[int, int, int] = (100, 200, 255)
-) -> Image.Image:
-    """
-    Word by word animation - each word appears with effect
-    """
+    """Apple-стиль: буквы падают волной сверху"""
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
     
     font = get_font(font_size, bold=True)
     
-    x, y = position
-    current_x = x
-    line_height = font_size + 20
-    max_width = img.size[0] - x * 2
+    # Измеряем полную ширину
+    total_bbox = draw.textbbox((0, 0), text, font=font)
+    total_w = total_bbox[2] - total_bbox[0]
     
-    for i, word in enumerate(words):
-        if i >= words_visible:
-            break
+    start_x = center[0] - total_w // 2
+    
+    # Рисуем каждую букву с задержкой
+    current_x = start_x
+    for i, char in enumerate(text):
+        if char == ' ':
+            char_bbox = draw.textbbox((0, 0), ' ', font=font)
+            current_x += char_bbox[2] - char_bbox[0]
+            continue
         
-        # Check if word fits on current line
-        bbox = draw.textbbox((0, 0), word + " ", font=font)
-        word_width = bbox[2] - bbox[0]
+        # Задержка для каждой буквы
+        char_delay = i * 0.05
+        char_progress = max(0, min(1, (progress - char_delay) / 0.3))
         
-        if current_x + word_width > x + max_width:
-            current_x = x
-            y += line_height
-        
-        # Determine color and animation
-        if i == words_visible - 1 and highlight_current:
-            # Current word - apply animation
-            word_color = highlight_color
-            scale = ease_out_back(current_word_progress)
-            alpha = int(255 * current_word_progress)
+        if char_progress > 0:
+            # Падение сверху
+            offset_y = int((1 - ease_out_quart(char_progress)) * -100)
+            alpha = int(255 * ease_out_cubic(char_progress))
             
-            # Scale effect
-            word_font = get_font(int(font_size * scale), bold=True)
-            offset_y = int((1 - scale) * font_size / 2)
-        else:
-            word_color = color
-            alpha = 255
-            word_font = font
-            offset_y = 0
+            char_bbox = draw.textbbox((0, 0), char, font=font)
+            char_h = char_bbox[3] - char_bbox[1]
+            
+            y = center[1] - char_h // 2 + offset_y
+            
+            draw.text((current_x, y), char, font=font, fill=(*color, alpha))
         
-        draw.text((current_x, y + offset_y), word, font=word_font, fill=(*word_color, alpha))
+        char_bbox = draw.textbbox((0, 0), char, font=font)
+        current_x += char_bbox[2] - char_bbox[0]
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
+def draw_text_wave_up(
+    img: Image.Image,
+    text: str,
+    center: Tuple[int, int],
+    font_size: int,
+    color: Tuple[int, int, int],
+    progress: float
+) -> Image.Image:
+    """Apple-стиль: буквы поднимаются волной снизу"""
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    font = get_font(font_size, bold=True)
+    
+    total_bbox = draw.textbbox((0, 0), text, font=font)
+    total_w = total_bbox[2] - total_bbox[0]
+    
+    start_x = center[0] - total_w // 2
+    current_x = start_x
+    
+    for i, char in enumerate(text):
+        if char == ' ':
+            char_bbox = draw.textbbox((0, 0), ' ', font=font)
+            current_x += char_bbox[2] - char_bbox[0]
+            continue
         
-        # Move to next position
-        bbox = draw.textbbox((0, 0), word + " ", font=font)
-        current_x += bbox[2] - bbox[0]
+        char_delay = i * 0.04
+        char_progress = max(0, min(1, (progress - char_delay) / 0.25))
+        
+        if char_progress > 0:
+            # Подъём снизу
+            offset_y = int((1 - ease_out_quart(char_progress)) * 80)
+            alpha = int(255 * ease_out_cubic(char_progress))
+            
+            char_bbox = draw.textbbox((0, 0), char, font=font)
+            char_h = char_bbox[3] - char_bbox[1]
+            
+            y = center[1] - char_h // 2 + offset_y
+            
+            draw.text((current_x, y), char, font=font, fill=(*color, alpha))
+        
+        char_bbox = draw.textbbox((0, 0), char, font=font)
+        current_x += char_bbox[2] - char_bbox[0]
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
+def draw_text_fade_blur(
+    img: Image.Image,
+    text: str,
+    center: Tuple[int, int],
+    font_size: int,
+    color: Tuple[int, int, int],
+    progress: float
+) -> Image.Image:
+    """Плавное появление из размытия"""
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    font = get_font(font_size, bold=True)
+    
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    x = center[0] - text_w // 2
+    y = center[1] - text_h // 2
+    
+    alpha = int(255 * ease_out_cubic(progress))
+    
+    draw.text((x, y), text, font=font, fill=(*color, alpha))
+    
+    # Размытие уменьшается по мере появления
+    if progress < 0.7:
+        blur_amount = int((1 - progress / 0.7) * 10)
+        if blur_amount > 0:
+            layer = layer.filter(ImageFilter.GaussianBlur(radius=blur_amount))
     
     return Image.alpha_composite(img.convert("RGBA"), layer)
 
@@ -397,46 +329,39 @@ def draw_word_by_word(
 def draw_gradient_text(
     img: Image.Image,
     text: str,
-    position: Tuple[int, int],
-    font_size: int = 72,
-    gradient_colors: List[Tuple[int, int, int]] = None,
-    animation_progress: float = 1.0,
-    shimmer_offset: float = 0.0  # For animated shimmer
+    center: Tuple[int, int],
+    font_size: int,
+    gradient_colors: List[Tuple[int, int, int]],
+    progress: float,
+    shimmer_offset: float = 0
 ) -> Image.Image:
-    """
-    Text with gradient fill and optional shimmer animation
-    """
-    if gradient_colors is None:
-        gradient_colors = [(0, 150, 255), (150, 50, 255), (255, 50, 150)]
+    """Текст с градиентом и shimmer эффектом"""
+    if not gradient_colors:
+        gradient_colors = [(0, 150, 255), (150, 50, 255)]
     
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
     
     font = get_font(font_size, bold=True)
-    x, y = position
     
-    # Get text dimensions
-    bbox = draw.textbbox((0, 0), text, font=font)
+    # Создаём временное изображение для текста
+    temp = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    temp_draw = ImageDraw.Draw(temp)
+    
+    bbox = temp_draw.textbbox((0, 0), text, font=font)
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
     
-    # Create gradient image
-    gradient = Image.new("RGBA", (text_w + 20, text_h + 20))
-    gradient_draw = ImageDraw.Draw(gradient)
+    x = center[0] - text_w // 2
+    y = center[1] - text_h // 2
     
-    # Draw gradient
-    num_colors = len(gradient_colors)
-    for gx in range(text_w + 20):
-        # Add shimmer offset for animation
-        t = ((gx / (text_w + 20)) + shimmer_offset) % 1.0
+    # Рисуем градиент горизонтально
+    for px in range(text_w + 20):
+        t = ((px / (text_w + 20)) + shimmer_offset) % 1.0
         
+        num_colors = len(gradient_colors)
         segment = t * (num_colors - 1)
-        idx = int(segment)
+        idx = min(int(segment), num_colors - 2)
         local_t = segment - idx
-        
-        if idx >= num_colors - 1:
-            idx = num_colors - 2
-            local_t = 1.0
         
         c1 = gradient_colors[idx]
         c2 = gradient_colors[idx + 1]
@@ -445,84 +370,87 @@ def draw_gradient_text(
         g = int(c1[1] * (1 - local_t) + c2[1] * local_t)
         b = int(c1[2] * (1 - local_t) + c2[2] * local_t)
         
-        gradient_draw.line((gx, 0, gx, text_h + 20), fill=(r, g, b, 255))
+        for py in range(text_h + 10):
+            temp.putpixel((x + px, y + py), (r, g, b, 255))
     
-    # Create text mask
-    mask = Image.new("L", (text_w + 20, text_h + 20), 0)
+    # Создаём маску из текста
+    mask = Image.new("L", img.size, 0)
     mask_draw = ImageDraw.Draw(mask)
-    mask_draw.text((10, 10), text, font=font, fill=255)
+    mask_draw.text((x, y), text, font=font, fill=255)
     
-    # Apply mask to gradient
-    gradient.putalpha(mask)
+    # Применяем маску
+    temp.putalpha(mask)
     
-    # Apply animation
-    alpha = int(255 * animation_progress)
-    if alpha < 255:
-        r, g, b, a = gradient.split()
-        a = a.point(lambda p: int(p * animation_progress))
-        gradient = Image.merge("RGBA", (r, g, b, a))
+    # Анимация появления
+    alpha_mult = ease_out_cubic(progress)
+    if alpha_mult < 1:
+        r, g, b, a = temp.split()
+        a = a.point(lambda p: int(p * alpha_mult))
+        temp = Image.merge("RGBA", (r, g, b, a))
     
-    # Paste onto layer
-    layer.paste(gradient, (x - 10, y - 10), gradient)
-    
-    return Image.alpha_composite(img.convert("RGBA"), layer)
+    return Image.alpha_composite(img.convert("RGBA"), temp)
 
 
 # =============================================================
-# CHAT/MESSAGE BUBBLES
+# CHAT BUBBLES - Профессиональные сообщения
 # =============================================================
 
-def draw_chat_bubble(
+def draw_rounded_rect(
+    draw: ImageDraw.Draw,
+    bounds: Tuple[int, int, int, int],
+    radius: int,
+    fill: Tuple[int, int, int, int]
+):
+    """Рисует прямоугольник со скруглёнными углами"""
+    x1, y1, x2, y2 = bounds
+    
+    # Основной прямоугольник
+    draw.rectangle((x1 + radius, y1, x2 - radius, y2), fill=fill)
+    draw.rectangle((x1, y1 + radius, x2, y2 - radius), fill=fill)
+    
+    # Углы
+    draw.ellipse((x1, y1, x1 + radius * 2, y1 + radius * 2), fill=fill)
+    draw.ellipse((x2 - radius * 2, y1, x2, y1 + radius * 2), fill=fill)
+    draw.ellipse((x1, y2 - radius * 2, x1 + radius * 2, y2), fill=fill)
+    draw.ellipse((x2 - radius * 2, y2 - radius * 2, x2, y2), fill=fill)
+
+
+def draw_chat_bubble_morphing(
     img: Image.Image,
     text: str,
-    position: Tuple[int, int],
-    is_sender: bool = True,
-    animation_progress: float = 1.0,
-    style: str = "imessage",  # imessage, whatsapp, telegram, modern
-    bubble_color: Tuple[int, int, int] = None,
-    text_color: Tuple[int, int, int] = None
+    y_position: int,
+    is_sender: bool,
+    morph_progress: float,  # 0 = typing indicator, 1 = full message
+    typing_phase: int = 0
 ) -> Tuple[Image.Image, int]:
     """
-    Draw chat bubble with animation
-    Returns (image, bubble_height) for positioning next bubble
+    Профессиональный чат-пузырь с морфингом из typing indicator.
     
-    Styles:
-    - imessage: iOS blue/gray
-    - whatsapp: WhatsApp green/white
-    - telegram: Telegram blue/white
-    - modern: Rounded modern style
+    morph_progress:
+    - 0.0-0.3: typing indicator (три точки)
+    - 0.3-1.0: трансформация в сообщение
     """
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
     
-    # Style-specific colors
-    if style == "imessage":
-        if bubble_color is None:
-            bubble_color = (0, 132, 255) if is_sender else (235, 235, 240)
-        if text_color is None:
-            text_color = (255, 255, 255) if is_sender else (0, 0, 0)
-    elif style == "whatsapp":
-        if bubble_color is None:
-            bubble_color = (37, 211, 102) if is_sender else (255, 255, 255)
-        if text_color is None:
-            text_color = (255, 255, 255) if is_sender else (0, 0, 0)
-    elif style == "telegram":
-        if bubble_color is None:
-            bubble_color = (58, 139, 216) if is_sender else (255, 255, 255)
-        if text_color is None:
-            text_color = (255, 255, 255) if is_sender else (0, 0, 0)
-    else:  # modern
-        if bubble_color is None:
-            bubble_color = (100, 100, 255) if is_sender else (50, 50, 60)
-        if text_color is None:
-            text_color = (255, 255, 255)
+    # Цвета в стиле iOS
+    if is_sender:
+        bubble_color = (0, 122, 255)  # iMessage blue
+        text_color = (255, 255, 255)
+    else:
+        bubble_color = (235, 235, 240)  # Light gray
+        text_color = (0, 0, 0)
     
-    # Large, readable font
-    font_size = 42
+    # КРУПНЫЙ шрифт
+    font_size = 52
     font = get_font(font_size)
     
-    # Wrap text
-    max_width = int(img.size[0] * 0.7)
+    # Максимальная ширина пузыря - 70% экрана
+    max_bubble_width = int(WIDTH * 0.7)
+    padding_x = 36
+    padding_y = 28
+    
+    # Измеряем и переносим текст
     lines = []
     words = text.split()
     current_line = ""
@@ -530,7 +458,7 @@ def draw_chat_bubble(
     for word in words:
         test_line = current_line + " " + word if current_line else word
         bbox = draw.textbbox((0, 0), test_line, font=font)
-        if bbox[2] - bbox[0] <= max_width:
+        if bbox[2] - bbox[0] <= max_bubble_width - padding_x * 2:
             current_line = test_line
         else:
             if current_line:
@@ -539,219 +467,118 @@ def draw_chat_bubble(
     if current_line:
         lines.append(current_line)
     
-    # Calculate bubble size
     line_height = font_size + 12
-    padding_x = 32
-    padding_y = 24
-    
     text_height = len(lines) * line_height
     text_width = max((draw.textbbox((0, 0), line, font=font)[2] for line in lines), default=100)
     
-    bubble_w = text_width + padding_x * 2
-    bubble_h = text_height + padding_y * 2
+    final_bubble_w = text_width + padding_x * 2
+    final_bubble_h = text_height + padding_y * 2
     
-    x, y = position
+    # Размеры typing indicator
+    typing_w = 90
+    typing_h = 55
     
-    # Animation
-    if animation_progress < 1.0:
-        eased = ease_out_back(animation_progress)
-        scale = 0.3 + 0.7 * eased
-        alpha = int(255 * eased)
-        
-        # Slide from side
-        if is_sender:
-            x += int((1 - eased) * 200)
-        else:
-            x -= int((1 - eased) * 200)
+    # Морфинг размеров
+    if morph_progress < 0.3:
+        # Показываем typing indicator
+        bubble_w = typing_w
+        bubble_h = typing_h
+        show_typing = True
+        show_text = False
+        alpha = 255
     else:
-        scale = 1.0
+        # Трансформация в сообщение
+        t = (morph_progress - 0.3) / 0.7
+        eased_t = ease_out_quart(t)
+        
+        bubble_w = int(typing_w + (final_bubble_w - typing_w) * eased_t)
+        bubble_h = int(typing_h + (final_bubble_h - typing_h) * eased_t)
+        show_typing = t < 0.3
+        show_text = t > 0.2
         alpha = 255
     
-    # Position based on sender
+    # Позиционирование
+    margin = 50
     if is_sender:
-        bubble_x = img.size[0] - bubble_w - 40
+        bubble_x = WIDTH - bubble_w - margin
     else:
-        bubble_x = 40
+        bubble_x = margin
     
-    # Draw bubble shadow
-    shadow_offset = 8
-    draw.rounded_rectangle(
-        (bubble_x + shadow_offset, y + shadow_offset, 
-         bubble_x + bubble_w + shadow_offset, y + bubble_h + shadow_offset),
-        radius=28,
-        fill=(0, 0, 0, alpha // 4)
+    bubble_y = y_position
+    radius = min(28, bubble_h // 2)
+    
+    # Тень
+    shadow_offset = 6
+    draw_rounded_rect(
+        draw,
+        (bubble_x + shadow_offset, bubble_y + shadow_offset,
+         bubble_x + bubble_w + shadow_offset, bubble_y + bubble_h + shadow_offset),
+        radius,
+        (0, 0, 0, 40)
     )
     
-    # Draw bubble
-    draw.rounded_rectangle(
-        (bubble_x, y, bubble_x + bubble_w, y + bubble_h),
-        radius=28,
-        fill=(*bubble_color, alpha)
+    # Основной пузырь
+    draw_rounded_rect(
+        draw,
+        (bubble_x, bubble_y, bubble_x + bubble_w, bubble_y + bubble_h),
+        radius,
+        (*bubble_color, alpha)
     )
     
-    # Draw tail
-    tail_size = 16
-    if is_sender:
-        tail_x = bubble_x + bubble_w - 20
-        tail_points = [
-            (tail_x, y + bubble_h - 15),
-            (tail_x + tail_size + 10, y + bubble_h + 8),
-            (tail_x + 15, y + bubble_h)
-        ]
-    else:
-        tail_x = bubble_x + 20
-        tail_points = [
-            (tail_x, y + bubble_h - 15),
-            (tail_x - tail_size - 10, y + bubble_h + 8),
-            (tail_x - 15, y + bubble_h)
-        ]
+    # Хвостик пузыря (только когда полностью раскрыт)
+    if morph_progress > 0.8:
+        tail_alpha = int(255 * ((morph_progress - 0.8) / 0.2))
+        tail_size = 14
+        if is_sender:
+            # Хвостик справа внизу
+            tail_points = [
+                (bubble_x + bubble_w - 15, bubble_y + bubble_h - 12),
+                (bubble_x + bubble_w + tail_size, bubble_y + bubble_h + 8),
+                (bubble_x + bubble_w - 5, bubble_y + bubble_h)
+            ]
+        else:
+            # Хвостик слева внизу
+            tail_points = [
+                (bubble_x + 15, bubble_y + bubble_h - 12),
+                (bubble_x - tail_size, bubble_y + bubble_h + 8),
+                (bubble_x + 5, bubble_y + bubble_h)
+            ]
+        draw.polygon(tail_points, fill=(*bubble_color, tail_alpha))
     
-    draw.polygon(tail_points, fill=(*bubble_color, alpha))
+    # Typing indicator (три точки)
+    if show_typing:
+        typing_alpha = int(255 * (1 - max(0, (morph_progress - 0.15) / 0.15)))
+        dot_radius = 7
+        dot_spacing = 22
+        base_x = bubble_x + bubble_w // 2 - dot_spacing
+        base_y = bubble_y + bubble_h // 2
+        
+        for i in range(3):
+            # Анимация прыгающих точек
+            phase = (typing_phase * 0.15 + i * 0.5) % (math.pi * 2)
+            bounce = math.sin(phase) * 6
+            
+            dot_x = base_x + i * dot_spacing
+            dot_y = int(base_y + bounce)
+            
+            dot_color = (150, 150, 155) if not is_sender else (200, 200, 210)
+            draw.ellipse(
+                (dot_x - dot_radius, dot_y - dot_radius,
+                 dot_x + dot_radius, dot_y + dot_radius),
+                fill=(*dot_color, typing_alpha)
+            )
     
-    # Draw text
-    text_y = y + padding_y
-    for line in lines:
-        text_x = bubble_x + padding_x
-        draw.text((text_x, text_y), line, font=font, fill=(*text_color, alpha))
-        text_y += line_height
+    # Текст сообщения
+    if show_text:
+        text_alpha = int(255 * min(1, (morph_progress - 0.5) / 0.3))
+        text_y = bubble_y + padding_y
+        for line in lines:
+            text_x = bubble_x + padding_x
+            draw.text((text_x, text_y), line, font=font, fill=(*text_color, text_alpha))
+            text_y += line_height
     
     result = Image.alpha_composite(img.convert("RGBA"), layer)
-    return result, bubble_h + 30  # Return height for positioning
-
-
-def draw_typing_indicator(
-    img: Image.Image,
-    position: Tuple[int, int],
-    frame: int,
-    style: str = "imessage"
-) -> Image.Image:
-    """
-    Animated typing indicator (three bouncing dots)
-    """
-    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-    
-    x, y = position
-    
-    # Bubble style colors
-    if style == "imessage":
-        bubble_color = (235, 235, 240)
-        dot_color = (150, 150, 155)
-    else:
-        bubble_color = (50, 50, 60)
-        dot_color = (150, 150, 150)
-    
-    # Bubble
-    bubble_w = 100
-    bubble_h = 55
-    
-    draw.rounded_rectangle(
-        (x, y, x + bubble_w, y + bubble_h),
-        radius=25,
-        fill=(*bubble_color, 255)
-    )
-    
-    # Three animated dots
-    dot_radius = 8
-    dot_spacing = 22
-    base_x = x + 25
-    base_y = y + bubble_h // 2
-    
-    for i in range(3):
-        phase = (frame * 0.2 + i * 0.5) % (math.pi * 2)
-        bounce = math.sin(phase) * 8
-        
-        dot_x = base_x + i * dot_spacing
-        dot_y = int(base_y + bounce)
-        
-        draw.ellipse(
-            (dot_x - dot_radius, dot_y - dot_radius,
-             dot_x + dot_radius, dot_y + dot_radius),
-            fill=(*dot_color, 255)
-        )
-    
-    return Image.alpha_composite(img.convert("RGBA"), layer)
-
-
-# =============================================================
-# UI ELEMENTS
-# =============================================================
-
-def draw_card(
-    img: Image.Image,
-    position: Tuple[int, int],
-    size: Tuple[int, int],
-    content: Dict,  # {title, subtitle, icon_color}
-    animation_progress: float = 1.0,
-    style: str = "glass"  # glass, solid, gradient
-) -> Image.Image:
-    """
-    Draw animated card element
-    """
-    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-    
-    x, y = position
-    w, h = size
-    
-    # Animation
-    if animation_progress < 1.0:
-        eased = ease_out_back(animation_progress)
-        y_offset = int((1 - eased) * 150)
-        y += y_offset
-        alpha = int(230 * eased)
-        scale = 0.8 + 0.2 * eased
-    else:
-        alpha = 230
-        scale = 1.0
-    
-    # Background style
-    if style == "glass":
-        bg_color = (255, 255, 255, alpha // 4)
-        border_color = (255, 255, 255, alpha // 2)
-    elif style == "gradient":
-        bg_color = (100, 100, 255, alpha)
-        border_color = None
-    else:  # solid
-        bg_color = (40, 40, 50, alpha)
-        border_color = None
-    
-    # Draw card
-    draw.rounded_rectangle(
-        (x, y, x + w, y + h),
-        radius=24,
-        fill=bg_color,
-        outline=border_color,
-        width=2 if border_color else 0
-    )
-    
-    # Content
-    title = content.get("title", "")
-    subtitle = content.get("subtitle", "")
-    icon_color = content.get("icon_color", (100, 150, 255))
-    
-    # Icon circle
-    icon_size = 60
-    icon_x = x + 25
-    icon_y = y + (h - icon_size) // 2
-    draw.ellipse(
-        (icon_x, icon_y, icon_x + icon_size, icon_y + icon_size),
-        fill=(*icon_color, alpha)
-    )
-    
-    # Title
-    if title:
-        font_title = get_font(28, bold=True)
-        draw.text((icon_x + icon_size + 20, y + h // 2 - 25), title,
-                 font=font_title, fill=(255, 255, 255, alpha))
-    
-    # Subtitle
-    if subtitle:
-        font_sub = get_font(20)
-        draw.text((icon_x + icon_size + 20, y + h // 2 + 8), subtitle,
-                 font=font_sub, fill=(180, 180, 180, alpha))
-    
-    return Image.alpha_composite(img.convert("RGBA"), layer)
+    return result, final_bubble_h + 25
 
 
 # =============================================================
@@ -764,22 +591,18 @@ async def render_universal_video(
     fps: int = 30
 ) -> str:
     """
-    Universal video renderer based on AI-generated script
+    Универсальный рендерер видео с профессиональными эффектами.
     
     script_data format:
     {
-        "background": {
-            "type": "aurora" | "linear" | "radial" | "solid",
-            "colors": [[r,g,b], [r,g,b], ...]
-        },
+        "background": {"type": "aurora"|"solid", "colors": [[r,g,b], ...]},
         "elements": [
             {
-                "type": "text" | "chat" | "card" | "gradient_text",
+                "type": "text"|"chat"|"gradient_text",
                 "content": "...",
                 "start_time": 0.0,
-                "duration": 2.0,
-                "effect": "scale_up" | "slide_up" | "typewriter" | "word_by_word",
-                "position": "center" | "top" | "bottom" | [x, y],
+                "duration": 3.0,
+                "effect": "scale_up"|"wave_down"|"wave_up"|"fade_blur",
                 ...
             }
         ],
@@ -793,11 +616,11 @@ async def render_universal_video(
     # Parse script
     bg_config = script_data.get("background", {})
     bg_type = bg_config.get("type", "aurora")
-    bg_colors = bg_config.get("colors", [[50, 50, 80], [100, 50, 150], [50, 100, 200]])
+    bg_colors = bg_config.get("colors", [[40, 30, 70], [70, 50, 120], [50, 80, 130]])
     bg_colors = [tuple(c) for c in bg_colors]
     
     elements = script_data.get("elements", [])
-    total_duration = script_data.get("duration", 8.0)
+    total_duration = script_data.get("duration", 10.0)
     total_frames = int(fps * total_duration)
     
     logger.info(f"Rendering {total_frames} frames, duration: {total_duration}s")
@@ -806,150 +629,110 @@ async def render_universal_video(
         time_sec = frame_num / fps
         progress = frame_num / total_frames
         
-        # Create background
+        # Background
         if bg_type == "aurora":
             bg = create_aurora_gradient(WIDTH, HEIGHT, bg_colors, progress)
         else:
-            bg = create_gradient_background(WIDTH, HEIGHT, bg_colors, bg_type, progress)
+            bg = create_solid_gradient(WIDTH, HEIGHT, bg_colors)
         
         bg = bg.convert("RGBA")
         
-        # Render each element
+        # Render elements
         for elem in elements:
             elem_type = elem.get("type", "text")
             start_time = elem.get("start_time", 0)
-            duration = elem.get("duration", 2.0)
-            end_time = start_time + duration
+            duration = elem.get("duration", 3.0)
             
-            # Skip if not yet visible
             if time_sec < start_time:
                 continue
             
-            # Calculate animation progress
-            anim_duration = elem.get("anim_duration", 0.5)
-            if time_sec < start_time + anim_duration:
-                anim_progress = (time_sec - start_time) / anim_duration
-            else:
-                anim_progress = 1.0
+            elem_progress = min(1.0, (time_sec - start_time) / duration)
             
-            # Fade out at end
-            fade_duration = elem.get("fade_duration", 0.3)
-            if time_sec > end_time - fade_duration:
-                fade_progress = (end_time - time_sec) / fade_duration
-                anim_progress = min(anim_progress, max(0, fade_progress))
+            # Fade out в конце
+            end_time = start_time + duration
+            if time_sec > end_time - 0.5:
+                fade_out = max(0, (end_time - time_sec) / 0.5)
+                elem_progress = min(elem_progress, fade_out + 0.5)
             
-            # Get position
-            pos = elem.get("position", "center")
-            if isinstance(pos, str):
-                if pos == "center":
-                    x, y = WIDTH // 2, HEIGHT // 2
-                elif pos == "top":
-                    x, y = WIDTH // 2, 200
-                elif pos == "bottom":
-                    x, y = WIDTH // 2, HEIGHT - 300
-                else:
-                    x, y = WIDTH // 2, HEIGHT // 2
-            else:
-                x, y = pos
-            
-            # Render element
+            # ===== TEXT ELEMENT =====
             if elem_type == "text":
                 content = elem.get("content", "")
-                font_size = elem.get("font_size", 72)
-                color = tuple(elem.get("color", [255, 255, 255]))
                 effect = elem.get("effect", "scale_up")
-                
-                bg = draw_text_popup(bg, content, (x, y), font_size, color, anim_progress, effect)
-            
-            elif elem_type == "typewriter":
-                content = elem.get("content", "")
-                font_size = elem.get("font_size", 48)
+                font_size = elem.get("font_size", 80)
                 color = tuple(elem.get("color", [255, 255, 255]))
                 
-                # Calculate visible characters
-                char_time = (time_sec - start_time) / max(0.1, duration - anim_duration)
-                chars_visible = int(len(content) * min(1, char_time * 1.5))
+                # Позиция
+                pos = elem.get("position", "center")
+                if pos == "center":
+                    center = (WIDTH // 2, HEIGHT // 2)
+                elif pos == "top":
+                    center = (WIDTH // 2, 300)
+                elif pos == "bottom":
+                    center = (WIDTH // 2, HEIGHT - 400)
+                else:
+                    center = (WIDTH // 2, HEIGHT // 2)
                 
-                bg = draw_typewriter_text(bg, content, (100, y), font_size, color, 
-                                         chars_visible, True, True, frame_num)
+                anim_progress = min(1.0, elem_progress * 2)  # Анимация за первую половину
+                
+                if effect == "wave_down":
+                    bg = draw_text_wave_down(bg, content, center, font_size, color, anim_progress)
+                elif effect == "wave_up":
+                    bg = draw_text_wave_up(bg, content, center, font_size, color, anim_progress)
+                elif effect == "fade_blur":
+                    bg = draw_text_fade_blur(bg, content, center, font_size, color, anim_progress)
+                else:  # scale_up
+                    bg = draw_text_scale_up(bg, content, center, font_size, color, anim_progress)
             
-            elif elem_type == "word_by_word":
-                content = elem.get("content", "")
-                words = content.split()
-                font_size = elem.get("font_size", 64)
-                color = tuple(elem.get("color", [255, 255, 255]))
-                highlight_color = tuple(elem.get("highlight_color", [100, 200, 255]))
-                
-                word_time = (time_sec - start_time) / max(0.1, duration)
-                words_count = len(words)
-                words_visible = int(words_count * min(1, word_time * 1.2)) + 1
-                words_visible = min(words_visible, words_count)
-                
-                current_progress = (word_time * words_count) % 1.0
-                
-                bg = draw_word_by_word(bg, words, (100, y - 100), font_size, color,
-                                      words_visible, current_progress, True, highlight_color)
-            
+            # ===== GRADIENT TEXT =====
             elif elem_type == "gradient_text":
                 content = elem.get("content", "")
-                font_size = elem.get("font_size", 72)
-                gradient_colors = [tuple(c) for c in elem.get("gradient_colors", 
-                                  [[0, 150, 255], [150, 50, 255], [255, 50, 150]])]
+                font_size = elem.get("font_size", 80)
+                gradient_colors = [tuple(c) for c in elem.get("gradient_colors", [[0, 150, 255], [150, 50, 255]])]
+                shimmer = elem.get("shimmer", True)
                 
-                shimmer = elem.get("shimmer", False)
+                center = (WIDTH // 2, HEIGHT // 2)
                 shimmer_offset = progress * 2 if shimmer else 0
                 
-                bg = draw_gradient_text(bg, content, (x - 200, y), font_size,
-                                       gradient_colors, anim_progress, shimmer_offset)
+                bg = draw_gradient_text(bg, content, center, font_size, gradient_colors, elem_progress, shimmer_offset)
             
+            # ===== CHAT ELEMENT =====
             elif elem_type == "chat":
                 messages = elem.get("messages", [])
-                style = elem.get("style", "imessage")
                 
-                current_y = 250
-                msg_time = (time_sec - start_time) / max(0.1, duration)
-                msgs_to_show = int(len(messages) * min(1, msg_time * 1.3)) + 1
+                # Центрируем диалог вертикально
+                total_msgs = len(messages)
+                estimated_height = total_msgs * 120
+                start_y = max(200, (HEIGHT - estimated_height) // 2)
                 
-                for i, msg in enumerate(messages[:msgs_to_show]):
-                    # Individual message animation
-                    msg_start = start_time + (i / len(messages)) * duration * 0.7
-                    if time_sec >= msg_start:
-                        msg_progress = min(1.0, (time_sec - msg_start) / 0.4)
-                    else:
+                current_y = start_y
+                
+                for i, msg in enumerate(messages):
+                    msg_text = msg.get("text", "")
+                    is_sender = msg.get("sender", False)
+                    
+                    # Время появления каждого сообщения
+                    msg_start = start_time + i * 1.5  # 1.5 сек на сообщение
+                    msg_duration = 1.2  # Длительность анимации
+                    
+                    if time_sec < msg_start:
+                        # Не показываем ещё
                         continue
                     
-                    # Show typing indicator before non-sender messages
-                    if i < msgs_to_show - 1 or msg.get("sender", True):
-                        bg, height = draw_chat_bubble(
-                            bg,
-                            msg.get("text", ""),
-                            (0, current_y),
-                            msg.get("sender", True),
-                            msg_progress,
-                            style
-                        )
-                        current_y += height
-                    else:
-                        # Show typing indicator
-                        bg = draw_typing_indicator(bg, (40, current_y), frame_num, style)
-            
-            elif elem_type == "card":
-                cards = elem.get("cards", [])
-                
-                card_y = 300
-                for i, card in enumerate(cards):
-                    card_start = start_time + i * 0.3
-                    if time_sec >= card_start:
-                        card_progress = min(1.0, (time_sec - card_start) / 0.5)
-                        
-                        bg = draw_card(
-                            bg,
-                            (60, card_y),
-                            (WIDTH - 120, 120),
-                            card,
-                            card_progress
-                        )
-                        card_y += 150
+                    msg_elapsed = time_sec - msg_start
+                    morph_progress = min(1.0, msg_elapsed / msg_duration)
+                    
+                    bg, bubble_height = draw_chat_bubble_morphing(
+                        bg,
+                        msg_text,
+                        current_y,
+                        is_sender,
+                        morph_progress,
+                        typing_phase=frame_num
+                    )
+                    
+                    # Следующее сообщение ниже (только когда это появилось)
+                    if morph_progress > 0.3:
+                        current_y += bubble_height
         
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
@@ -958,16 +741,20 @@ async def render_universal_video(
         if frame_num % 30 == 0:
             logger.info(f"Rendered frame {frame_num}/{total_frames}")
     
-    # Encode video with ffmpeg
+    # Encode video with AUDIO (silent) for browser compatibility
     logger.info("Encoding video with ffmpeg...")
     cmd = [
         "ffmpeg", "-y",
         "-framerate", str(fps),
         "-i", str(frames_dir / "frame_%05d.png"),
+        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
         "-c:v", "libx264",
         "-preset", "fast",
         "-crf", "23",
+        "-c:a", "aac",
+        "-shortest",
         "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
         str(output_path)
     ]
     
@@ -978,16 +765,17 @@ async def render_universal_video(
     )
     
     try:
-        await asyncio.wait_for(process.communicate(), timeout=120)
+        await asyncio.wait_for(process.communicate(), timeout=180)
     except asyncio.TimeoutError:
         process.kill()
         logger.error("Video encoding timed out")
     
-    # Cleanup frames
+    # Cleanup
     shutil.rmtree(frames_dir, ignore_errors=True)
     
     if output_path.exists():
-        logger.info(f"Video rendered: {output_path} ({output_path.stat().st_size} bytes)")
+        size = output_path.stat().st_size
+        logger.info(f"Video rendered: {output_path} ({size} bytes)")
         return str(output_path)
     else:
         logger.error("Video encoding failed")
