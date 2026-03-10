@@ -551,9 +551,9 @@ def draw_gradient_text(
 
 
 # =============================================================
-# LOGO ANIMATION - HORIZONTAL layout
+# LOGO ANIMATION - AI-DRIVEN with effects
 # LOGO LEFT, TEXT RIGHT - on SAME LINE
-# NO ROTATION - smooth only
+# Supports: wink, bounce, pulse, shake, rotate, zoom
 # =============================================================
 
 async def render_logo_animation(
@@ -562,14 +562,15 @@ async def render_logo_animation(
     bg_color: Tuple[int, int, int],
     output_dir: Path,
     fps: int = 30,
-    duration: float = 3.0
+    duration: float = 4.0,
+    outro_effect: str = "none",
+    outro_repeat: int = 1
 ) -> str:
     """
-    Logo animation - HORIZONTAL layout:
+    Logo animation with AI-driven effects:
     1. Logo appears in CENTER
-    2. Logo moves to the LEFT
-    3. Text appears on the RIGHT
-    4. Final: LOGO LEFT + TEXT RIGHT on SAME horizontal line
+    2. Logo moves to the LEFT, text appears RIGHT
+    3. OUTRO effect (wink, bounce, pulse, etc.)
     """
     output_path = output_dir / f"logo_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"frames_{uuid.uuid4().hex[:8]}"
@@ -579,23 +580,25 @@ async def render_logo_animation(
     
     # Load logo
     try:
-        logo = Image.open(logo_path).convert("RGBA")
-        max_size = 150
-        ratio = min(max_size / logo.width, max_size / logo.height)
-        new_size = (int(logo.width * ratio), int(logo.height * ratio))
-        logo = logo.resize(new_size, Image.Resampling.LANCZOS)
+        logo_original = Image.open(logo_path).convert("RGBA")
+        max_size = 280  # Larger logo
+        ratio = min(max_size / logo_original.width, max_size / logo_original.height)
+        new_size = (int(logo_original.width * ratio), int(logo_original.height * ratio))
+        logo_original = logo_original.resize(new_size, Image.Resampling.LANCZOS)
     except Exception as e:
         logger.error(f"Failed to load logo: {e}")
-        logo = Image.new("RGBA", (150, 150), (255, 255, 255, 255))
-        draw = ImageDraw.Draw(logo)
-        draw.ellipse((15, 15, 135, 135), fill=(200, 200, 200, 255))
+        logo_original = Image.new("RGBA", (280, 280), (255, 255, 255, 255))
+        draw = ImageDraw.Draw(logo_original)
+        draw.ellipse((28, 28, 252, 252), fill=(200, 200, 200, 255))
+    
+    logo = logo_original.copy()
     
     # Text color
     brightness = (bg_color[0] * 299 + bg_color[1] * 587 + bg_color[2] * 114) / 1000
     text_color = (255, 255, 255) if brightness < 128 else (0, 0, 0)
     
-    # Prepare text
-    font_size = 70
+    # Prepare text - larger size
+    font_size = 120
     font = get_font(font_size, "bold")
     
     # Measure text
@@ -612,68 +615,121 @@ async def render_logo_animation(
     start_x = (WIDTH - total_w) // 2
     center_y = HEIGHT // 2
     
-    # LOGO on LEFT
     final_logo_x = start_x
     final_logo_y = center_y - logo.height // 2
-    
-    # TEXT on RIGHT
     final_text_x = start_x + logo.width + gap
     final_text_y = center_y - text_h // 2
     
-    # Logo center position (where it starts)
     logo_center_x = (WIDTH - logo.width) // 2
+    
+    # Timing
+    intro_end = 0.8
+    main_end = 1.8
+    outro_start = 2.0
     
     for frame_num in range(total_frames):
         time_sec = frame_num / fps
         
         bg = create_solid_bg(WIDTH, HEIGHT, bg_color).convert("RGBA")
         
+        # Current logo state
+        current_logo = logo_original.copy()
+        logo_x = final_logo_x
+        logo_y = final_logo_y
+        logo_scale = 1.0
+        logo_rotation = 0
+        logo_alpha = 1.0
+        text_alpha = 1.0
+        
         # =============================================
-        # PHASE 1 (0 - 0.8s): Logo appears in CENTER
+        # PHASE 1: Logo appears in CENTER
         # =============================================
-        if time_sec < 0.8:
-            t = time_sec / 0.8
-            
+        if time_sec < intro_end:
+            t = time_sec / intro_end
             logo_scale = ease_out_cubic(t)
             logo_alpha = ease_out_quad(t)
             logo_x = logo_center_x
             logo_y = center_y - int(logo.height * logo_scale) // 2
-            
             text_alpha = 0
         
         # =============================================
-        # PHASE 2 (0.8s - 1.8s): Logo moves LEFT, text appears RIGHT
+        # PHASE 2: Logo moves LEFT, text appears
         # =============================================
-        elif time_sec < 1.8:
-            t = (time_sec - 0.8) / 1.0
-            
-            logo_scale = 1.0
-            logo_alpha = 1.0
-            # Move from center to LEFT
+        elif time_sec < main_end:
+            t = (time_sec - intro_end) / (main_end - intro_end)
             logo_x = int(logo_center_x + (final_logo_x - logo_center_x) * ease_out_cubic(t))
             logo_y = final_logo_y
-            
-            # Text fades in
             text_alpha = ease_out_cubic(t)
         
         # =============================================
-        # PHASE 3 (1.8s+): Static
+        # PHASE 3: OUTRO effects
         # =============================================
-        else:
-            logo_scale = 1.0
-            logo_alpha = 1.0
-            logo_x = final_logo_x
-            logo_y = final_logo_y
+        elif time_sec >= outro_start and outro_effect != "none":
+            outro_duration = (duration - outro_start) / max(1, outro_repeat)
+            cycle_time = (time_sec - outro_start) % outro_duration
+            t = cycle_time / outro_duration
             
-            text_alpha = 1.0
+            if outro_effect == "wink":
+                # Wink effect - draw a line over the right side of logo
+                if t < 0.3:
+                    wink_progress = t / 0.3
+                elif t < 0.5:
+                    wink_progress = 1.0
+                else:
+                    wink_progress = 1.0 - (t - 0.5) / 0.3
+                wink_progress = max(0, min(1, wink_progress))
+                
+                if wink_progress > 0:
+                    # Draw wink line on right side of logo
+                    draw = ImageDraw.Draw(current_logo)
+                    eye_y = int(current_logo.height * 0.35)
+                    eye_x = int(current_logo.width * 0.65)
+                    line_width = int(current_logo.width * 0.25 * wink_progress)
+                    # Draw arc for wink
+                    draw.arc(
+                        (eye_x - line_width//2, eye_y - 5, eye_x + line_width//2, eye_y + 15),
+                        start=0, end=180,
+                        fill=(text_color[0], text_color[1], text_color[2], int(255 * wink_progress)),
+                        width=3
+                    )
+            
+            elif outro_effect == "bounce":
+                # Bounce up and down
+                bounce = math.sin(t * math.pi * 2) * 20
+                logo_y = final_logo_y + int(bounce * (1 - t * 0.5))
+            
+            elif outro_effect == "pulse":
+                # Pulse scale
+                pulse = 1.0 + 0.1 * math.sin(t * math.pi * 2)
+                logo_scale = pulse
+            
+            elif outro_effect == "shake":
+                # Shake horizontally
+                shake = math.sin(t * math.pi * 8) * 10 * (1 - t)
+                logo_x = final_logo_x + int(shake)
+            
+            elif outro_effect == "rotate":
+                # Full rotation
+                logo_rotation = 360 * ease_out_cubic(t)
+            
+            elif outro_effect == "zoom":
+                # Zoom in slightly
+                zoom_scale = 1.0 + 0.15 * ease_out_quad(t)
+                logo_scale = zoom_scale
         
         # Draw logo
         if logo_scale > 0.01 and logo_alpha > 0:
-            scaled_w = int(logo.width * logo_scale)
-            scaled_h = int(logo.height * logo_scale)
+            scaled_w = int(current_logo.width * logo_scale)
+            scaled_h = int(current_logo.height * logo_scale)
             
             if scaled_w > 0 and scaled_h > 0:
-                scaled_logo = logo.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
+                scaled_logo = current_logo.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
+                
+                if logo_rotation != 0:
+                    scaled_logo = scaled_logo.rotate(logo_rotation, expand=True, resample=Image.Resampling.BICUBIC)
+                    # Adjust position for rotation
+                    logo_x = logo_x - (scaled_logo.width - scaled_w) // 2
+                    logo_y = logo_y - (scaled_logo.height - scaled_h) // 2
                 
                 r, g, b, a = scaled_logo.split()
                 a = a.point(lambda p: int(p * logo_alpha))
@@ -681,14 +737,12 @@ async def render_logo_animation(
                 
                 bg.paste(scaled_logo, (logo_x, logo_y), scaled_logo)
         
-        # Draw text on RIGHT
+        # Draw text
         if text_alpha > 0:
             text_layer = Image.new("RGBA", bg.size, (0, 0, 0, 0))
             text_draw = ImageDraw.Draw(text_layer)
-            
             alpha_color = (*text_color, int(255 * text_alpha))
             text_draw.text((final_text_x, final_text_y), brand_name, font=font, fill=alpha_color)
-            
             bg = Image.alpha_composite(bg, text_layer)
         
         # Save frame
@@ -696,7 +750,7 @@ async def render_logo_animation(
         bg.convert("RGB").save(frame_path, "PNG", optimize=True)
     
     # Encode
-    logger.info("Encoding logo animation...")
+    logger.info(f"Encoding logo animation with effect: {outro_effect}")
     cmd = [
         "ffmpeg", "-y",
         "-framerate", str(fps),

@@ -390,6 +390,85 @@ async def detect_video_type(prompt: str) -> dict:
     return {"format_id": "universal", "confidence": 0.9, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
 
 
+async def generate_logo_animation_script(prompt: str, brand_name: str, language: str) -> dict:
+    """
+    AI generates logo animation script with custom effects based on user prompt.
+    Supports: wink, bounce, pulse, shake, rotate, zoom, and more.
+    """
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    
+    api_key = os.getenv("EMERGENT_LLM_KEY")
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+    
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"logo-anim-{uuid.uuid4()}",
+            system_message="You create logo animation scripts. Analyze user requests for special effects."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        system_prompt = f"""Create logo animation script. Return ONLY valid JSON.
+
+Brand name: {brand_name}
+User request: {prompt}
+
+ANIMATION STRUCTURE:
+The animation has 3 phases:
+1. "intro" - Logo appears (0-1s)
+2. "main" - Logo moves left, text appears right (1-2s)  
+3. "outro" - Special effects at the end (2-3s)
+
+AVAILABLE EFFECTS for "outro" phase:
+- "wink" - Logo winks (one eye closes briefly) - good for logos with eyes/faces
+- "bounce" - Logo bounces up and down
+- "pulse" - Logo pulses (scales up/down)
+- "shake" - Logo shakes horizontally
+- "rotate" - Logo rotates 360 degrees
+- "zoom" - Logo zooms in slightly
+- "none" - No special effect, just static
+
+RETURN JSON:
+{{
+    "brand_name": "{brand_name}",
+    "bg_color": "#5865F2",
+    "effects": {{
+        "intro": "scale_fade",
+        "outro": "wink"
+    }},
+    "outro_repeat": 2
+}}
+
+RULES:
+- Analyze user prompt for effect hints (подмигнул=wink, прыгает=bounce, пульсирует=pulse)
+- Choose appropriate bg_color based on brand (Discord=#5865F2, etc.)
+- Default outro is "none" unless user asks for something specific
+- outro_repeat = how many times to repeat the outro effect (1-3)
+
+User prompt: {prompt}
+
+Return ONLY JSON."""
+
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            result = json.loads(response[json_start:json_end])
+            return result
+    except Exception as e:
+        logger.warning(f"Logo animation script generation failed: {e}")
+    
+    # Default script
+    return {
+        "brand_name": brand_name,
+        "bg_color": "#5865F2",
+        "effects": {"intro": "scale_fade", "outro": "none"},
+        "outro_repeat": 1
+    }
+
+
 
 async def generate_universal_script(prompt: str, language: str) -> dict:
     """
@@ -818,65 +897,7 @@ User prompt: {prompt}"""
         }
 
 
-async def generate_logo_animation_script(prompt: str, language: str) -> dict:
-    """Generate script for logo animation"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-    
-    api_key = os.getenv("EMERGENT_LLM_KEY")
-    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
-    
-    try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"logo-{uuid.uuid4()}",
-            system_message="You help create brand identity and logo animation content."
-        )
-        chat.with_model("openai", "gpt-5.2")
-        
-        lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
-        
-        system_prompt = f"""Create content for a logo/brand animation.
-{lang_instruction}
-
-Extract or suggest:
-- Brand name from the prompt
-- Optional tagline
-- Brand colors (suggest modern, appealing colors)
-
-Return JSON:
-{{
-    "title": "Brand Animation",
-    "brand_name": "Brand Name",
-    "tagline": "Optional tagline or slogan",
-    "bg_color": "#7289da",
-    "text_color": "#ffffff",
-    "full_script": "Brand name and tagline for TTS"
-}}
-
-User prompt: {prompt}"""
-        
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
-        
-        json_start = response.find('{')
-        json_end = response.rfind('}') + 1
-        if json_start != -1 and json_end > json_start:
-            return json.loads(response[json_start:json_end])
-    except Exception as e:
-        logger.warning(f"Logo animation script generation failed: {e}")
-    
-    # Fallback - extract brand name from prompt
-    words = prompt.split()
-    brand_name = words[0].capitalize() if words else "Brand"
-    
-    return {
-        "title": f"{brand_name} Animation",
-        "brand_name": brand_name,
-        "tagline": "",
-        "bg_color": "#7289da",
-        "text_color": "#ffffff",
-        "full_script": brand_name
-    }
+# Old logo script function removed - using new AI-driven one at line 393
 
 
 async def generate_product_advertisement_script(
@@ -1513,6 +1534,7 @@ async def process_video_generation(project_id: str):
         elif format_id == "logo_animation":
             script_data = await generate_logo_animation_script(
                 project["prompt"],
+                project.get("brand_name", "Brand"),
                 project["language"]
             )
         elif format_id == "ai_story":
@@ -1720,6 +1742,19 @@ async def process_video_generation(project_id: str):
             brand_name = script_data.get("brand_name", project.get("brand_name", "Brand"))
             bg_color_hex = script_data.get("bg_color", "#5865F2")
             
+            # Get prompt and language from project
+            user_prompt = project.get("prompt", "")
+            lang = project.get("language", "auto")
+            
+            # Generate AI-driven logo animation script
+            logo_script = await generate_logo_animation_script(user_prompt, brand_name, lang)
+            
+            # Update brand_name and bg_color from AI script
+            brand_name = logo_script.get("brand_name", brand_name)
+            bg_color_hex = logo_script.get("bg_color", bg_color_hex)
+            effects = logo_script.get("effects", {"intro": "scale_fade", "outro": "none"})
+            outro_repeat = logo_script.get("outro_repeat", 1)
+            
             # Parse hex color
             try:
                 bg_color_hex = bg_color_hex.lstrip("#")
@@ -1727,7 +1762,7 @@ async def process_video_generation(project_id: str):
             except:
                 bg_color = (88, 101, 242)  # Discord blue default
             
-            # Use the new professional logo animation
+            # Use the new professional logo animation with effects
             if logo_path and logo_path.exists():
                 final_video_path = await render_logo_anim_new(
                     logo_path=str(logo_path),
@@ -1735,7 +1770,9 @@ async def process_video_generation(project_id: str):
                     bg_color=bg_color,
                     output_dir=work_dir,
                     fps=30,
-                    duration=4.0
+                    duration=4.0,
+                    outro_effect=effects.get("outro", "none"),
+                    outro_repeat=outro_repeat
                 )
                 final_video = Path(final_video_path) if final_video_path else None
             else:
