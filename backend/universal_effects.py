@@ -573,7 +573,7 @@ async def render_logo_animation(
     1. Logo appears in CENTER alone
     2. Logo moves LEFT
     3. Text appears on RIGHT
-    Final: [LOGO] [TEXT] - horizontal, same line
+    Final: [LOGO] [TEXT] - horizontal, same line, fits within screen
     """
     output_path = output_dir / f"logo_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"frames_{uuid.uuid4().hex[:8]}"
@@ -581,26 +581,33 @@ async def render_logo_animation(
     
     total_frames = int(fps * duration)
     
-    # Logo size - MUCH BIGGER - 15% of screen height
-    logo_target_height = int(HEIGHT * 0.15)
-    
-    # Load logo
-    try:
-        logo = Image.open(logo_path).convert("RGBA")
-        ratio = logo_target_height / logo.height
-        logo = logo.resize((int(logo.width * ratio), logo_target_height), Image.Resampling.LANCZOS)
-    except Exception as e:
-        logger.error(f"Failed to load logo: {e}")
-        logo = Image.new("RGBA", (logo_target_height, logo_target_height), (255, 255, 255, 255))
-        d = ImageDraw.Draw(logo)
-        d.ellipse((5, 5, logo_target_height-5, logo_target_height-5), fill=(200, 200, 200, 255))
-    
     # Text color
     brightness = (bg_color[0] * 299 + bg_color[1] * 587 + bg_color[2] * 114) / 1000
     text_color = (255, 255, 255) if brightness < 128 else (0, 0, 0)
     
-    # Text same height as logo
-    font_size = int(logo.height * 1.2)
+    # Load original logo
+    try:
+        logo_orig = Image.open(logo_path).convert("RGBA")
+    except Exception as e:
+        logger.error(f"Failed to load logo: {e}")
+        logo_orig = Image.new("RGBA", (200, 200), (255, 255, 255, 255))
+        d = ImageDraw.Draw(logo_orig)
+        d.ellipse((10, 10, 190, 190), fill=(200, 200, 200, 255))
+    
+    # Target: composition should fill ~85% of screen WIDTH
+    TARGET_WIDTH_PERCENT = 0.85
+    target_total_width = int(WIDTH * TARGET_WIDTH_PERCENT)
+    
+    # Initial sizing - logo height ~20% of screen for more impact
+    logo_target_height = int(HEIGHT * 0.20)
+    ratio = logo_target_height / logo_orig.height
+    logo = logo_orig.resize((int(logo_orig.width * ratio), logo_target_height), Image.Resampling.LANCZOS)
+    
+    # Gap between logo and text
+    gap = int(logo.width * 0.35)
+    
+    # Initial font size based on logo height
+    font_size = int(logo.height * 0.9)
     font = get_font(font_size, "bold")
     
     # Measure text
@@ -610,9 +617,27 @@ async def render_logo_animation(
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
     
-    # Positions
-    gap = int(logo.width * 0.3)  # Gap between logo and text
+    # Calculate total width
     total_w = logo.width + gap + text_w
+    
+    # Scale everything down if it exceeds target width
+    if total_w > target_total_width:
+        scale_factor = target_total_width / total_w
+        # Scale logo
+        new_logo_w = int(logo.width * scale_factor)
+        new_logo_h = int(logo.height * scale_factor)
+        logo = logo_orig.resize((new_logo_w, new_logo_h), Image.Resampling.LANCZOS)
+        # Scale font
+        font_size = int(font_size * scale_factor)
+        font = get_font(font_size, "bold")
+        # Recalculate text size
+        bbox = temp_draw.textbbox((0, 0), brand_name, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+        # Recalculate gap
+        gap = int(logo.width * 0.35)
+        # Recalculate total width
+        total_w = logo.width + gap + text_w
     
     # Final positions (centered as a group)
     start_x = (WIDTH - total_w) // 2
@@ -732,14 +757,22 @@ async def render_logo_animation(
     
     proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     try:
-        await asyncio.wait_for(proc.communicate(), timeout=90)
-    except:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+        if proc.returncode != 0:
+            logger.error(f"ffmpeg error: {stderr.decode()}")
+    except asyncio.TimeoutError:
+        logger.error("ffmpeg timeout")
+        proc.kill()
+    except Exception as e:
+        logger.error(f"ffmpeg exception: {e}")
         proc.kill()
     
     shutil.rmtree(frames_dir, ignore_errors=True)
     
     if output_path.exists():
+        logger.info(f"Logo animation done: {output_path}")
         return str(output_path)
+    logger.error(f"Logo animation failed, output not found: {output_path}")
     return ""
 
 # =============================================================
