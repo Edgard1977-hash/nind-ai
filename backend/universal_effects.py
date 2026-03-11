@@ -598,16 +598,25 @@ async def render_logo_animation(
     TARGET_WIDTH_PERCENT = 0.85
     target_total_width = int(WIDTH * TARGET_WIDTH_PERCENT)
     
+    # FIXED APPROACH: Set MINIMUM font size first, then size logo to match
+    MIN_FONT_SIZE = 180  # Minimum font size for readability on 1920px screen
+    
     # Initial sizing - logo height ~20% of screen for more impact
     logo_target_height = int(HEIGHT * 0.20)
     ratio = logo_target_height / logo_orig.height
     logo = logo_orig.resize((int(logo_orig.width * ratio), logo_target_height), Image.Resampling.LANCZOS)
     
-    # Gap between logo and text
-    gap = int(logo.width * 0.35)
+    # If logo is too wide (landscape orientation), resize to max width
+    max_logo_width = int(WIDTH * 0.35)  # Logo should not exceed 35% of width
+    if logo.width > max_logo_width:
+        ratio = max_logo_width / logo.width
+        logo = logo.resize((max_logo_width, int(logo.height * ratio)), Image.Resampling.LANCZOS)
     
-    # Initial font size based on logo height
-    font_size = int(logo.height * 0.9)
+    # Gap between logo and text
+    gap = int(logo.height * 0.4)  # Gap based on height, not width
+    
+    # Font size - start with MIN_FONT_SIZE
+    font_size = max(MIN_FONT_SIZE, int(logo.height * 0.85))
     font = get_font(font_size, "bold")
     
     # Measure text
@@ -620,23 +629,41 @@ async def render_logo_animation(
     # Calculate total width
     total_w = logo.width + gap + text_w
     
-    # Scale everything down if it exceeds target width
+    # Scale down if exceeds target width - but PROTECT text size
     if total_w > target_total_width:
+        # Calculate how much we need to shrink
         scale_factor = target_total_width / total_w
-        # Scale logo
-        new_logo_w = int(logo.width * scale_factor)
-        new_logo_h = int(logo.height * scale_factor)
-        logo = logo_orig.resize((new_logo_w, new_logo_h), Image.Resampling.LANCZOS)
-        # Scale font
-        font_size = int(font_size * scale_factor)
-        font = get_font(font_size, "bold")
-        # Recalculate text size
-        bbox = temp_draw.textbbox((0, 0), brand_name, font=font)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
-        # Recalculate gap
-        gap = int(logo.width * 0.35)
-        # Recalculate total width
+        
+        # If scale would make font too small, shrink ONLY the logo
+        new_font_size = int(font_size * scale_factor)
+        if new_font_size < MIN_FONT_SIZE:
+            # Keep font at minimum, shrink only logo
+            font_size = MIN_FONT_SIZE
+            font = get_font(font_size, "bold")
+            bbox = temp_draw.textbbox((0, 0), brand_name, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            
+            # Available width for logo and gap
+            available = target_total_width - text_w - int(20)  # small gap
+            gap = 50
+            new_logo_w = available - gap
+            if new_logo_w > 50:
+                ratio = new_logo_w / logo.width
+                new_logo_h = int(logo.height * ratio)
+                logo = logo.resize((new_logo_w, max(50, new_logo_h)), Image.Resampling.LANCZOS)
+        else:
+            # Scale both proportionally
+            new_logo_w = int(logo.width * scale_factor)
+            new_logo_h = int(logo.height * scale_factor)
+            logo = logo.resize((new_logo_w, new_logo_h), Image.Resampling.LANCZOS)
+            font_size = new_font_size
+            font = get_font(font_size, "bold")
+            bbox = temp_draw.textbbox((0, 0), brand_name, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            gap = int(logo.height * 0.4)
+        
         total_w = logo.width + gap + text_w
     
     # Final positions (centered as a group)
