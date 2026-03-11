@@ -88,10 +88,246 @@ def ease_out_elastic(t: float) -> float:
     c4 = (2 * math.pi) / 3
     return pow(2, -10 * t) * math.sin((t * 10 - 0.75) * c4) + 1
 
+def ease_out_bounce(t: float) -> float:
+    """Bounce effect for emphasized text"""
+    n1 = 7.5625
+    d1 = 2.75
+    if t < 1 / d1:
+        return n1 * t * t
+    elif t < 2 / d1:
+        t -= 1.5 / d1
+        return n1 * t * t + 0.75
+    elif t < 2.5 / d1:
+        t -= 2.25 / d1
+        return n1 * t * t + 0.9375
+    else:
+        t -= 2.625 / d1
+        return n1 * t * t + 0.984375
+
 
 # =============================================================
-# BACKGROUNDS
+# CAL.COM STYLE ANIMATIONS - Exact replication
+# Based on frame-by-frame analysis of reference video
 # =============================================================
+
+# Purple accent color from Cal.com video
+CALCOM_PURPLE = (138, 43, 226)  # Vibrant purple for emphasis
+CALCOM_BLUE = (59, 130, 246)    # Blue for chat bubbles
+
+
+def draw_calcom_text(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    color: Tuple[int, int, int] = (0, 0, 0),
+    font_size: int = 100,
+    y_position: float = 0.5,
+    emphasis_word: str = None,
+    emphasis_color: Tuple[int, int, int] = None
+) -> Image.Image:
+    """
+    Cal.com style text animation:
+    - Fade in from 0 to full opacity
+    - Slight upward slide (30px)
+    - Scale from 0.9 to 1.0
+    - Optional: emphasis word in different color with bounce
+    """
+    if emphasis_color is None:
+        emphasis_color = CALCOM_PURPLE
+    
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    # Animation timing - appears in first 50% of scene duration
+    if progress < 0.5:
+        anim_t = progress / 0.5
+    else:
+        anim_t = 1.0
+    
+    # Easing
+    eased = ease_out_cubic(anim_t)
+    
+    # Alpha: 0 -> 255
+    alpha = int(255 * eased)
+    
+    # Slide up: 30px -> 0px
+    slide_y = int(30 * (1 - eased))
+    
+    # Scale: 0.9 -> 1.0
+    scale = 0.9 + 0.1 * eased
+    scaled_size = int(font_size * scale)
+    
+    font = get_font(scaled_size, "bold")
+    
+    # Check for emphasis word
+    if emphasis_word and emphasis_word in text:
+        # Split text around emphasis word
+        parts = text.split(emphasis_word)
+        
+        # Measure all parts
+        temp_draw = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+        
+        before_text = parts[0]
+        after_text = parts[1] if len(parts) > 1 else ""
+        
+        # Calculate widths
+        before_bbox = temp_draw.textbbox((0, 0), before_text, font=font) if before_text else (0, 0, 0, 0)
+        emph_bbox = temp_draw.textbbox((0, 0), emphasis_word, font=font)
+        after_bbox = temp_draw.textbbox((0, 0), after_text, font=font) if after_text else (0, 0, 0, 0)
+        
+        before_w = before_bbox[2] - before_bbox[0]
+        emph_w = emph_bbox[2] - emph_bbox[0]
+        after_w = after_bbox[2] - after_bbox[0]
+        text_h = emph_bbox[3] - emph_bbox[1]
+        
+        total_w = before_w + emph_w + after_w
+        
+        # Center position
+        start_x = (WIDTH - total_w) // 2
+        y = int(HEIGHT * y_position) - text_h // 2 + slide_y
+        
+        # Draw before text
+        if before_text:
+            draw.text((start_x, y), before_text, font=font, fill=(*color, alpha))
+        
+        # Draw emphasis word with bounce effect
+        emph_x = start_x + before_w
+        
+        # Extra bounce animation for emphasis word
+        if progress > 0.3:
+            emph_t = (progress - 0.3) / 0.4
+            emph_t = min(1.0, emph_t)
+            bounce = ease_out_bounce(emph_t)
+            emph_scale = 0.8 + 0.2 * bounce
+            emph_alpha = int(255 * min(1.0, emph_t * 1.5))
+            
+            emph_font = get_font(int(scaled_size * emph_scale), "bold")
+            draw.text((emph_x, y), emphasis_word, font=emph_font, fill=(*emphasis_color, emph_alpha))
+        
+        # Draw after text
+        if after_text:
+            draw.text((emph_x + emph_w, y), after_text, font=font, fill=(*color, alpha))
+    else:
+        # Simple text without emphasis
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+        
+        # Auto-fit
+        max_width = int(WIDTH * 0.85)
+        while text_w > max_width and scaled_size > 40:
+            scaled_size -= 4
+            font = get_font(scaled_size, "bold")
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+        
+        x = (WIDTH - text_w) // 2
+        y = int(HEIGHT * y_position) - text_h // 2 + slide_y
+        
+        draw.text((x, y), text, font=font, fill=(*color, alpha))
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
+def draw_calcom_chat_bubble(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    is_sender: bool = True,  # True = blue (right), False = gray (left)
+    y_position: float = 0.5
+) -> Image.Image:
+    """
+    Cal.com/iMessage style chat bubble:
+    - Slides in from left (receiver) or right (sender)
+    - Text types in character by character
+    - Bubble has rounded corners and tail
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    # Colors
+    if is_sender:
+        bubble_color = CALCOM_BLUE  # Blue for sender
+        text_color = (255, 255, 255)
+    else:
+        bubble_color = (229, 229, 234)  # Light gray for receiver
+        text_color = (0, 0, 0)
+    
+    # Animation timing
+    # Phase 1 (0-0.3): Bubble slides in
+    # Phase 2 (0.3-1.0): Text types in
+    
+    if progress < 0.3:
+        slide_t = progress / 0.3
+        slide_t = ease_out_cubic(slide_t)
+        bubble_alpha = int(255 * slide_t)
+        text_progress = 0
+    else:
+        slide_t = 1.0
+        bubble_alpha = 255
+        text_progress = (progress - 0.3) / 0.7
+    
+    # Typing effect
+    visible_chars = int(len(text) * ease_out_quad(text_progress))
+    display_text = text[:visible_chars] if visible_chars > 0 else ""
+    
+    if not display_text and progress < 0.3:
+        display_text = " "  # Show empty bubble
+    
+    # Font
+    font_size = 48
+    font = get_font(font_size, "medium")
+    
+    # Measure text (full text for consistent bubble size)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    # Bubble dimensions
+    padding_h = 30
+    padding_v = 20
+    bubble_w = text_w + padding_h * 2
+    bubble_h = text_h + padding_v * 2
+    corner_radius = 25
+    
+    # Position - slide from edge
+    if is_sender:
+        final_x = WIDTH - bubble_w - 60
+        start_x = WIDTH + 50
+        bubble_x = int(start_x + (final_x - start_x) * slide_t)
+    else:
+        final_x = 60
+        start_x = -bubble_w - 50
+        bubble_x = int(start_x + (final_x - start_x) * slide_t)
+    
+    bubble_y = int(HEIGHT * y_position) - bubble_h // 2
+    
+    # Draw shadow
+    shadow_offset = 4
+    draw.rounded_rectangle(
+        (bubble_x + shadow_offset, bubble_y + shadow_offset, 
+         bubble_x + bubble_w + shadow_offset, bubble_y + bubble_h + shadow_offset),
+        radius=corner_radius,
+        fill=(0, 0, 0, 20)
+    )
+    
+    # Draw bubble
+    draw.rounded_rectangle(
+        (bubble_x, bubble_y, bubble_x + bubble_w, bubble_y + bubble_h),
+        radius=corner_radius,
+        fill=(*bubble_color, bubble_alpha)
+    )
+    
+    # Draw text
+    text_x = bubble_x + padding_h
+    text_y = bubble_y + padding_v
+    text_alpha = int(255 * min(1.0, text_progress * 2)) if display_text.strip() else 0
+    
+    if display_text.strip():
+        draw.text((text_x, text_y), display_text, font=font, fill=(*text_color, text_alpha))
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
 
 def create_solid_bg(w: int, h: int, color: Tuple[int, int, int]) -> Image.Image:
     """Solid color background"""
@@ -1480,6 +1716,24 @@ async def render_professional_video(
             emphasis = content.get("emphasis", False)
             bg = draw_apple_text_reveal(bg, text, vis, color, font_size, emphasis)
         
+        # === CALCOM TEXT (with emphasis word) ===
+        elif scene_type == "calcom_text":
+            text = content.get("text", "Hello")
+            color = tuple(content.get("color", [0, 0, 0]))  # Black on white
+            font_size = content.get("font_size", 100)
+            emphasis_word = content.get("emphasis_word")
+            emphasis_color = content.get("emphasis_color")
+            if emphasis_color:
+                emphasis_color = tuple(emphasis_color)
+            bg = draw_calcom_text(bg, text, vis, color, font_size, 0.5, emphasis_word, emphasis_color)
+        
+        # === CALCOM CHAT BUBBLE ===
+        elif scene_type == "calcom_chat":
+            text = content.get("text", "Hello")
+            is_sender = content.get("sender", True)
+            y_pos = content.get("y_position", 0.5)
+            bg = draw_calcom_chat_bubble(bg, text, vis, is_sender, y_pos)
+        
         # === LOGO REVEAL (logo left, brand name right) ===
         elif scene_type == "logo_reveal":
             brand_name = content.get("brand_name", "Brand")
@@ -1868,6 +2122,24 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
                 "color": elem.get("color", text_color),
                 "font_size": elem.get("font_size", 140),
                 "emphasis": elem.get("emphasis", False)
+            }
+        
+        # === CALCOM TEXT (with emphasis word) ===
+        elif scene_type == "calcom_text":
+            scene["content"] = {
+                "text": elem.get("text", ""),
+                "color": text_color,
+                "font_size": elem.get("font_size", 100),
+                "emphasis_word": elem.get("emphasis_word"),
+                "emphasis_color": elem.get("emphasis_color")
+            }
+        
+        # === CALCOM CHAT BUBBLE ===
+        elif scene_type == "calcom_chat":
+            scene["content"] = {
+                "text": elem.get("text", ""),
+                "sender": elem.get("sender", True),
+                "y_position": elem.get("y_position", 0.5)
             }
         
         # === LOGO REVEAL (logo left, text right) ===

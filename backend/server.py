@@ -395,7 +395,7 @@ async def generate_universal_script(prompt: str, language: str, logo_path: str =
     """
     UNIVERSAL AI SCRIPT GENERATOR
     Analyzes any prompt and generates appropriate scene sequence.
-    Combines: text animations, logo reveals, gradients, shapes - whatever user needs.
+    Cal.com style animations with emphasis words.
     """
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     
@@ -416,33 +416,43 @@ USER PROMPT: {prompt}
 {"BRAND NAME: " + brand_name if brand_name else ""}
 {"HAS LOGO: yes" if logo_path else ""}
 
-AVAILABLE SCENE TYPES:
-1. "apple_text" - Text appears with fade + scale + slide up (Apple style)
-2. "logo_reveal" - Logo appears center, moves left, brand name appears right
-3. "gradient_text" - Text with animated gradient sweep
-4. "chat" - Chat bubble message
-5. "shape" - Animated shape (circle, rectangle)
+AVAILABLE SCENE TYPES (Cal.com style):
 
-RULES:
-1. Keep EXACT text user provides - DO NOT translate or modify
-2. Create logical sequence of scenes based on user request
-3. Each scene has: type, text/content, duration (1.0-2.0s), background (black/white)
-4. If user wants "text animation + logo at end" -> multiple apple_text scenes, then logo_reveal at end
-5. Match the language user writes in
+1. "calcom_text" - Text with fade + slide up + optional emphasis word in purple
+   {{"type": "calcom_text", "text": "No more back and forths", "emphasis_word": "back and forths", "bg": "white", "duration": 1.5}}
 
-RETURN JSON FORMAT:
+2. "calcom_chat" - Chat bubble with typing effect (iMessage style)  
+   {{"type": "calcom_chat", "text": "Are you free Tuesday?", "sender": true, "bg": "white", "duration": 2.0}}
+   sender=true (blue, right side), sender=false (gray, left side)
+
+3. "logo_reveal" - Logo appears center, moves left, brand name fades in right
+   {{"type": "logo_reveal", "brand_name": "Brand", "bg": "black", "duration": 3.0}}
+
+4. "apple_text" - Simple text fade + scale (for alternating black/white backgrounds)
+   {{"type": "apple_text", "text": "Hello", "bg": "black", "duration": 1.2}}
+
+STYLE RULES (Cal.com video style):
+1. White background (#FFFFFF) is default
+2. Black text (#000000) on white background
+3. Purple (#8A2BE2) for emphasis words that bounce in
+4. Chat bubbles: blue for sender (right), gray for receiver (left)
+5. Smooth ease-out animations
+6. Duration per scene: 1.0-2.0 seconds
+
+KEEP EXACT TEXT - DO NOT translate or modify user's text!
+
+RETURN JSON:
 {{
     "scenes": [
-        {{"type": "apple_text", "text": "First phrase", "bg": "black", "duration": 1.2}},
-        {{"type": "apple_text", "text": "Second phrase", "bg": "white", "duration": 1.2}},
-        {{"type": "logo_reveal", "brand_name": "Brand", "bg": "black", "duration": 2.0}}
-    ],
-    "total_duration": 4.4
+        {{"type": "calcom_text", "text": "We've all been there", "bg": "white", "duration": 1.2}},
+        {{"type": "calcom_chat", "text": "Are you free Tuesday?", "sender": true, "bg": "white", "duration": 2.0}},
+        {{"type": "calcom_text", "text": "meetings simplified.", "emphasis_word": "simplified.", "bg": "white", "duration": 1.5}}
+    ]
 }}
 
 USER REQUEST: {prompt}
 
-Return ONLY valid JSON, no explanations."""
+Return ONLY valid JSON."""
 
         msg = UserMessage(text=system_prompt)
         response = await chat.send_message(msg)
@@ -453,7 +463,6 @@ Return ONLY valid JSON, no explanations."""
         json_end = response.rfind('}') + 1
         if json_start != -1 and json_end > json_start:
             result = json.loads(response[json_start:json_end])
-            # Add logo path if provided
             if logo_path:
                 result["logo_path"] = logo_path
             if brand_name:
@@ -463,11 +472,11 @@ Return ONLY valid JSON, no explanations."""
     except Exception as e:
         logger.warning(f"Universal script generation failed: {e}")
     
-    # Fallback - simple text animation
+    # Fallback
     fallback_text = "Привет мир" if is_russian else "Hello World"
     return {
         "scenes": [
-            {"type": "apple_text", "text": fallback_text, "bg": "black", "duration": 1.5}
+            {"type": "calcom_text", "text": fallback_text, "bg": "white", "duration": 1.5}
         ],
         "total_duration": 1.5
     }
