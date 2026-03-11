@@ -1480,6 +1480,16 @@ async def render_professional_video(
             emphasis = content.get("emphasis", False)
             bg = draw_apple_text_reveal(bg, text, vis, color, font_size, emphasis)
         
+        # === LOGO REVEAL (logo left, brand name right) ===
+        elif scene_type == "logo_reveal":
+            brand_name = content.get("brand_name", "Brand")
+            logo_path_str = content.get("logo_path")
+            bg_color = tuple(content.get("bg_color", [88, 101, 242]))
+            
+            # Draw logo reveal animation inline
+            bg = create_solid_bg(WIDTH, HEIGHT, bg_color)
+            bg = draw_logo_reveal_frame(bg, brand_name, logo_path_str, vis)
+        
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
         bg.convert("RGB").save(frame_path, "PNG", optimize=True)
@@ -1693,120 +1703,216 @@ def draw_apple_text_reveal(
     return Image.alpha_composite(img.convert("RGBA"), layer)
 
 
+def draw_logo_reveal_frame(
+    img: Image.Image,
+    brand_name: str,
+    logo_path: str,
+    progress: float
+) -> Image.Image:
+    """
+    Logo reveal animation frame:
+    Phase 1 (0-0.3): Logo appears in center with scale
+    Phase 2 (0.3-0.6): Logo moves left
+    Phase 3 (0.6-1.0): Brand name fades in on right
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    # Text color (white on any background)
+    text_color = (255, 255, 255)
+    
+    # Load logo or create placeholder
+    logo_size = int(HEIGHT * 0.15)
+    logo = None
+    
+    if logo_path:
+        try:
+            from pathlib import Path
+            p = Path(logo_path) if not logo_path.startswith("/api") else Path(f"/app/backend/uploads/{logo_path.split('/')[-1]}")
+            if p.exists():
+                logo = Image.open(p).convert("RGBA")
+                ratio = logo_size / max(logo.width, logo.height)
+                logo = logo.resize((int(logo.width * ratio), int(logo.height * ratio)), Image.Resampling.LANCZOS)
+        except Exception as e:
+            logger.warning(f"Failed to load logo: {e}")
+    
+    if logo is None:
+        # Create placeholder circle logo
+        logo = Image.new("RGBA", (logo_size, logo_size), (0, 0, 0, 0))
+        logo_draw = ImageDraw.Draw(logo)
+        logo_draw.ellipse((5, 5, logo_size-5, logo_size-5), fill=(255, 255, 255, 200))
+    
+    # Font for brand name
+    font_size = int(logo.height * 0.8)
+    font = get_font(font_size, "bold")
+    bbox = draw.textbbox((0, 0), brand_name, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    # Calculate positions
+    center_x = WIDTH // 2
+    center_y = HEIGHT // 2
+    
+    gap = int(logo.width * 0.4)
+    total_w = logo.width + gap + text_w
+    
+    final_logo_x = (WIDTH - total_w) // 2
+    final_text_x = final_logo_x + logo.width + gap
+    
+    # Animation phases
+    if progress < 0.3:
+        # Phase 1: Logo appears in center
+        p = progress / 0.3
+        p = ease_out_cubic(p)
+        logo_scale = 0.5 + 0.5 * p
+        logo_alpha = int(255 * p)
+        logo_x = center_x - logo.width // 2
+        text_alpha = 0
+    elif progress < 0.6:
+        # Phase 2: Logo moves left
+        p = (progress - 0.3) / 0.3
+        p = ease_out_cubic(p)
+        logo_scale = 1.0
+        logo_alpha = 255
+        logo_x = int(center_x - logo.width // 2 + (final_logo_x - (center_x - logo.width // 2)) * p)
+        text_alpha = 0
+    else:
+        # Phase 3: Brand name appears
+        p = (progress - 0.6) / 0.4
+        p = ease_out_cubic(p)
+        logo_scale = 1.0
+        logo_alpha = 255
+        logo_x = final_logo_x
+        text_alpha = int(255 * p)
+    
+    # Draw logo
+    if logo_scale != 1.0:
+        new_size = (int(logo.width * logo_scale), int(logo.height * logo_scale))
+        scaled_logo = logo.resize(new_size, Image.Resampling.LANCZOS)
+        logo_x = logo_x + (logo.width - new_size[0]) // 2
+        logo_y = center_y - new_size[1] // 2
+    else:
+        scaled_logo = logo
+        logo_y = center_y - logo.height // 2
+    
+    # Apply alpha to logo
+    if logo_alpha < 255:
+        alpha_mask = scaled_logo.split()[3].point(lambda x: int(x * logo_alpha / 255))
+        scaled_logo.putalpha(alpha_mask)
+    
+    layer.paste(scaled_logo, (logo_x, logo_y), scaled_logo)
+    
+    # Draw brand name
+    if text_alpha > 0:
+        text_y = center_y - text_h // 2
+        draw.text((final_text_x, text_y), brand_name, font=font, fill=(*text_color, text_alpha))
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
 # =============================================================
-# UNIVERSAL RENDER (Backward compatible)
+# UNIVERSAL RENDER - Handles ANY scene type from AI
 # =============================================================
 
 async def render_universal_video(script_data: Dict, output_dir: Path, fps: int = 30) -> str:
-    """Convert script_data to scenes and render - supports ALL visual types"""
-    elements = script_data.get("elements", [])
-    scenes = []
+    """
+    UNIVERSAL VIDEO RENDERER
+    Accepts scenes from AI and renders each one appropriately.
+    Supports: apple_text, logo_reveal, gradient_text, chat, shapes, etc.
+    """
+    # Get scenes from script_data (new format uses "scenes", old format uses "elements")
+    raw_scenes = script_data.get("scenes", []) or script_data.get("elements", [])
     
-    for idx, elem in enumerate(elements):
-        t = elem.get("type", "text")
-        dur = elem.get("duration", 2.5)
+    if not raw_scenes:
+        # Fallback
+        raw_scenes = [{"type": "apple_text", "text": "Hello World", "bg": "black", "duration": 1.5}]
+    
+    scenes = []
+    logo_path = script_data.get("logo_path")
+    brand_name = script_data.get("brand_name")
+    
+    for idx, elem in enumerate(raw_scenes):
+        scene_type = elem.get("type", "apple_text")
+        duration = elem.get("duration", 1.5)
+        bg = elem.get("bg", elem.get("background", "black"))
         
-        # Determine background based on content type
-        if t in ["gradient_text", "scale_text", "circle", "rect", "shapes"]:
-            bg = "black"  # Shapes look better on dark
-        elif t == "text":
-            bg = "white"
+        # Convert bg string to background format
+        if bg == "black" or bg == "dark":
+            background = "black"
+        elif bg == "white" or bg == "light":
+            background = "white"
+        elif isinstance(bg, list):
+            background = bg
         else:
-            bg = elem.get("background", "white")
+            background = "white"
         
-        # Override with explicit background if provided
-        if "background" in elem:
-            bg = elem["background"]
-        if "bg_colors" in elem:
-            bg = "gradient"
+        # Determine text color based on background
+        if background == "black":
+            text_color = [255, 255, 255]
+        else:
+            text_color = [0, 0, 0]
         
         scene = {
-            "type": t,
-            "duration": dur,
-            "trans_in": 0.25,
+            "type": scene_type,
+            "duration": duration,
+            "trans_in": 0.2,
             "trans_out": 0.15,
-            "background": bg,
-            "bg_colors": elem.get("bg_colors"),
+            "background": background,
             "content": {}
         }
         
-        # === TEXT TYPES ===
-        if t == "text":
-            text_color = [0, 0, 0] if bg == "white" else [255, 255, 255]
+        # === APPLE TEXT (fade + scale + slide) ===
+        if scene_type == "apple_text":
             scene["content"] = {
-                "text": elem.get("content", ""),
+                "text": elem.get("text", ""),
+                "color": elem.get("color", text_color),
+                "font_size": elem.get("font_size", 140),
+                "emphasis": elem.get("emphasis", False)
+            }
+        
+        # === LOGO REVEAL (logo left, text right) ===
+        elif scene_type == "logo_reveal":
+            # This will be handled specially - render logo animation
+            scene["type"] = "logo_reveal"
+            scene["content"] = {
+                "brand_name": elem.get("brand_name", brand_name or "Brand"),
+                "logo_path": elem.get("logo_path", logo_path),
+                "bg_color": elem.get("bg_color", [88, 101, 242])  # Discord blue default
+            }
+            scene["duration"] = max(duration, 3.0)  # Logo needs at least 3s
+        
+        # === GRADIENT TEXT (animated sweep) ===
+        elif scene_type == "gradient_text" or scene_type == "gradient_sweep":
+            scene["type"] = "gradient_sweep"
+            scene["content"] = {
+                "text": elem.get("text", ""),
+                "base_color": elem.get("base_color", [100, 100, 100]),
+                "font_size": elem.get("font_size", 160)
+            }
+            scene["background"] = "black"
+        
+        # === SIMPLE TEXT (word-by-word reveal) ===
+        elif scene_type == "text":
+            scene["content"] = {
+                "text": elem.get("text", elem.get("content", "")),
                 "color": elem.get("color", text_color),
                 "underline": elem.get("underline")
             }
         
-        elif t == "gradient_text":
+        # === CHAT BUBBLE ===
+        elif scene_type == "chat":
             scene["content"] = {
-                "text": elem.get("content", ""),
-                "colors": elem.get("gradient_colors", [[0, 180, 255], [100, 220, 255]]),
-                "shimmer": elem.get("shimmer", True)
-            }
-            scene["background"] = "black"
-        
-        elif t == "scale_text":
-            scene["content"] = {
-                "text": elem.get("content", ""),
-                "color": elem.get("color", [255, 255, 255])
-            }
-            scene["background"] = "black"
-        
-        # === SHAPE TYPES ===
-        elif t == "circle":
-            scene["content"] = {
-                "size": elem.get("size", 400),
-                "colors": elem.get("colors", [[255, 100, 150], [100, 150, 255]]),
-                "glow": elem.get("glow", True)
-            }
-            scene["background"] = "black"
-        
-        elif t == "rect":
-            scene["content"] = {
-                "width": elem.get("width", 500),
-                "height": elem.get("height", 300),
-                "radius": elem.get("radius", 40),
-                "colors": elem.get("colors", [[100, 200, 255], [200, 100, 255]]),
-                "rotation": elem.get("rotation", 0)
-            }
-            scene["background"] = "black"
-        
-        elif t == "shapes":
-            scene["content"] = {
-                "shapes": elem.get("shapes", [])
-            }
-            scene["background"] = "black"
-        
-        # === UI TYPES ===
-        elif t == "chat":
-            msgs = elem.get("messages", [])
-            for msg in msgs:
-                scenes.append({
-                    "type": "chat",
-                    "duration": 2.0,
-                    "trans_in": 0.25,
-                    "trans_out": 0.15,
-                    "background": "white",
-                    "content": {
-                        "text": msg.get("text", ""),
-                        "sender": msg.get("sender", True)
-                    }
-                })
-            continue
-        
-        elif t == "ui_form":
-            scene["content"] = {
-                "fields": elem.get("fields", ["Field"]),
-                "button": elem.get("button_text", "Submit"),
-                "btn_color": elem.get("button_color", [0, 122, 255])
+                "text": elem.get("text", ""),
+                "sender": elem.get("sender", True)
             }
             scene["background"] = "white"
         
+        # === SHAPES ===
+        elif scene_type in ["circle", "rect", "shapes"]:
+            scene["content"] = elem.get("content", elem)
+            scene["background"] = "black"
+        
         scenes.append(scene)
     
-    if not scenes:
-        scenes = [{"type": "text", "duration": 2.5, "background": "white", "content": {"text": "Hello World"}}]
-    
+    # Render all scenes
     return await render_professional_video(scenes, output_dir, fps)

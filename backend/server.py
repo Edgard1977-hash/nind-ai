@@ -386,30 +386,91 @@ FORMAT_CATEGORIES = {
 # ==================== AI SERVICES ====================
 
 async def detect_video_type(prompt: str) -> dict:
-    """Smart AI engine - analyze prompt and auto-detect the best video type"""
+    """DEPRECATED - Always return universal format. AI decides what to render."""
+    lang = "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"
+    return {"format_id": "universal", "confidence": 1.0, "detected_language": lang}
+
+
+async def generate_universal_script(prompt: str, language: str, logo_path: str = None, brand_name: str = None) -> dict:
+    """
+    UNIVERSAL AI SCRIPT GENERATOR
+    Analyzes any prompt and generates appropriate scene sequence.
+    Combines: text animations, logo reveals, gradients, shapes - whatever user needs.
+    """
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     api_key = os.getenv("EMERGENT_LLM_KEY")
-    prompt_lower = prompt.lower()
+    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
     
-    # FIRST: Check keywords BEFORE LLM to ensure specific formats are caught
-    # Check for logo/brand FIRST (high priority)
-    logo_keywords = ['лого', 'logo', 'бренд анимац', 'brand animat', 'интро', 'intro', 'логотип']
-    if any(kw in prompt_lower for kw in logo_keywords):
-        return {"format_id": "logo_animation", "confidence": 0.9, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"universal-{uuid.uuid4()}",
+            system_message="You create video animation scripts. Return ONLY valid JSON."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        
+        system_prompt = f"""Create video animation script based on user request.
+
+USER PROMPT: {prompt}
+{"BRAND NAME: " + brand_name if brand_name else ""}
+{"HAS LOGO: yes" if logo_path else ""}
+
+AVAILABLE SCENE TYPES:
+1. "apple_text" - Text appears with fade + scale + slide up (Apple style)
+2. "logo_reveal" - Logo appears center, moves left, brand name appears right
+3. "gradient_text" - Text with animated gradient sweep
+4. "chat" - Chat bubble message
+5. "shape" - Animated shape (circle, rectangle)
+
+RULES:
+1. Keep EXACT text user provides - DO NOT translate or modify
+2. Create logical sequence of scenes based on user request
+3. Each scene has: type, text/content, duration (1.0-2.0s), background (black/white)
+4. If user wants "text animation + logo at end" -> multiple apple_text scenes, then logo_reveal at end
+5. Match the language user writes in
+
+RETURN JSON FORMAT:
+{{
+    "scenes": [
+        {{"type": "apple_text", "text": "First phrase", "bg": "black", "duration": 1.2}},
+        {{"type": "apple_text", "text": "Second phrase", "bg": "white", "duration": 1.2}},
+        {{"type": "logo_reveal", "brand_name": "Brand", "bg": "black", "duration": 2.0}}
+    ],
+    "total_duration": 4.4
+}}
+
+USER REQUEST: {prompt}
+
+Return ONLY valid JSON, no explanations."""
+
+        msg = UserMessage(text=system_prompt)
+        response = await chat.send_message(msg)
+        
+        logger.info(f"Universal AI response: {response[:500]}")
+        
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        if json_start != -1 and json_end > json_start:
+            result = json.loads(response[json_start:json_end])
+            # Add logo path if provided
+            if logo_path:
+                result["logo_path"] = logo_path
+            if brand_name:
+                result["brand_name"] = brand_name
+            logger.info(f"Parsed universal script: {result}")
+            return result
+    except Exception as e:
+        logger.warning(f"Universal script generation failed: {e}")
     
-    # Check for chat/dialog keywords
-    chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation', 'беседа']
-    if any(kw in prompt_lower for kw in chat_keywords) or '[' in prompt or '«' in prompt:
-        return {"format_id": "chat_animation", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
-    # Check for product advertisement
-    product_keywords = ['реклам', 'товар', 'продукт', 'product', 'advertis', 'showcase', 'commercial', 'macbook', 'iphone', 'показать продукт']
-    if any(kw in prompt_lower for kw in product_keywords):
-        return {"format_id": "product_advertisement", "confidence": 0.8, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
-    
-    # For everything else - use universal (handles shapes, text, gradients, etc.)
-    return {"format_id": "universal", "confidence": 0.9, "detected_language": "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"}
+    # Fallback - simple text animation
+    fallback_text = "Привет мир" if is_russian else "Hello World"
+    return {
+        "scenes": [
+            {"type": "apple_text", "text": fallback_text, "bg": "black", "duration": 1.5}
+        ],
+        "total_duration": 1.5
+    }
 
 
 async def generate_logo_animation_script(prompt: str, brand_name: str, language: str) -> dict:
@@ -492,179 +553,6 @@ Return ONLY JSON."""
 
 
 
-async def generate_universal_script(prompt: str, language: str) -> dict:
-    """
-    AI generates dynamic video script with various visual elements.
-    Supports: text, shapes, gradients, UI elements, and more.
-    """
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-    
-    api_key = os.getenv("EMERGENT_LLM_KEY")
-    is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
-    
-    try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"universal-{uuid.uuid4()}",
-            system_message="You create professional motion graphics scripts. Analyze what user wants and use appropriate visual elements."
-        )
-        chat.with_model("openai", "gpt-5.2")
-        
-        system_prompt = f"""Create video animation script. Return ONLY valid JSON.
-
-AVAILABLE SCENE TYPES:
-
-1. "text" - Text with word-by-word animation (Apple-style)
-   {{"type":"text","content":"Hello World","duration":2.5,"color":[0,0,0],"underline":"World"}}
-
-2. "gradient_text" - Gradient colored text with shimmer (on dark bg)
-   {{"type":"gradient_text","content":"Brand","duration":2.5,"gradient_colors":[[255,100,150],[100,150,255]]}}
-
-3. "circle" - Gradient circle shape with glow
-   {{"type":"circle","duration":2.5,"size":400,"colors":[[255,100,150],[100,150,255]],"glow":true}}
-
-4. "rect" - Gradient rectangle with rounded corners
-   {{"type":"rect","duration":2.5,"width":500,"height":300,"radius":40,"colors":[[100,200,255],[200,100,255]]}}
-
-5. "shapes" - Multiple shapes composition
-   {{"type":"shapes","duration":3,"shapes":[
-     {{"type":"circle","size":200,"colors":[[255,0,100],[255,100,0]],"x":0,"y":-200}},
-     {{"type":"circle","size":150,"colors":[[0,200,255],[100,0,255]],"x":150,"y":100}},
-     {{"type":"rect","width":300,"height":100,"colors":[[100,255,100],[0,200,100]],"x":-100,"y":200}}
-   ]}}
-
-6. "ui_form" - Form with input fields and button
-   {{"type":"ui_form","duration":3,"fields":["Email","Password"],"button_text":"Sign up","button_color":[0,122,255]}}
-
-7. "chat" - Chat message bubbles
-   {{"type":"chat","messages":[{{"text":"Hello","sender":true}},{{"text":"Hi!","sender":false}}]}}
-
-BACKGROUND OPTIONS:
-- "white" or "black" (default based on content)
-- [r,g,b] - custom solid color
-- "gradient" with "bg_colors": [[r,g,b], [r,g,b]]
-
-ANALYZE THE PROMPT:
-- If user asks for SHAPES/FIGURES → use "circle", "rect", "shapes"
-- If user asks for TEXT → use "text" or "gradient_text"
-- If user asks for UI → use "ui_form"
-- If user asks for CHAT → use "chat"
-- If user asks for COMPOSITION → use "shapes" with multiple elements
-
-EXAMPLES:
-1. "gradient circle" → {{"elements":[{{"type":"circle","duration":3,"size":500,"colors":[[255,50,150],[50,150,255]],"glow":true}}]}}
-
-2. "blue rectangle" → {{"elements":[{{"type":"rect","duration":3,"width":600,"height":400,"colors":[[0,100,255],[0,200,255]]}}]}}
-
-3. "Hello World text" → {{"elements":[{{"type":"text","content":"Hello World","duration":2.5}}]}}
-
-4. "3 circles" → {{"elements":[{{"type":"shapes","duration":4,"shapes":[
-  {{"type":"circle","size":250,"colors":[[255,0,0],[255,100,0]],"x":-200,"y":0}},
-  {{"type":"circle","size":250,"colors":[[0,255,0],[100,255,0]],"x":0,"y":0}},
-  {{"type":"circle","size":250,"colors":[[0,0,255],[0,100,255]],"x":200,"y":0}}
-]}}]}}
-
-User prompt: {prompt}
-
-Return ONLY JSON with "elements" array. Match the visual type to what user asked for."""
-        
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
-        
-        # Parse JSON
-        json_start = response.find('{')
-        json_end = response.rfind('}') + 1
-        if json_start != -1 and json_end > json_start:
-            result = json.loads(response[json_start:json_end])
-            logger.info(f"Generated universal script: {result.get('title', 'No title')}")
-            return result
-    except Exception as e:
-        logger.warning(f"Universal script generation failed: {e}")
-    
-    # Fallback script based on prompt analysis
-    prompt_lower = prompt.lower()
-    
-    # Detect chat/dialog intent
-    chat_keywords = ['диалог', 'сообщен', 'переписк', 'чат', 'chat', 'dialog', 'message', 'conversation', '[', ']']
-    is_chat = any(kw in prompt_lower for kw in chat_keywords)
-    
-    # Detect gradient intent
-    gradient_keywords = ['градиент', 'перелив', 'gradient', 'aurora', 'shimmer']
-    wants_gradient = any(kw in prompt_lower for kw in gradient_keywords)
-    
-    if is_chat:
-        # Извлекаем сообщения из промпта если есть []
-        import re
-        bracket_msgs = re.findall(r'\[([^\]]+)\]', prompt)
-        
-        if bracket_msgs:
-            messages = []
-            for i, msg in enumerate(bracket_msgs[:6]):
-                messages.append({"text": msg.strip(), "sender": i % 2 == 0})
-        else:
-            messages = [
-                {"text": "Привет! 👋" if is_russian else "Hey! 👋", "sender": True},
-                {"text": "Привет!" if is_russian else "Hi!", "sender": False},
-                {"text": "Как дела?" if is_russian else "How are you?", "sender": True},
-                {"text": "Отлично! 😊" if is_russian else "Great! 😊", "sender": False},
-            ]
-        
-        return {
-            "title": "Диалог" if is_russian else "Dialog",
-            "background": {
-                "type": "solid",
-                "colors": [[25, 25, 30], [35, 35, 45]]
-            },
-            "elements": [
-                {
-                    "type": "chat",
-                    "start_time": 0.3,
-                    "duration": len(messages) * 1.8 + 2,
-                    "messages": messages
-                }
-            ],
-            "duration": len(messages) * 1.8 + 3
-        }
-    elif wants_gradient:
-        return {
-            "title": prompt[:30],
-            "background": {
-                "type": "aurora",
-                "colors": [[80, 40, 150], [50, 120, 200], [100, 180, 220]]
-            },
-            "elements": [
-                {
-                    "type": "gradient_text",
-                    "content": prompt[:40] if prompt else "Amazing",
-                    "start_time": 0.5,
-                    "duration": 5.0,
-                    "font_size": 85,
-                    "gradient_colors": [[0, 180, 255], [200, 80, 255]],
-                    "shimmer": True
-                }
-            ],
-            "duration": 8.0
-        }
-    else:
-        return {
-            "title": prompt[:30],
-            "background": {
-                "type": "aurora",
-                "colors": [[40, 30, 70], [70, 50, 120], [50, 80, 140]]
-            },
-            "elements": [
-                {
-                    "type": "text",
-                    "content": prompt[:50] if prompt else "Hello World",
-                    "start_time": 0.5,
-                    "duration": 4.0,
-                    "effect": "wave_down",
-                    "font_size": 75,
-                    "color": [255, 255, 255]
-                }
-            ],
-            "duration": 8.0
-        }
 
 
 async def generate_chat_animation_script(prompt: str, language: str) -> dict:
