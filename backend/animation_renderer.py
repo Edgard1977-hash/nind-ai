@@ -1147,9 +1147,9 @@ async def render_product_advertisement(
     TEXT_COLOR = (0, 0, 0)  # Black text
     
     scenes = script_data.get("scenes", [])
-    brand_name = script_data.get("brand_name", "Brand")
-    product_name = script_data.get("product_name", "Product")
-    tagline = script_data.get("tagline", "")
+    brand_name = script_data.get("brand_name") or "Brand"
+    product_name = script_data.get("product_name") or "Product"
+    tagline = script_data.get("tagline") or ""
     
     # Calculate total duration
     total_duration = sum(s.get("duration", 1.5) for s in scenes) + 1.0  # +1s for outro
@@ -1320,6 +1320,10 @@ def render_brand_reveal(
     - Logo slides left, brand name appears to the right
     - Product name fades in with gradient effect
     """
+    # Ensure strings are not None
+    brand_name = brand_name or "Brand"
+    product_name = product_name or "Product"
+    
     center_x = W // 2
     center_y = H // 2 - 50
     
