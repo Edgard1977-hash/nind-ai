@@ -551,6 +551,309 @@ def draw_gradient_text(
 
 
 # =============================================================
+# ADVANCED TEXT EFFECTS - Based on Video Analysis
+# =============================================================
+
+def draw_smooth_fade_text(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    color: Tuple[int, int, int] = (255, 255, 255),
+    font_size: int = 140,
+    y_position: float = 0.5,  # 0-1, relative to screen height
+    x_align: str = "center",  # center, left, right
+    slide_from: str = "none",  # none, left, right, bottom
+    scale_effect: bool = True
+) -> Image.Image:
+    """
+    Smooth text appearance with fade + optional scale + optional slide.
+    Based on Cal.com video analysis - clean, professional text reveals.
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    # Easing for smooth appearance
+    fade_progress = ease_out_cubic(min(1, progress * 1.5))
+    alpha = int(255 * fade_progress)
+    
+    # Scale effect (0.95 -> 1.0)
+    if scale_effect:
+        scale = 0.95 + 0.05 * ease_out_cubic(min(1, progress * 1.2))
+    else:
+        scale = 1.0
+    
+    scaled_size = int(font_size * scale)
+    font = get_font(scaled_size, "semibold")
+    
+    # Measure and auto-fit text
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    max_width = int(WIDTH * 0.85)
+    while text_w > max_width and scaled_size > 40:
+        scaled_size -= 4
+        font = get_font(scaled_size, "semibold")
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+    
+    # Calculate position
+    if x_align == "center":
+        x = (WIDTH - text_w) // 2
+    elif x_align == "left":
+        x = int(WIDTH * 0.1)
+    else:  # right
+        x = int(WIDTH * 0.9) - text_w
+    
+    y = int(HEIGHT * y_position) - text_h // 2
+    
+    # Slide animation
+    slide_distance = 50
+    slide_progress = ease_out_cubic(min(1, progress * 1.3))
+    
+    if slide_from == "left":
+        x -= int(slide_distance * (1 - slide_progress))
+    elif slide_from == "right":
+        x += int(slide_distance * (1 - slide_progress))
+    elif slide_from == "bottom":
+        y += int(slide_distance * (1 - slide_progress))
+    
+    draw.text((x, y), text, font=font, fill=(*color, alpha))
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
+def draw_animated_gradient_text(
+    img: Image.Image,
+    text: str,
+    time: float,  # 0-1 for animation cycle
+    base_color: Tuple[int, int, int] = (255, 255, 255),
+    gradient_colors: List[Tuple[int, int, int]] = None,
+    font_size: int = 160,
+    y_position: float = 0.5,
+    gradient_width: float = 0.5  # Width of gradient band (0-1)
+) -> Image.Image:
+    """
+    Text with animated gradient sweep (like MacBook Neo video).
+    Gradient moves horizontally across text from left to right.
+    Colors: purple (#5A4D7C) -> blue (#6A8BC4) -> white (#F0EFF4)
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    
+    if gradient_colors is None:
+        # Default: dramatic purple to white (from video analysis)
+        gradient_colors = [
+            (120, 80, 200),   # Vibrant purple
+            (150, 120, 220),  # Light purple
+            (200, 180, 240),  # Pale purple
+            (240, 240, 255),  # Near white
+            (255, 255, 255),  # White
+        ]
+    
+    font = get_font(font_size, "bold")
+    
+    # Measure text
+    temp_draw = ImageDraw.Draw(layer)
+    bbox = temp_draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    # Auto-fit
+    max_width = int(WIDTH * 0.85)
+    while text_w > max_width and font_size > 60:
+        font_size -= 5
+        font = get_font(font_size, "bold")
+        bbox = temp_draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+    
+    x = (WIDTH - text_w) // 2
+    y = int(HEIGHT * y_position) - text_h // 2
+    
+    # Create text image with gradient
+    text_img = Image.new("RGBA", (text_w + 20, text_h + 20), (0, 0, 0, 0))
+    text_draw = ImageDraw.Draw(text_img)
+    
+    # Calculate gradient position (sweeping left to right)
+    # time 0->1 means gradient moves from left to right of text
+    gradient_center = -gradient_width + time * (1 + gradient_width * 2)
+    
+    for px in range(text_w + 20):
+        rel_x = px / (text_w + 20)
+        
+        # Distance from gradient center
+        dist = abs(rel_x - gradient_center)
+        
+        if dist < gradient_width:
+            # Inside gradient band - use gradient colors
+            t = 1 - (dist / gradient_width)  # 0 at edge, 1 at center
+            t = ease_out_quad(t)
+            
+            # Interpolate through gradient colors
+            color_t = t
+            idx = min(int(color_t * (len(gradient_colors) - 1)), len(gradient_colors) - 2)
+            local_t = (color_t * (len(gradient_colors) - 1)) - idx
+            
+            c1, c2 = gradient_colors[idx], gradient_colors[idx + 1]
+            r = int(c1[0] * (1 - local_t) + c2[0] * local_t)
+            g = int(c1[1] * (1 - local_t) + c2[1] * local_t)
+            b = int(c1[2] * (1 - local_t) + c2[2] * local_t)
+        else:
+            # Outside gradient - use base color
+            r, g, b = base_color
+        
+        text_draw.line((px, 0, px, text_h + 20), fill=(r, g, b, 255))
+    
+    # Create mask from text
+    mask = Image.new("L", text_img.size, 0)
+    mask_draw = ImageDraw.Draw(mask)
+    mask_draw.text((10, 10), text, font=font, fill=255)
+    
+    text_img.putalpha(mask)
+    
+    layer.paste(text_img, (x - 10, y - 10), text_img)
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
+
+
+def draw_multiline_text_sequential(
+    img: Image.Image,
+    lines: List[str],
+    progress: float,
+    colors: List[Tuple[int, int, int]] = None,
+    font_sizes: List[int] = None,
+    y_start: float = 0.35,
+    line_spacing: int = 80,
+    stagger_delay: float = 0.2
+) -> Image.Image:
+    """
+    Sequential multi-line text animation.
+    Each line appears with fade + scale, staggered timing.
+    Based on full animation video analysis.
+    """
+    if colors is None:
+        colors = [(255, 255, 255)] * len(lines)
+    if font_sizes is None:
+        font_sizes = [140] * len(lines)
+    
+    result = img.convert("RGBA")
+    
+    for i, line in enumerate(lines):
+        # Calculate timing for this line
+        line_start = i * stagger_delay
+        line_progress = max(0, min(1, (progress - line_start) / (1 - stagger_delay * (len(lines) - 1))))
+        
+        if line_progress <= 0:
+            continue
+        
+        color = colors[i] if i < len(colors) else (255, 255, 255)
+        font_size = font_sizes[i] if i < len(font_sizes) else 140
+        
+        y_pos = y_start + (i * line_spacing / HEIGHT)
+        
+        result = draw_smooth_fade_text(
+            result,
+            line,
+            line_progress,
+            color=color,
+            font_size=font_size,
+            y_position=y_pos,
+            scale_effect=True,
+            slide_from="right" if i % 2 == 0 else "left"
+        )
+    
+    return result
+
+
+def draw_chat_bubble(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    is_sender: bool = True,
+    y_position: float = 0.5,
+    bubble_color: Tuple[int, int, int] = None,
+    text_color: Tuple[int, int, int] = (255, 255, 255),
+    typing_effect: bool = True
+) -> Image.Image:
+    """
+    iMessage-style chat bubble with typing animation.
+    Based on Cal.com video - text types in character by character.
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    if bubble_color is None:
+        bubble_color = (59, 130, 246) if is_sender else (75, 85, 99)  # Blue or gray
+    
+    # Animation
+    bubble_alpha = int(255 * ease_out_cubic(min(1, progress * 2)))
+    
+    # Typing effect - reveal characters progressively
+    if typing_effect:
+        char_progress = ease_out_quad(min(1, progress * 1.5))
+        visible_chars = int(len(text) * char_progress)
+        display_text = text[:visible_chars]
+    else:
+        display_text = text
+    
+    if not display_text:
+        return img
+    
+    font_size = 48
+    font = get_font(font_size, "medium")
+    
+    # Measure text
+    bbox = draw.textbbox((0, 0), display_text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    # Bubble dimensions
+    padding = 30
+    bubble_w = text_w + padding * 2
+    bubble_h = text_h + padding * 2
+    corner_radius = 25
+    
+    # Position
+    if is_sender:
+        bubble_x = WIDTH - bubble_w - 60
+    else:
+        bubble_x = 60
+    
+    bubble_y = int(HEIGHT * y_position) - bubble_h // 2
+    
+    # Slide in animation
+    slide_progress = ease_out_cubic(min(1, progress * 1.5))
+    slide_offset = int(100 * (1 - slide_progress))
+    if is_sender:
+        bubble_x += slide_offset
+    else:
+        bubble_x -= slide_offset
+    
+    # Draw bubble with shadow
+    shadow_offset = 4
+    shadow_color = (0, 0, 0, 30)
+    draw.rounded_rectangle(
+        (bubble_x + shadow_offset, bubble_y + shadow_offset, 
+         bubble_x + bubble_w + shadow_offset, bubble_y + bubble_h + shadow_offset),
+        radius=corner_radius,
+        fill=shadow_color
+    )
+    
+    # Draw bubble
+    draw.rounded_rectangle(
+        (bubble_x, bubble_y, bubble_x + bubble_w, bubble_y + bubble_h),
+        radius=corner_radius,
+        fill=(*bubble_color, bubble_alpha)
+    )
+    
+    # Draw text
+    text_x = bubble_x + padding
+    text_y = bubble_y + padding
+    text_alpha = int(255 * ease_out_quad(min(1, progress * 2)))
+    draw.text((text_x, text_y), display_text, font=font, fill=(*text_color, text_alpha))
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
 
 
 # =============================================================
@@ -803,10 +1106,10 @@ async def render_logo_animation(
     return ""
 
 # =============================================================
-# CHAT BUBBLES - iMessage Style
+# CHAT BUBBLES - iMessage Style (Centered Version)
 # =============================================================
 
-def draw_chat_bubble(
+def draw_chat_bubble_centered(
     img: Image.Image,
     text: str,
     is_sender: bool,
@@ -1045,7 +1348,11 @@ async def render_professional_video(
         
         # Background
         bg_type = active.get("background", "white")
-        if bg_type == "black" or bg_type == "dark":
+        bg_color = active.get("bg_color")  # [r, g, b] list
+        
+        if bg_color and isinstance(bg_color, (list, tuple)) and len(bg_color) == 3:
+            bg = create_solid_bg(WIDTH, HEIGHT, tuple(bg_color))
+        elif bg_type == "black" or bg_type == "dark":
             bg = create_solid_bg(WIDTH, HEIGHT, (10, 10, 15))
         elif bg_type == "gradient":
             colors = [tuple(c) for c in active.get("bg_colors", [[80, 60, 180], [60, 100, 200]])]
@@ -1097,7 +1404,7 @@ async def render_professional_video(
         elif scene_type == "chat":
             text = content.get("text", "Hello")
             is_sender = content.get("sender", True)
-            bg = draw_chat_bubble(bg, text, is_sender, vis)
+            bg = draw_chat_bubble_centered(bg, text, is_sender, vis)
         
         # === UI FORM ===
         elif scene_type == "ui_form":
@@ -1111,6 +1418,38 @@ async def render_professional_video(
             text = content.get("text", "Hello")
             color = tuple(content.get("color", [255, 255, 255]))
             bg = draw_text_scale_fade(bg, text, vis, color)
+        
+        # === SMOOTH FADE TEXT (professional reveal) ===
+        elif scene_type == "smooth_text":
+            text = content.get("text", "Hello")
+            color = tuple(content.get("color", [255, 255, 255]))
+            font_size = content.get("font_size", 140)
+            y_pos = content.get("y_position", 0.5)
+            slide = content.get("slide_from", "none")
+            bg = draw_smooth_fade_text(bg, text, vis, color, font_size, y_pos, "center", slide, True)
+        
+        # === ANIMATED GRADIENT TEXT (MacBook Neo style) ===
+        elif scene_type == "gradient_sweep":
+            text = content.get("text", "Hello")
+            base_color = tuple(content.get("base_color", [100, 100, 100]))
+            font_size = content.get("font_size", 160)
+            # Animate gradient sweep - one full sweep per scene
+            sweep_time = vis  # 0->1 as scene progresses
+            bg = draw_animated_gradient_text(bg, text, sweep_time, base_color, None, font_size, 0.5)
+        
+        # === MULTI-LINE SEQUENTIAL TEXT ===
+        elif scene_type == "multiline":
+            lines = content.get("lines", ["Line 1", "Line 2"])
+            colors = [tuple(c) for c in content.get("colors", [[255,255,255]] * len(lines))]
+            font_sizes = content.get("font_sizes", [140] * len(lines))
+            bg = draw_multiline_text_sequential(bg, lines, vis, colors, font_sizes)
+        
+        # === CHAT CONVERSATION (typing effect) ===
+        elif scene_type == "chat_typing":
+            text = content.get("text", "Hello")
+            is_sender = content.get("sender", True)
+            y_pos = content.get("y_position", 0.5)
+            bg = draw_chat_bubble(bg, text, vis, is_sender, y_pos, typing_effect=True)
         
         # === CIRCLE SHAPE ===
         elif scene_type == "circle":
