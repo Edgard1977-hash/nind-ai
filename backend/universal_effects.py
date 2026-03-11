@@ -1472,6 +1472,14 @@ async def render_professional_video(
             shapes = content.get("shapes", [])
             bg = draw_multiple_shapes(bg, vis, shapes)
         
+        # === APPLE TEXT REVEAL (single scene) ===
+        elif scene_type == "apple_text":
+            text = content.get("text", "Hello")
+            color = tuple(content.get("color", [255, 255, 255]))
+            font_size = content.get("font_size", 140)
+            emphasis = content.get("emphasis", False)
+            bg = draw_apple_text_reveal(bg, text, vis, color, font_size, emphasis)
+        
         # Save frame
         frame_path = frames_dir / f"frame_{frame_num:05d}.png"
         bg.convert("RGB").save(frame_path, "PNG", optimize=True)
@@ -1504,6 +1512,185 @@ async def render_professional_video(
         logger.info(f"Done: {output_path}")
         return str(output_path)
     return ""
+
+
+# =============================================================
+# APPLE-STYLE TEXT ANIMATION - Multiple scenes with text reveals
+# Based on video analysis: Logo -> Text scenes -> Final logo
+# =============================================================
+
+async def render_apple_text_sequence(
+    texts: List[str],
+    output_dir: Path,
+    fps: int = 30,
+    bg_colors: List[Tuple[int, int, int]] = None,
+    text_colors: List[Tuple[int, int, int]] = None,
+    final_title: str = None,
+    scene_duration: float = 1.2
+) -> str:
+    """
+    Apple-style text animation sequence:
+    1. Each text appears with fade + scale animation
+    2. Background color can change between scenes
+    3. Final title appears at the end
+    
+    Based on: @adobebasics TikTok video analysis
+    """
+    output_path = output_dir / f"apple_text_{uuid.uuid4().hex[:8]}.mp4"
+    frames_dir = output_dir / f"frames_{uuid.uuid4().hex[:8]}"
+    frames_dir.mkdir(exist_ok=True)
+    
+    # Default colors - alternating black/white like the reference
+    if bg_colors is None:
+        bg_colors = []
+        for i in range(len(texts)):
+            bg_colors.append((0, 0, 0) if i % 2 == 0 else (255, 255, 255))
+    
+    if text_colors is None:
+        text_colors = []
+        for bg in bg_colors:
+            # White text on dark, black text on light
+            if sum(bg) < 384:
+                text_colors.append((255, 255, 255))
+            else:
+                text_colors.append((0, 0, 0))
+    
+    # Calculate total duration
+    total_duration = len(texts) * scene_duration
+    if final_title:
+        total_duration += scene_duration  # Extra time for final title
+    
+    total_frames = int(total_duration * fps)
+    frames_per_scene = int(scene_duration * fps)
+    
+    frame_num = 0
+    
+    for scene_idx, text in enumerate(texts):
+        bg_color = bg_colors[scene_idx % len(bg_colors)]
+        text_color = text_colors[scene_idx % len(text_colors)]
+        
+        for f in range(frames_per_scene):
+            # Scene progress 0->1
+            progress = f / frames_per_scene
+            
+            # Create background
+            bg = create_solid_bg(WIDTH, HEIGHT, bg_color)
+            
+            # Draw text with Apple-style animation (fade + scale + slight slide up)
+            bg = draw_apple_text_reveal(bg, text, progress, text_color)
+            
+            # Save frame
+            frame_path = frames_dir / f"frame_{frame_num:05d}.png"
+            bg.convert("RGB").save(frame_path, "PNG", optimize=True)
+            frame_num += 1
+    
+    # Final title scene (if provided)
+    if final_title:
+        for f in range(frames_per_scene):
+            progress = f / frames_per_scene
+            
+            # Black background for final title
+            bg = create_solid_bg(WIDTH, HEIGHT, (0, 0, 0))
+            
+            # Draw final title with special emphasis
+            bg = draw_apple_text_reveal(bg, final_title, progress, (255, 255, 255), font_size=180, emphasis=True)
+            
+            frame_path = frames_dir / f"frame_{frame_num:05d}.png"
+            bg.convert("RGB").save(frame_path, "PNG", optimize=True)
+            frame_num += 1
+    
+    # Encode video
+    logger.info("Encoding Apple text animation...")
+    cmd = [
+        "ffmpeg", "-y",
+        "-framerate", str(fps),
+        "-i", str(frames_dir / "frame_%05d.png"),
+        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+        "-c:a", "aac", "-shortest",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+        str(output_path)
+    ]
+    
+    proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    try:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+        if proc.returncode != 0:
+            logger.error(f"ffmpeg error: {stderr.decode()}")
+    except asyncio.TimeoutError:
+        logger.error("ffmpeg timeout")
+        proc.kill()
+    
+    shutil.rmtree(frames_dir, ignore_errors=True)
+    
+    if output_path.exists():
+        logger.info(f"Apple text animation done: {output_path}")
+        return str(output_path)
+    return ""
+
+
+def draw_apple_text_reveal(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    color: Tuple[int, int, int] = (255, 255, 255),
+    font_size: int = 140,
+    emphasis: bool = False
+) -> Image.Image:
+    """
+    Apple-style text reveal:
+    - Fade in (0 -> 255 alpha)
+    - Scale up (0.85 -> 1.0)
+    - Slight slide up (20px -> 0px)
+    - Easing: ease_out_cubic for smooth feel
+    """
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    
+    # Animation timing - text appears in first 60% of scene, holds rest
+    if progress < 0.6:
+        anim_progress = progress / 0.6
+    else:
+        anim_progress = 1.0
+    
+    # Apply easing
+    eased = ease_out_cubic(anim_progress)
+    
+    # Alpha: 0 -> 255
+    alpha = int(255 * eased)
+    
+    # Scale: 0.85 -> 1.0
+    scale = 0.85 + 0.15 * eased
+    
+    # Slide: 30px -> 0px (moves up)
+    slide_y = int(30 * (1 - eased))
+    
+    # Calculate font size with scale
+    scaled_font_size = int(font_size * scale)
+    font = get_font(scaled_font_size, "bold" if emphasis else "semibold")
+    
+    # Measure text
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    
+    # Auto-fit to screen width (85% max)
+    max_width = int(WIDTH * 0.85)
+    while text_w > max_width and scaled_font_size > 40:
+        scaled_font_size -= 5
+        font = get_font(scaled_font_size, "bold" if emphasis else "semibold")
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+    
+    # Position: centered, with slide offset
+    x = (WIDTH - text_w) // 2
+    y = (HEIGHT - text_h) // 2 + slide_y
+    
+    # Draw text with alpha
+    draw.text((x, y), text, font=font, fill=(*color, alpha))
+    
+    return Image.alpha_composite(img.convert("RGBA"), layer)
 
 
 # =============================================================

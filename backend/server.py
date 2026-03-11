@@ -73,7 +73,7 @@ from exact_effects import (
     render_spotify_exact,
     render_imessage_exact
 )
-from universal_effects import render_universal_video
+from universal_effects import render_universal_video, render_apple_text_sequence
 
 # Import montage service
 from montage_service import (
@@ -1675,8 +1675,43 @@ async def process_video_generation(project_id: str):
                 {"$set": {"progress": 30, "progress_message": "Рендерим Apple-style текст..."}}
             )
             
-            # Use professional PIL renderer
-            final_video = await render_apple_text_animation(script_data, work_dir)
+            # Get texts from script_data - check phrases first
+            phrases = script_data.get("phrases", [])
+            texts = []
+            bg_colors = []
+            
+            for phrase in phrases:
+                if isinstance(phrase, dict):
+                    texts.append(phrase.get("text", ""))
+                    # Background color
+                    bg = phrase.get("bg", "white")
+                    if bg == "black":
+                        bg_colors.append((0, 0, 0))
+                    else:
+                        bg_colors.append((255, 255, 255))
+                elif isinstance(phrase, str):
+                    texts.append(phrase)
+                    bg_colors.append((255, 255, 255))
+            
+            # Fallback to scenes if no phrases
+            if not texts:
+                for scene in script_data.get("scenes", []):
+                    if scene.get("text"):
+                        texts.append(scene.get("text"))
+                        bg_colors.append((255, 255, 255))
+            
+            # Final title (brand name or title)
+            final_title = script_data.get("final_title") or script_data.get("title")
+            
+            # Render with new function
+            final_video_str = await render_apple_text_sequence(
+                texts=texts if texts else ["Hello World"],
+                output_dir=work_dir,
+                fps=30,
+                bg_colors=bg_colors if bg_colors else None,
+                final_title=final_title
+            )
+            final_video = Path(final_video_str) if final_video_str else None
             
             if final_video:
                 await db.video_projects.update_one(
