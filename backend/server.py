@@ -14,6 +14,28 @@ import asyncio
 import base64
 import json
 import httpx
+import subprocess
+import shutil
+
+# AUTO-INSTALL DEPENDENCIES (ffmpeg, fonts)
+def ensure_dependencies():
+    """Install ffmpeg and fonts if missing"""
+    # Check ffmpeg
+    if not shutil.which("ffmpeg"):
+        print("Installing ffmpeg...")
+        subprocess.run(["apt-get", "update"], capture_output=True)
+        subprocess.run(["apt-get", "install", "-y", "ffmpeg"], capture_output=True)
+    
+    # Check fonts
+    font_path = Path("/usr/share/fonts/opentype/inter")
+    if not font_path.exists():
+        print("Installing fonts...")
+        subprocess.run(["apt-get", "install", "-y", "fonts-inter", "fonts-dejavu"], capture_output=True)
+        subprocess.run(["fc-cache", "-f"], capture_output=True)
+    
+    print(f"Dependencies OK: ffmpeg={shutil.which('ffmpeg')}, fonts={font_path.exists()}")
+
+ensure_dependencies()
 
 # Stripe integration
 from emergentintegrations.payments.stripe.checkout import (
