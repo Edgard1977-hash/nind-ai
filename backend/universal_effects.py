@@ -491,92 +491,220 @@ def animate_zoom(
 # 3D DEVICE MOCKUPS
 # =============================================================
 
+def create_iphone_16_frame(
+    screen_content: Image.Image,
+    frame_width: int = 420,
+    frame_height: int = 860
+) -> Image.Image:
+    """
+    Create a realistic iPhone 16 frame with titanium look.
+    Screen content is placed inside the frame.
+    """
+    img = Image.new('RGBA', (frame_width, frame_height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    
+    # iPhone 16 dimensions
+    corner_radius = 58
+    bezel = 12
+    
+    # Titanium frame (natural titanium color)
+    frame_color = (195, 195, 200)
+    
+    # Outer frame with subtle gradient effect
+    draw.rounded_rectangle(
+        [0, 0, frame_width-1, frame_height-1],
+        radius=corner_radius,
+        fill=frame_color
+    )
+    
+    # Inner edge (darker for depth)
+    edge_color = (60, 60, 62)
+    draw.rounded_rectangle(
+        [bezel-2, bezel-2, frame_width-bezel+1, frame_height-bezel+1],
+        radius=corner_radius - bezel + 3,
+        fill=edge_color
+    )
+    
+    # Screen bezel (true black)
+    bezel_color = (15, 15, 17)
+    draw.rounded_rectangle(
+        [bezel, bezel, frame_width-bezel-1, frame_height-bezel-1],
+        radius=corner_radius - bezel,
+        fill=bezel_color
+    )
+    
+    # Screen area
+    screen_margin = bezel + 4
+    screen_radius = corner_radius - bezel - 2
+    screen_w = frame_width - screen_margin * 2
+    screen_h = frame_height - screen_margin * 2
+    
+    # Resize and place screen content
+    content_resized = screen_content.resize((screen_w, screen_h), Image.Resampling.LANCZOS)
+    
+    # Create rounded mask for screen
+    screen_mask = Image.new('L', (screen_w, screen_h), 0)
+    mask_draw = ImageDraw.Draw(screen_mask)
+    mask_draw.rounded_rectangle(
+        [0, 0, screen_w-1, screen_h-1],
+        radius=screen_radius,
+        fill=255
+    )
+    
+    # Paste screen with rounded corners
+    screen_layer = Image.new('RGBA', (screen_w, screen_h), (0, 0, 0, 0))
+    screen_layer.paste(content_resized, (0, 0))
+    screen_layer.putalpha(screen_mask)
+    img.paste(screen_layer, (screen_margin, screen_margin), screen_layer)
+    
+    # Dynamic Island
+    island_width = 126
+    island_height = 37
+    island_x = (frame_width - island_width) // 2
+    island_y = screen_margin + 12
+    draw.rounded_rectangle(
+        [island_x, island_y, island_x + island_width, island_y + island_height],
+        radius=island_height // 2,
+        fill=(10, 10, 12)
+    )
+    
+    # Camera lens in Dynamic Island
+    lens_size = 12
+    lens_x = island_x + island_width - 30
+    lens_y = island_y + (island_height - lens_size) // 2
+    draw.ellipse(
+        [lens_x, lens_y, lens_x + lens_size, lens_y + lens_size],
+        fill=(25, 25, 30)
+    )
+    
+    # Side button (power - right side)
+    button_w = 4
+    button_h = 70
+    button_y = frame_height // 3 - 20
+    draw.rectangle(
+        [frame_width - 3, button_y, frame_width, button_y + button_h],
+        fill=(170, 170, 175)
+    )
+    
+    # Volume buttons (left side)
+    for y_off in [frame_height // 4 - 10, frame_height // 4 + 45]:
+        draw.rectangle(
+            [0, y_off, 3, y_off + 45],
+            fill=(170, 170, 175)
+        )
+    
+    # Action button (left, above volume)
+    action_y = frame_height // 4 - 55
+    draw.rounded_rectangle(
+        [0, action_y, 3, action_y + 35],
+        radius=2,
+        fill=(170, 170, 175)
+    )
+    
+    return img
+
+
 def create_3d_phone_mockup(
     screen_content: Image.Image,
     rotation_x: float = 0,  # Tilt forward/backward (degrees)
     rotation_y: float = 15,  # Rotate left/right (degrees)
     device_color: Tuple[int, int, int] = (40, 40, 40),
-    shadow: bool = True
+    shadow: bool = True,
+    float_offset_y: float = 0  # For floating animation
 ) -> Image.Image:
     """
-    Create a 3D phone mockup with screen content.
-    Simple perspective transform to simulate 3D rotation.
+    Create a 3D iPhone mockup with screen content and floating animation.
     """
-    # Phone dimensions (iPhone-like)
-    phone_w = 400
-    phone_h = 820
-    bezel = 20
-    corner_radius = 50
+    # Create the iPhone frame with screen
+    phone = create_iphone_16_frame(screen_content)
     
-    # Create phone body
-    phone = Image.new("RGBA", (phone_w + 100, phone_h + 100), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(phone)
+    # Add padding for transforms and shadow
+    padding = 120
+    canvas_w = phone.width + padding * 2
+    canvas_h = phone.height + padding * 2
+    canvas = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
     
-    # Shadow
-    if shadow:
-        shadow_offset = 15
-        draw.rounded_rectangle(
-            (50 + shadow_offset, 50 + shadow_offset, 50 + phone_w + shadow_offset, 50 + phone_h + shadow_offset),
-            radius=corner_radius,
-            fill=(0, 0, 0, 60)
-        )
+    # Position phone with float offset
+    phone_x = padding
+    phone_y = padding + int(float_offset_y)
+    canvas.paste(phone, (phone_x, phone_y), phone)
     
-    # Phone body
-    draw.rounded_rectangle(
-        (50, 50, 50 + phone_w, 50 + phone_h),
-        radius=corner_radius,
-        fill=(*device_color, 255)
-    )
-    
-    # Screen area (inner rectangle)
-    screen_x = 50 + bezel
-    screen_y = 50 + bezel
-    screen_w = phone_w - bezel * 2
-    screen_h = phone_h - bezel * 2
-    
-    # Resize screen content to fit
-    content_resized = screen_content.resize((screen_w, screen_h), Image.Resampling.LANCZOS)
-    
-    # Paste screen content
-    phone.paste(content_resized, (screen_x, screen_y))
-    
-    # Apply simple perspective transform for 3D effect
-    if rotation_y != 0:
-        # Calculate skew based on Y rotation
-        skew = math.tan(math.radians(rotation_y)) * 0.1
+    # Apply 3D perspective transform
+    if rotation_y != 0 or rotation_x != 0:
+        width, height = canvas.size
         
-        # Transform coefficients for perspective
-        # Simple affine transform to simulate perspective
-        width, height = phone.size
+        # Calculate perspective distortion
+        skew_y = math.tan(math.radians(rotation_y)) * 0.08
+        skew_x = math.tan(math.radians(rotation_x)) * 0.05
         
-        # Create perspective transform
-        coeffs = find_perspective_coeffs(
-            [(0, 0), (width, 0), (width, height), (0, height)],
-            [
-                (int(width * abs(skew) if rotation_y > 0 else 0), int(height * 0.05 if rotation_y > 0 else 0)),
-                (int(width - width * abs(skew) if rotation_y < 0 else width), int(height * 0.05 if rotation_y < 0 else 0)),
-                (int(width - width * abs(skew) if rotation_y < 0 else width), int(height - height * 0.05 if rotation_y < 0 else height)),
-                (int(width * abs(skew) if rotation_y > 0 else 0), int(height - height * 0.05 if rotation_y > 0 else height))
+        # Source corners
+        src = [(0, 0), (width, 0), (width, height), (0, height)]
+        
+        # Destination corners with perspective
+        if rotation_y > 0:
+            # Rotated right - left side closer
+            dst = [
+                (int(width * skew_y * 0.3), int(height * 0.03)),
+                (width, int(height * 0.01)),
+                (width, int(height * 0.99)),
+                (int(width * skew_y * 0.3), int(height * 0.97))
             ]
-        )
+        elif rotation_y < 0:
+            # Rotated left - right side closer
+            dst = [
+                (0, int(height * 0.01)),
+                (int(width - width * abs(skew_y) * 0.3), int(height * 0.03)),
+                (int(width - width * abs(skew_y) * 0.3), int(height * 0.97)),
+                (0, int(height * 0.99))
+            ]
+        else:
+            dst = src
         
-        phone = phone.transform((width, height), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
+        coeffs = find_perspective_coeffs(src, dst)
+        canvas = canvas.transform((width, height), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
     
-    return phone
+    # Add soft shadow
+    if shadow:
+        shadow_img = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        shadow_draw = ImageDraw.Draw(shadow_img)
+        
+        # Shadow under phone
+        shadow_y = padding + phone.height - 30 + int(float_offset_y)
+        shadow_w = int(phone.width * 0.7)
+        shadow_x = (canvas_w - shadow_w) // 2
+        
+        # Elliptical shadow
+        for i in range(40, 0, -2):
+            alpha = int(25 * (i / 40))
+            expand = (40 - i) * 2
+            shadow_draw.ellipse(
+                [shadow_x - expand, shadow_y - 10, shadow_x + shadow_w + expand, shadow_y + 30 + expand//3],
+                fill=(0, 0, 0, alpha)
+            )
+        
+        # Blur shadow
+        shadow_img = shadow_img.filter(ImageFilter.GaussianBlur(radius=15))
+        
+        # Composite shadow under phone
+        result = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        result.paste(shadow_img, (0, 0), shadow_img)
+        result.paste(canvas, (0, 0), canvas)
+        canvas = result
+    
+    return canvas
 
 
 async def render_video_on_device(
     video_path: str,
     output_dir: Path,
     device_type: str = "phone",
-    rotation_y: float = 15,
+    rotation_y: float = 12,
     fps: int = 30,
     duration: float = None,
     bg_color: Tuple[int, int, int] = (255, 255, 255)
 ) -> str:
     """
-    Render video playing on a 3D device mockup.
-    Extracts frames from input video and displays them on device screen.
+    Render video playing on a 3D iPhone mockup with smooth floating animation.
     
     Args:
         video_path: Path to the video to display on device
@@ -631,20 +759,39 @@ async def render_video_on_device(
         shutil.rmtree(video_frames_dir, ignore_errors=True)
         return ""
     
-    logger.info(f"Creating {total_frames} device mockup frames...")
+    logger.info(f"Creating {total_frames} device mockup frames with floating animation...")
+    
+    # Animation parameters
+    float_amplitude = 20  # pixels up/down
+    float_period = 3.0    # seconds for one cycle
+    rotation_amplitude = 5  # degrees left/right oscillation
     
     for i in range(total_frames):
+        # Calculate floating animation
+        time_seconds = i / fps
+        
+        # Smooth sine wave for floating
+        float_offset = math.sin(time_seconds * 2 * math.pi / float_period) * float_amplitude
+        
+        # Subtle rotation oscillation
+        rotation_offset = math.sin(time_seconds * 2 * math.pi / (float_period * 1.3)) * rotation_amplitude
+        current_rotation = rotation_y + rotation_offset
+        
         # Get corresponding video frame (loop if needed)
         vf_idx = i % len(video_frame_files)
         screen_frame = Image.open(video_frame_files[vf_idx]).convert("RGB")
         
-        # Create device mockup with this frame
+        # Create device mockup with this frame and animation
         if device_type == "phone":
-            mockup = create_3d_phone_mockup(screen_frame, rotation_y=rotation_y)
+            mockup = create_3d_phone_mockup(
+                screen_frame, 
+                rotation_y=current_rotation,
+                float_offset_y=float_offset
+            )
         elif device_type == "tablet":
-            mockup = create_3d_tablet_mockup(screen_frame, rotation_y=rotation_y)
+            mockup = create_3d_tablet_mockup(screen_frame, rotation_y=current_rotation)
         else:  # laptop
-            mockup = create_3d_laptop_mockup(screen_frame, rotation_y=rotation_y)
+            mockup = create_3d_laptop_mockup(screen_frame, rotation_y=current_rotation)
         
         # Create background
         bg = create_solid_bg(WIDTH, HEIGHT, bg_color)
@@ -658,6 +805,9 @@ async def render_video_on_device(
         # Save frame
         frame_path = frames_dir / f"frame_{i:05d}.png"
         bg.save(frame_path, "PNG", optimize=True)
+        
+        if i % 30 == 0:
+            logger.info(f"Frame {i}/{total_frames}")
     
     # Encode video
     logger.info("Encoding device mockup video...")
