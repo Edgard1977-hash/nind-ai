@@ -268,7 +268,8 @@ export const CreatePage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!prompt.trim()) {
+    // For device mockup, prompt is optional
+    if (!videoUrl && !prompt.trim()) {
       toast.error("Введите описание");
       return;
     }
@@ -276,40 +277,46 @@ export const CreatePage = () => {
     setIsLoading(true);
     
     try {
-      // If video is uploaded, create montage with AI
+      // If video is uploaded, create 3D device mockup animation
       if (videoUrl) {
-        setMontageMessage("AI анализирует ваше видео...");
+        setMontageMessage("Создаём 3D анимацию устройства...");
         setMontageProgress(10);
         
-        const response = await axios.post(`${API}/montage/create`, {
+        // Send to device mockup endpoint
+        const response = await axios.post(`${API}/device-mockup/create`, {
           video_url: videoUrl,
-          prompt: prompt.trim(),
-          music_url: musicUrl,
-          style: "auto" // AI will determine style from prompt
+          device_type: "phone",
+          rotation: 15,
+          bg_color: [255, 255, 255]
         });
         
-        const montageId = response.data.id;
+        const projectId = response.data.id;
+        setMontageProgress(30);
+        setMontageMessage("Рендерим 3D mockup...");
         
         // Poll for progress
         const pollInterval = setInterval(async () => {
           try {
-            const statusRes = await axios.get(`${API}/montage/${montageId}`);
+            const statusRes = await axios.get(`${API}/video/${projectId}`);
             const data = statusRes.data;
             
-            setMontageProgress(data.progress || 0);
-            setMontageMessage(data.progress_message || "Обрабатываем...");
+            // Estimate progress based on status
+            if (data.status === "processing") {
+              setMontageProgress(prev => Math.min(prev + 5, 85));
+              setMontageMessage("Рендерим кадры устройства...");
+            }
             
-            if (data.status === "completed") {
+            if (data.status === "completed" && data.video_url) {
               clearInterval(pollInterval);
               setMontageResult(`${BACKEND_URL}${data.video_url}`);
               setMontageProgress(100);
               setMontageMessage("Готово!");
               setIsLoading(false);
-              toast.success("Монтаж готов!");
-            } else if (data.status === "error") {
+              toast.success("3D анимация готова!");
+            } else if (data.status === "failed") {
               clearInterval(pollInterval);
               setIsLoading(false);
-              toast.error(`Ошибка: ${data.error}`);
+              toast.error(`Ошибка: ${data.error || "Не удалось создать"}`);
             }
           } catch (e) {
             console.error("Poll error:", e);
@@ -407,7 +414,7 @@ export const CreatePage = () => {
           <div className="w-full max-w-md" data-testid="montage-result">
             <div className="flex items-center gap-2 mb-3">
               <Check className="w-5 h-5 text-green-400" />
-              <span className="text-white font-medium">Ваш монтаж готов!</span>
+              <span className="text-white font-medium">3D анимация готова!</span>
             </div>
             <div className="glass-ios rounded-2xl overflow-hidden">
               <video
@@ -455,11 +462,11 @@ export const CreatePage = () => {
             </div>
           </div>
         ) : videoPreview ? (
-          /* Video Preview for Montage */
+          /* Video Preview for 3D Device Mockup */
           <div className="w-full max-w-md" data-testid="video-preview">
             <div className="flex items-center gap-2 mb-3">
               <Film className="w-5 h-5 text-purple-400" />
-              <span className="text-white/60 text-sm">Видео для монтажа</span>
+              <span className="text-white/60 text-sm">Видео для 3D анимации</span>
             </div>
             <div className="relative glass-ios rounded-2xl overflow-hidden">
               <video
@@ -476,21 +483,8 @@ export const CreatePage = () => {
               </button>
             </div>
             
-            {/* Music option */}
-            <button
-              onClick={() => musicInputRef.current.click()}
-              className={`w-full mt-3 py-3 rounded-xl glass-ios flex items-center justify-center gap-2 transition-colors ${
-                musicFile ? 'bg-green-500/20' : 'hover:bg-white/10'
-              }`}
-              data-testid="add-music"
-            >
-              <Music className="w-5 h-5" />
-              <span>{musicFile ? musicFile.name : "Добавить музыку (опционально)"}</span>
-              {musicFile && <Check className="w-4 h-4 text-green-400" />}
-            </button>
-            
             <p className="text-white/40 text-sm text-center mt-3">
-              Напишите что сделать с видео и нажмите отправить
+              Видео будет показано на 3D телефоне с анимацией. Нажмите отправить.
             </p>
           </div>
         ) : mediaFiles.length > 0 ? (
@@ -567,7 +561,7 @@ export const CreatePage = () => {
               Опишите что хотите создать
             </p>
             <p className="text-white/30 text-sm mt-2">
-              или загрузите видео для AI монтажа
+              или загрузите видео для 3D анимации на устройстве
             </p>
           </div>
         )}
@@ -656,7 +650,7 @@ export const CreatePage = () => {
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={videoFile ? "Что сделать с видео? (напр: динамичный монтаж с мемами)" : "Опишите ваше видео..."}
+              placeholder={videoFile ? "Описание для 3D анимации (опционально)" : "Опишите ваше видео..."}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 py-2"
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSubmit()}
               disabled={isLoading}

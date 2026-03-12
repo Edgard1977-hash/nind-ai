@@ -2506,6 +2506,17 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
     
     project_id = str(uuid.uuid4())
     
+    # Create initial project record in DB so polling works
+    await db.video_projects.insert_one({
+        "id": project_id,
+        "prompt": f"3D {request.device_type} mockup",
+        "format_id": "device_mockup",
+        "status": "processing",
+        "progress": 10,
+        "progress_message": "Создаём 3D анимацию...",
+        "created_at": datetime.now(timezone.utc)
+    })
+    
     # Start background rendering
     background_tasks.add_task(
         process_device_mockup, 
