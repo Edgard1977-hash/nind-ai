@@ -73,7 +73,7 @@ from exact_effects import (
     render_spotify_exact,
     render_imessage_exact
 )
-from universal_effects import render_universal_video, render_apple_text_sequence
+from universal_effects import render_universal_video, render_apple_text_sequence, render_video_on_device
 
 # Import montage service
 from montage_service import (
@@ -2474,6 +2474,97 @@ async def get_montage_styles():
             "transitions": config["transitions"]
         })
     return {"styles": styles}
+
+
+# =============================================================
+# DEVICE MOCKUP VIDEO - Show video on 3D device
+# =============================================================
+
+class DeviceMockupRequest(BaseModel):
+    """Request to create device mockup video"""
+    video_url: str  # URL of uploaded video to show on device
+    device_type: str = "phone"  # phone, tablet, laptop
+    rotation: float = 15  # 3D rotation angle
+    bg_color: List[int] = [255, 255, 255]  # Background color RGB
+
+@api_router.post("/device-mockup/create")
+async def create_device_mockup(request: DeviceMockupRequest, background_tasks: BackgroundTasks):
+    """
+    Create video showing uploaded content on a 3D device (phone/tablet/laptop).
+    Use this for app interface demos.
+    """
+    # Validate video exists
+    video_url = request.video_url
+    if not video_url.startswith("/api/uploads/"):
+        raise HTTPException(status_code=400, detail="Invalid video URL. Upload video first.")
+    
+    video_filename = video_url.split("/")[-1]
+    video_path = UPLOADS_DIR / video_filename
+    
+    if not video_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found. Please upload again.")
+    
+    project_id = str(uuid.uuid4())
+    
+    # Start background rendering
+    background_tasks.add_task(
+        process_device_mockup, 
+        project_id, 
+        str(video_path),
+        request.device_type,
+        request.rotation,
+        tuple(request.bg_color)
+    )
+    
+    return {"id": project_id, "status": "processing"}
+
+
+async def process_device_mockup(
+    project_id: str, 
+    video_path: str, 
+    device_type: str,
+    rotation: float,
+    bg_color: tuple
+):
+    """Background task to render video on device mockup"""
+    try:
+        logger.info(f"Starting device mockup render: {project_id}")
+        
+        result = await render_video_on_device(
+            video_path=video_path,
+            output_dir=UPLOADS_DIR,
+            device_type=device_type,
+            rotation_y=rotation,
+            fps=30,
+            bg_color=bg_color
+        )
+        
+        if result:
+            # Move to final location
+            final_name = f"device_{project_id}.mp4"
+            final_path = UPLOADS_DIR / final_name
+            Path(result).rename(final_path)
+            video_url = f"/api/uploads/{final_name}"
+            
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"status": "completed", "video_url": video_url}},
+                upsert=True
+            )
+            logger.info(f"Device mockup done: {video_url}")
+        else:
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"status": "failed", "error": "Render failed"}},
+                upsert=True
+            )
+    except Exception as e:
+        logger.error(f"Device mockup error: {e}")
+        await db.video_projects.update_one(
+            {"id": project_id},
+            {"$set": {"status": "failed", "error": str(e)}},
+            upsert=True
+        )
 
 
 @api_router.post("/montage/create")

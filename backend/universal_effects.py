@@ -565,6 +565,223 @@ def create_3d_phone_mockup(
     return phone
 
 
+async def render_video_on_device(
+    video_path: str,
+    output_dir: Path,
+    device_type: str = "phone",
+    rotation_y: float = 15,
+    fps: int = 30,
+    duration: float = None,
+    bg_color: Tuple[int, int, int] = (255, 255, 255)
+) -> str:
+    """
+    Render video playing on a 3D device mockup.
+    Extracts frames from input video and displays them on device screen.
+    
+    Args:
+        video_path: Path to the video to display on device
+        output_dir: Directory for output
+        device_type: "phone", "tablet", "laptop"
+        rotation_y: 3D rotation angle in degrees
+        fps: Output FPS
+        duration: Max duration (None = full video length)
+        bg_color: Background color
+    
+    Returns:
+        Path to rendered video with device mockup
+    """
+    import tempfile
+    
+    output_path = output_dir / f"device_video_{uuid.uuid4().hex[:8]}.mp4"
+    frames_dir = output_dir / f"device_frames_{uuid.uuid4().hex[:8]}"
+    frames_dir.mkdir(exist_ok=True)
+    
+    video_frames_dir = output_dir / f"video_frames_{uuid.uuid4().hex[:8]}"
+    video_frames_dir.mkdir(exist_ok=True)
+    
+    # Get video info
+    try:
+        probe_cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", 
+                     "-of", "default=noprint_wrappers=1:nokey=1", video_path]
+        result = subprocess.run(probe_cmd, capture_output=True, text=True)
+        video_duration = float(result.stdout.strip())
+    except:
+        video_duration = 5.0
+    
+    if duration:
+        video_duration = min(duration, video_duration)
+    
+    total_frames = int(video_duration * fps)
+    
+    # Extract frames from input video
+    logger.info(f"Extracting {total_frames} frames from input video...")
+    extract_cmd = [
+        "ffmpeg", "-y", "-i", video_path,
+        "-vf", f"fps={fps}",
+        str(video_frames_dir / "vf%05d.png")
+    ]
+    proc = subprocess.run(extract_cmd, capture_output=True)
+    
+    # Get list of extracted frames
+    video_frame_files = sorted(video_frames_dir.glob("vf*.png"))
+    
+    if not video_frame_files:
+        logger.error("No frames extracted from input video")
+        shutil.rmtree(frames_dir, ignore_errors=True)
+        shutil.rmtree(video_frames_dir, ignore_errors=True)
+        return ""
+    
+    logger.info(f"Creating {total_frames} device mockup frames...")
+    
+    for i in range(total_frames):
+        # Get corresponding video frame (loop if needed)
+        vf_idx = i % len(video_frame_files)
+        screen_frame = Image.open(video_frame_files[vf_idx]).convert("RGB")
+        
+        # Create device mockup with this frame
+        if device_type == "phone":
+            mockup = create_3d_phone_mockup(screen_frame, rotation_y=rotation_y)
+        elif device_type == "tablet":
+            mockup = create_3d_tablet_mockup(screen_frame, rotation_y=rotation_y)
+        else:  # laptop
+            mockup = create_3d_laptop_mockup(screen_frame, rotation_y=rotation_y)
+        
+        # Create background
+        bg = create_solid_bg(WIDTH, HEIGHT, bg_color)
+        
+        # Center mockup
+        mockup_x = (WIDTH - mockup.width) // 2
+        mockup_y = (HEIGHT - mockup.height) // 2
+        
+        bg.paste(mockup, (mockup_x, mockup_y), mockup)
+        
+        # Save frame
+        frame_path = frames_dir / f"frame_{i:05d}.png"
+        bg.save(frame_path, "PNG", optimize=True)
+    
+    # Encode video
+    logger.info("Encoding device mockup video...")
+    cmd = [
+        "ffmpeg", "-y",
+        "-framerate", str(fps),
+        "-i", str(frames_dir / "frame_%05d.png"),
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+        str(output_path)
+    ]
+    
+    proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    try:
+        await asyncio.wait_for(proc.communicate(), timeout=300)
+    except asyncio.TimeoutError:
+        proc.kill()
+    
+    # Cleanup
+    shutil.rmtree(frames_dir, ignore_errors=True)
+    shutil.rmtree(video_frames_dir, ignore_errors=True)
+    
+    if output_path.exists():
+        logger.info(f"Device mockup video done: {output_path}")
+        return str(output_path)
+    return ""
+
+
+def create_3d_tablet_mockup(
+    screen_content: Image.Image,
+    rotation_y: float = 10,
+    device_color: Tuple[int, int, int] = (50, 50, 50)
+) -> Image.Image:
+    """Create 3D tablet mockup (iPad-like)"""
+    tablet_w = 600
+    tablet_h = 820
+    bezel = 30
+    corner_radius = 30
+    
+    tablet = Image.new("RGBA", (tablet_w + 100, tablet_h + 100), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(tablet)
+    
+    # Shadow
+    draw.rounded_rectangle(
+        (50 + 12, 50 + 12, 50 + tablet_w + 12, 50 + tablet_h + 12),
+        radius=corner_radius, fill=(0, 0, 0, 50)
+    )
+    
+    # Body
+    draw.rounded_rectangle(
+        (50, 50, 50 + tablet_w, 50 + tablet_h),
+        radius=corner_radius, fill=(*device_color, 255)
+    )
+    
+    # Screen
+    screen_x = 50 + bezel
+    screen_y = 50 + bezel
+    screen_w = tablet_w - bezel * 2
+    screen_h = tablet_h - bezel * 2
+    
+    content_resized = screen_content.resize((screen_w, screen_h), Image.Resampling.LANCZOS)
+    tablet.paste(content_resized, (screen_x, screen_y))
+    
+    # Apply perspective
+    if rotation_y != 0:
+        skew = math.tan(math.radians(rotation_y)) * 0.08
+        width, height = tablet.size
+        coeffs = find_perspective_coeffs(
+            [(0, 0), (width, 0), (width, height), (0, height)],
+            [
+                (int(width * abs(skew) if rotation_y > 0 else 0), int(height * 0.03)),
+                (int(width - width * abs(skew) if rotation_y < 0 else width), int(height * 0.03)),
+                (int(width - width * abs(skew) if rotation_y < 0 else width), int(height * 0.97)),
+                (int(width * abs(skew) if rotation_y > 0 else 0), int(height * 0.97))
+            ]
+        )
+        tablet = tablet.transform((width, height), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
+    
+    return tablet
+
+
+def create_3d_laptop_mockup(
+    screen_content: Image.Image,
+    rotation_y: float = 5,
+    device_color: Tuple[int, int, int] = (180, 180, 185)
+) -> Image.Image:
+    """Create 3D laptop mockup (MacBook-like)"""
+    screen_w = 800
+    screen_h = 500
+    bezel = 25
+    base_h = 30
+    
+    total_w = screen_w + 100
+    total_h = screen_h + base_h + 100
+    
+    laptop = Image.new("RGBA", (total_w, total_h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(laptop)
+    
+    # Screen frame (lid)
+    lid_x, lid_y = 50, 50
+    draw.rounded_rectangle(
+        (lid_x, lid_y, lid_x + screen_w, lid_y + screen_h),
+        radius=15, fill=(*device_color, 255)
+    )
+    
+    # Screen content
+    inner_x = lid_x + bezel
+    inner_y = lid_y + bezel
+    inner_w = screen_w - bezel * 2
+    inner_h = screen_h - bezel * 2
+    
+    content_resized = screen_content.resize((inner_w, inner_h), Image.Resampling.LANCZOS)
+    laptop.paste(content_resized, (inner_x, inner_y))
+    
+    # Base/keyboard
+    base_y = lid_y + screen_h
+    draw.rounded_rectangle(
+        (lid_x - 10, base_y, lid_x + screen_w + 10, base_y + base_h),
+        radius=5, fill=(150, 150, 155, 255)
+    )
+    
+    return laptop
+
+
 def find_perspective_coeffs(source_coords, target_coords):
     """Calculate perspective transform coefficients"""
     import numpy as np
