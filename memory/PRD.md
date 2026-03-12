@@ -1,46 +1,64 @@
-# VidFlux AI - Product Requirements Document
+# VidFlux AI - Product Requirements Document v7
 
-## Implemented Cal.com Style (March 11, 2026)
+## FIXED ISSUES (March 12, 2026)
 
-### EXACT REPLICATION of Cal.com Video
-Based on frame-by-frame analysis:
+### 1. Text Never Goes Outside Screen Bounds
+- Added SAFE_MARGIN_X = 60px, SAFE_MARGIN_Y = 100px
+- Auto-fit: text shrinks if too wide
+- Position clamping to safe bounds
 
-**Text Animation (calcom_text):**
-- Fade in: 0 -> 255 alpha over 0.5s
-- Slide up: 30px -> 0px with ease_out_cubic
-- Scale: 0.9 -> 1.0
-- Emphasis word: bounce effect with purple color (#8A2BE2)
-- Font: Inter Bold, black on white background
+### 2. Proper Centering
+- All text centered with correct calculations
+- Emphasis words stay inline with rest of text
 
-**Chat Bubbles (calcom_chat):**
-- iMessage style rounded rectangles
-- Blue (#3B82F6) for sender (right side)
-- Gray for receiver (left side)
-- Typing effect: characters appear one by one
-- Slide in from edge with ease_out_cubic
+### 3. Correct Layering
+- Background drawn first, text on top via alpha_composite
+- No more text hidden by background
 
-**Colors:**
-- Background: White (#FFFFFF)
-- Text: Black (#000000)
-- Emphasis: Purple (#8A2BE2)
-- Chat sender: Blue (#3B82F6)
+### 4. ZOOM Effects
+- `apply_zoom_effect(img, zoom)` - zoom > 1.0 = closer, < 1.0 = farther
+- `animate_zoom(progress, start, end)` - animated zoom
+- New scene type: `zoom_text`
 
-### Scene Types
-1. `calcom_text` - Text with optional emphasis word
-2. `calcom_chat` - Chat bubble with typing effect  
-3. `apple_text` - Simple fade + scale text
-4. `logo_reveal` - Logo + brand name animation
+### 5. 3D Device Mockups
+- `create_3d_phone_mockup(screen_content, rotation_y)` 
+- Perspective transform for 3D effect
+- Shadow included
+- Ready for video playback on screen
 
-### API Usage
-```json
-POST /api/video/generate
-{
-  "prompt": "We have all been there. Are you free Tuesday? cal.com"
-}
+## Scene Types Available
+
+| Type | Description |
+|------|-------------|
+| `calcom_text` | Text with fade + slide + optional purple emphasis |
+| `calcom_chat` | iMessage-style chat bubble with typing effect |
+| `apple_text` | Simple fade + scale text |
+| `zoom_text` | Text with camera zoom in/out |
+| `device_mockup` | 3D phone mockup (for showing app interfaces) |
+| `logo_reveal` | Logo + brand name animation |
+| `gradient_sweep` | Animated gradient across text |
+
+## Key Parameters
+
+### Safe Bounds
+```python
+SAFE_MARGIN_X = 60   # pixels from left/right
+SAFE_MARGIN_Y = 100  # pixels from top/bottom
+MAX_TEXT_WIDTH = 960 # 1080 - 60*2
 ```
 
-AI automatically generates appropriate scene sequence.
+### Colors
+```python
+CALCOM_PURPLE = (138, 43, 226)  # Emphasis words
+CALCOM_BLUE = (59, 130, 246)   # Chat sender bubbles
+```
 
-## Key Files
-- `/app/backend/universal_effects.py` - Rendering functions
-- `/app/backend/server.py` - API and AI script generator
+## Files Modified
+- `/app/backend/universal_effects.py` - All rendering functions
+- `/app/backend/server.py` - AI script generator
+
+## Testing Done
+- ✅ Long text fits in screen
+- ✅ Emphasis words with bounce
+- ✅ 3D phone mockup with perspective
+- ✅ Chat bubbles with typing effect

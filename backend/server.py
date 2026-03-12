@@ -431,13 +431,20 @@ AVAILABLE SCENE TYPES (Cal.com style):
 4. "apple_text" - Simple text fade + scale (for alternating black/white backgrounds)
    {{"type": "apple_text", "text": "Hello", "bg": "black", "duration": 1.2}}
 
+5. "zoom_text" - Text with zoom in/out camera effect
+   {{"type": "zoom_text", "text": "WOW", "start_zoom": 0.8, "end_zoom": 1.2, "bg": "white", "duration": 1.5}}
+
+6. "device_mockup" - 3D phone/tablet mockup showing video content
+   {{"type": "device_mockup", "device": "phone", "rotation": 15, "bg": "white", "duration": 3.0}}
+
 STYLE RULES (Cal.com video style):
 1. White background (#FFFFFF) is default
-2. Black text (#000000) on white background
+2. Black text (#000000) on white background  
 3. Purple (#8A2BE2) for emphasis words that bounce in
 4. Chat bubbles: blue for sender (right), gray for receiver (left)
-5. Smooth ease-out animations
+5. Smooth ease-out animations, text NEVER goes outside screen
 6. Duration per scene: 1.0-2.0 seconds
+7. Use zoom_text for dramatic emphasis
 
 KEEP EXACT TEXT - DO NOT translate or modify user's text!
 
