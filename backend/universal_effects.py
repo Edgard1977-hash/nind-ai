@@ -701,10 +701,12 @@ async def render_video_on_device(
     rotation_y: float = 12,
     fps: int = 30,
     duration: float = None,
-    bg_color: Tuple[int, int, int] = (255, 255, 255)
+    bg_color: Tuple[int, int, int] = (255, 255, 255),
+    use_3d_model: bool = True  # Use real 3D iPhone model
 ) -> str:
     """
-    Render video playing on a 3D iPhone mockup with smooth floating animation.
+    Render video playing on a 3D iPhone 16 mockup with smooth floating animation.
+    Uses pre-rendered 3D model frames for fast compositing.
     
     Args:
         video_path: Path to the video to display on device
@@ -714,11 +716,12 @@ async def render_video_on_device(
         fps: Output FPS
         duration: Max duration (None = full video length)
         bg_color: Background color
+        use_3d_model: If True, use real 3D iPhone model
     
     Returns:
         Path to rendered video with device mockup
     """
-    import tempfile
+    from iphone_compositor import create_floating_iphone_frame, select_iphone_render
     
     output_path = output_dir / f"device_video_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"device_frames_{uuid.uuid4().hex[:8]}"
@@ -759,55 +762,86 @@ async def render_video_on_device(
         shutil.rmtree(video_frames_dir, ignore_errors=True)
         return ""
     
-    logger.info(f"Creating {total_frames} device mockup frames with floating animation...")
-    
     # Animation parameters
-    float_amplitude = 20  # pixels up/down
-    float_period = 3.0    # seconds for one cycle
-    rotation_amplitude = 5  # degrees left/right oscillation
+    float_amplitude = 25  # pixels up/down
+    float_period = 3.5    # seconds for one cycle
+    rotation_amplitude = 4  # degrees left/right oscillation
     
-    for i in range(total_frames):
-        # Calculate floating animation
-        time_seconds = i / fps
+    # Check if 3D iPhone renders exist
+    iphone_renders_exist = Path("/app/backend/iphone_renders/iphone_rot_12.png").exists()
+    
+    if use_3d_model and device_type == "phone" and iphone_renders_exist:
+        logger.info(f"Creating {total_frames} frames with 3D iPhone 16 model...")
         
-        # Smooth sine wave for floating
-        float_offset = math.sin(time_seconds * 2 * math.pi / float_period) * float_amplitude
-        
-        # Subtle rotation oscillation
-        rotation_offset = math.sin(time_seconds * 2 * math.pi / (float_period * 1.3)) * rotation_amplitude
-        current_rotation = rotation_y + rotation_offset
-        
-        # Get corresponding video frame (loop if needed)
-        vf_idx = i % len(video_frame_files)
-        screen_frame = Image.open(video_frame_files[vf_idx]).convert("RGB")
-        
-        # Create device mockup with this frame and animation
-        if device_type == "phone":
-            mockup = create_3d_phone_mockup(
-                screen_frame, 
-                rotation_y=current_rotation,
-                float_offset_y=float_offset
+        for i in range(total_frames):
+            time_seconds = i / fps
+            
+            # Smooth floating animation
+            float_offset = math.sin(time_seconds * 2 * math.pi / float_period) * float_amplitude
+            
+            # Rotation oscillation - map to available renders (8, 12, 16)
+            rotation_offset = math.sin(time_seconds * 2 * math.pi / (float_period * 1.2)) * rotation_amplitude
+            current_rotation = rotation_y + rotation_offset
+            
+            # Select closest iPhone render
+            iphone_path = select_iphone_render(current_rotation)
+            closest_rotation = int(Path(iphone_path).stem.split("_")[-1])
+            
+            # Get video frame
+            vf_idx = i % len(video_frame_files)
+            video_frame = Image.open(video_frame_files[vf_idx]).convert("RGB")
+            
+            # Create composited frame
+            frame = create_floating_iphone_frame(
+                iphone_path=iphone_path,
+                video_frame=video_frame,
+                float_offset=float_offset,
+                rotation=closest_rotation,
+                bg_color=bg_color,
+                output_size=(WIDTH, HEIGHT)
             )
-        elif device_type == "tablet":
-            mockup = create_3d_tablet_mockup(screen_frame, rotation_y=current_rotation)
-        else:  # laptop
-            mockup = create_3d_laptop_mockup(screen_frame, rotation_y=current_rotation)
+            
+            # Save frame
+            frame_path = frames_dir / f"frame_{i:05d}.png"
+            frame.save(frame_path, "PNG")
+            
+            if i % 30 == 0:
+                logger.info(f"Frame {i}/{total_frames}")
+    else:
+        # Fallback to PIL-based mockup
+        logger.info(f"Using PIL-based mockup, creating {total_frames} frames...")
         
-        # Create background
-        bg = create_solid_bg(WIDTH, HEIGHT, bg_color)
-        
-        # Center mockup
-        mockup_x = (WIDTH - mockup.width) // 2
-        mockup_y = (HEIGHT - mockup.height) // 2
-        
-        bg.paste(mockup, (mockup_x, mockup_y), mockup)
-        
-        # Save frame
-        frame_path = frames_dir / f"frame_{i:05d}.png"
-        bg.save(frame_path, "PNG", optimize=True)
-        
-        if i % 30 == 0:
-            logger.info(f"Frame {i}/{total_frames}")
+        for i in range(total_frames):
+            time_seconds = i / fps
+            
+            float_offset = math.sin(time_seconds * 2 * math.pi / float_period) * float_amplitude
+            rotation_offset = math.sin(time_seconds * 2 * math.pi / (float_period * 1.3)) * rotation_amplitude
+            current_rotation = rotation_y + rotation_offset
+            
+            vf_idx = i % len(video_frame_files)
+            screen_frame = Image.open(video_frame_files[vf_idx]).convert("RGB")
+            
+            if device_type == "phone":
+                mockup = create_3d_phone_mockup(
+                    screen_frame, 
+                    rotation_y=current_rotation,
+                    float_offset_y=float_offset
+                )
+            elif device_type == "tablet":
+                mockup = create_3d_tablet_mockup(screen_frame, rotation_y=current_rotation)
+            else:
+                mockup = create_3d_laptop_mockup(screen_frame, rotation_y=current_rotation)
+            
+            bg = create_solid_bg(WIDTH, HEIGHT, bg_color)
+            mockup_x = (WIDTH - mockup.width) // 2
+            mockup_y = (HEIGHT - mockup.height) // 2
+            bg.paste(mockup, (mockup_x, mockup_y), mockup)
+            
+            frame_path = frames_dir / f"frame_{i:05d}.png"
+            bg.save(frame_path, "PNG", optimize=True)
+            
+            if i % 30 == 0:
+                logger.info(f"Frame {i}/{total_frames}")
     
     # Encode video
     logger.info("Encoding device mockup video...")

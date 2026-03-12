@@ -1,40 +1,26 @@
-# VidFlux AI - Product Requirements Document v9
+# VidFlux AI - Product Requirements Document v10
 
 ## LATEST UPDATE (March 12, 2026)
 
-### 3D iPhone 16 Mockup with Floating Animation ✅
-- Created realistic iPhone 16 frame with:
-  - Titanium body (Natural Titanium color)
-  - Dynamic Island with camera
-  - Side buttons (Action, Volume, Power)
-  - Rounded screen corners
-- Added smooth floating animation:
-  - 20px amplitude up/down movement
-  - 3 second period
-  - Subtle rotation oscillation (±5°)
-- Video upload → 3D device animation flow working
+### 3D iPhone 16 Model Integration ✅ COMPLETED
+- Integrated user's GLTF 3D model of iPhone 16
+- Pre-rendered 3D frames with Blender at angles: 8°, 12°, 16°
+- Fast compositing: video frames overlaid on 3D iPhone screen
+- Smooth floating animation (25px amplitude, 3.5s period)
+- Rotation oscillation (±4° around base angle)
 
-### Video Upload → 3D Device Mockup ✅
-- Frontend sends to `/api/device-mockup/create`
-- Background processing with progress tracking
-- Polling via `/api/video/{id}` endpoint
+### Files Created
+- `/app/backend/iphone_compositor.py` - Screen compositing logic
+- `/app/backend/render_iphone_v2.py` - Blender render script
+- `/app/backend/iphone_renders/` - Pre-rendered iPhone frames
+- `/app/backend/iphone_model/source/iphone_simple.gltf` - Cleaned model
 
 ## IMPLEMENTED FEATURES
 
-### 1. Text Never Goes Outside Screen Bounds
-- SAFE_MARGIN_X = 60px, SAFE_MARGIN_Y = 100px
-- Auto-fit: text shrinks if too wide
-- Position clamping to safe bounds
-
-### 2. 3D Device Mockups
-- `create_iphone_16_frame()` - Realistic iPhone 16 frame
-- `create_3d_phone_mockup()` - 3D perspective + floating animation
-- `render_video_on_device()` - Full video rendering pipeline
-
-### 3. Animation Effects
-- Floating: sine wave 20px amplitude
-- Rotation: ±5° oscillation
-- Soft shadow under device
+### 1. 3D Device Mockups (Real Model)
+- User's iPhone 16 3D model rendered via Blender
+- Screen replacement using color masking
+- 60-frame video in ~20 seconds
 
 ## Scene Types Available
 
