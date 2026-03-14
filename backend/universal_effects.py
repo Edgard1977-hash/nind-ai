@@ -784,10 +784,10 @@ async def render_video_on_device(
         shutil.rmtree(video_frames_dir, ignore_errors=True)
         return ""
     
-    # Check if 3D iPhone renders exist
-    iphone_renders_exist = Path("/app/backend/iphone_renders/iphone_rot_12.png").exists()
+    # Check if 3D iPhone 16 renders exist (from Blender)
+    iphone_16_renders_exist = Path("/app/backend/iphone_16_renders/iphone16_angle_0.png").exists()
     
-    if use_3d_model and device_type == "phone" and iphone_renders_exist:
+    if use_3d_model and device_type == "phone" and iphone_16_renders_exist:
         logger.info(f"Creating {total_frames} frames with 3D iPhone 16 ({animation_style} animation, {aspect_ratio})...")
         
         for i in range(total_frames):

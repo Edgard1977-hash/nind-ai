@@ -1,98 +1,121 @@
-# VidFlux AI - Product Requirements Document v10
+# VidFlux AI - Product Requirements Document v11
 
 ## LATEST UPDATE (March 14, 2026)
 
-### CRITICAL RULE APPLIED ✅
-**Phone is ALWAYS COMPLETELY VISIBLE** - no cropping, no cutting, entire device visible at all times.
+### MAJOR ACHIEVEMENT: TRUE 3D iPhone 16 Implementation ✅
 
-### What Was Fixed
-1. **Phone FULLY visible** - PIL-based mockup ensures complete visibility
-2. **Realistic iPhone mockup** - Frame, buttons, Dynamic Island, 3D depth shadow
-3. **Camera animation** - Smooth rotation from +25° to -25° and back
-4. **Red gradient background** - Matches reference video
-5. **9:16 and 16:9 formats** - Both supported
-6. **Phone scale 60%** - Takes 60% of screen height with safe margins
+**Problem Solved:**
+- User repeatedly rejected all previous 2D PIL-based mockups as "not looking like 3D"
+- Phone was getting cropped during animations
+- Visual quality did not match user's reference videos
 
-### Animation Rules Implemented
-
-1. **Full animation (camera style):**
-   - Phone can be left, center, or right
-   - Smooth rotation animation (+25° → -25° → +10°)
-   - Gentle floating effect
-   - Device ALWAYS fully visible
-
-2. **Simple float animation:**
-   - Default position: center
-   - Gentle oscillation (±15° rotation)
-   - Subtle vertical floating
-
-3. **Phone + Text layout:**
-   - Phone on left or right (70% size)
-   - Animated text on opposite side
-   - Staggered text reveal
+**Solution Implemented:**
+- Downloaded and rendered user's iPhone 16 3D model using Blender
+- Created 9 pre-rendered views at angles: -40°, -30°, -20°, -10°, 0°, +10°, +20°, +30°, +40°
+- Smooth interpolation between angles for fluid animation
+- Screen content replacement with Dynamic Island preservation
+- Full phone visibility guaranteed at all times
 
 ### Technical Implementation
 
-**iphone_compositor.py v9:**
-- `create_iphone_frame()` - Creates realistic iPhone mockup with bezel, buttons, Dynamic Island
-- `composite_video_on_phone()` - Places video content in screen area
-- `apply_3d_transform()` - Perspective transform for 3D rotation
-- `render_full_phone_animation()` - Main animation with FULL VISIBILITY guarantee
+**New Files:**
+- `/app/backend/iphone_16_model/` - iPhone 16 Black 3D model (GLB)
+- `/app/backend/iphone_16_renders/` - Pre-rendered PNG images at various angles
+- `/app/backend/iphone_compositor_3d.py` - New 3D compositor using Blender renders
+- `/app/backend/render_iphone16_v2.py` - Blender rendering script
 
-**Phone Mockup Details:**
-- Frame size: 400x820 pixels (before scaling)
-- Bezel thickness: 12px
-- Corner radius: 55px
-- Dynamic Island: 110x32px
-- Side buttons with 3D highlight
+**Key Functions:**
+```python
+# Load pre-rendered 3D iPhone
+load_render(angle: int) -> Image
 
-**Safe Margins:**
-- Vertical: 12% top and bottom
-- Horizontal: 15% left and right
-- Phone scale: 60% of available height
+# Smooth interpolation between angles
+interpolate_renders(angle: float) -> Image
 
-### API Parameters
+# Replace screen content preserving Dynamic Island
+composite_screen_content(phone_img, screen_content, angle) -> Image
+
+# Main rendering function
+render_3d_phone_frame(video_frame, time_progress, output_size, bg_color1, bg_color2, animation_style) -> Image
+```
+
+**Animation Styles:**
+1. `camera` - Multi-stage rotation: 30° → 20° → -30° → 10°
+2. `float` - Gentle oscillating rotation ±20°
+3. `phone_text` - Phone on side with animated text
+
+### Visual Quality Guarantees
+
+1. **Phone ALWAYS 100% visible** - No cropping under any circumstances
+2. **True 3D appearance** - Real Blender-rendered model with proper lighting
+3. **Dynamic Island preserved** - Screen replacement masks around it
+4. **Smooth animation** - Interpolation between pre-rendered angles
+5. **Professional shadows** - Soft shadow under phone
+
+### API Usage
 
 ```json
 POST /api/device-mockup/create
 {
   "video_url": "/api/uploads/video.mp4",
   "device_type": "phone",
-  "bg_color": [100, 20, 20],      // Gradient start (red)
-  "bg_color2": [20, 5, 5],        // Gradient end (dark red)
-  "animation_style": "camera",    // "camera", "float", "phone_text"
-  "phone_position": "center",     // "center", "left", "right"
-  "aspect_ratio": "9:16"          // "9:16" or "16:9"
+  "bg_color": [90, 15, 15],
+  "animation_style": "camera",
+  "aspect_ratio": "9:16"
 }
 ```
 
-### Files
+### File Structure
 ```
 /app/backend/
-├── iphone_compositor.py      # v9 - FULL VISIBILITY mockup
-├── universal_effects.py      # render_video_on_device()
-├── server.py                 # API endpoints
-└── iphone_15_model/          # New iPhone 15 Pro 3D model (for future use)
+├── iphone_16_model/
+│   ├── source/
+│   │   └── iphone_16_black.glb
+│   └── textures/
+├── iphone_16_renders/
+│   ├── iphone16_angle_-40.png
+│   ├── iphone16_angle_-30.png
+│   ├── ...
+│   └── iphone16_angle_40.png
+├── iphone_compositor_3d.py   # 3D compositor
+├── iphone_compositor.py      # Wrapper (imports from 3d)
+├── universal_effects.py      # Updated to use 3D renders
+└── server.py                 # API endpoints
 ```
 
 ## Completed Tasks
-1. ✅ Phone ALWAYS FULLY VISIBLE
-2. ✅ Realistic iPhone mockup
-3. ✅ Camera animation (rotation)
-4. ✅ Float animation
-5. ✅ Red gradient background
-6. ✅ 9:16 and 16:9 formats
-7. ✅ Phone positions (center/left/right)
-8. ✅ Phone + text layout
 
-## Pending Tasks (P1)
-- Use real 3D iPhone 15 Pro model renders (Blender rendering in progress)
-- Add more gradient presets (green, blue, purple)
-- Integrate into universal AI generator
+### P0 (Critical) - ALL DONE ✅
+1. ✅ True 3D iPhone 16 rendering using Blender
+2. ✅ Phone ALWAYS FULLY VISIBLE - no cropping
+3. ✅ Screen content replacement with Dynamic Island
+4. ✅ Camera animation (multi-stage rotation)
+5. ✅ Float animation
+6. ✅ Red gradient background
+7. ✅ 9:16 and 16:9 format support
+8. ✅ API endpoint working
 
-## Future Tasks (P2+)
-- Sora 2 video generation
-- Stock video search
-- User authentication
-- Stripe subscriptions
-- Template marketplace
+### P1 (Important) - Pending
+1. Phone + Text layout with new 3D model
+2. Integration into universal AI generator
+3. More gradient presets
+
+### P2 (Future)
+1. Sora 2 video generation integration
+2. Stock video search
+3. User authentication
+4. Stripe subscriptions
+5. Template marketplace
+
+## Known Issues - RESOLVED
+- ~~Phone model cropped during animation~~ - FIXED with pre-rendered 3D
+- ~~Animation looks 2D, not 3D~~ - FIXED with Blender renders
+- ~~Purple artifact on screen~~ - FIXED with proper masking
+
+## Testing Verification
+- [x] Single frame rendering
+- [x] Animation sequence
+- [x] API endpoint
+- [x] Video output
+- [x] Full phone visibility
+- [x] Dynamic Island preservation
