@@ -701,9 +701,11 @@ async def render_video_on_device(
     rotation_y: float = 12,
     fps: int = 30,
     duration: float = None,
-    bg_color: Tuple[int, int, int] = (255, 255, 255),
+    bg_color: Tuple[int, int, int] = (60, 80, 60),
     use_3d_model: bool = True,
-    animation_style: str = "float"  # "float" or "cinematic"
+    animation_style: str = "float",  # "float", "cinematic", or "phone_text"
+    text: str = "",
+    phone_position: str = "left"
 ) -> str:
     """
     Render video playing on a 3D iPhone 16 mockup with smooth animation.
@@ -715,14 +717,20 @@ async def render_video_on_device(
         rotation_y: Base 3D rotation angle in degrees
         fps: Output FPS
         duration: Max duration (None = full video length)
-        bg_color: Background color (or gradient base for cinematic)
+        bg_color: Background color (gradient base)
         use_3d_model: If True, use real 3D iPhone model
-        animation_style: "float" for simple floating, "cinematic" for reference-style
+        animation_style: "float", "cinematic", or "phone_text"
+        text: Text to show alongside phone (for phone_text)
+        phone_position: "left" or "right" (for phone_text)
     
     Returns:
         Path to rendered video with device mockup
     """
-    from iphone_compositor import create_simple_float_frame, create_animated_iphone_frame
+    from iphone_compositor import (
+        create_simple_float_frame, 
+        create_animated_iphone_frame,
+        create_phone_with_text_frame
+    )
     
     output_path = output_dir / f"device_video_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"device_frames_{uuid.uuid4().hex[:8]}"
@@ -771,33 +779,47 @@ async def render_video_on_device(
         
         for i in range(total_frames):
             time_seconds = i / fps
+            time_progress = i / total_frames
             
             # Get video frame
             vf_idx = i % len(video_frame_files)
             video_frame = Image.open(video_frame_files[vf_idx]).convert("RGB")
             
-            if animation_style == "cinematic":
-                # Reference-style animation with dark gradient background
-                time_progress = i / total_frames
+            if animation_style == "phone_text":
+                # Phone + text layout
+                frame = create_phone_with_text_frame(
+                    video_frame=video_frame,
+                    text=text or "Your Text Here",
+                    time_progress=time_progress,
+                    output_size=(WIDTH, HEIGHT),
+                    bg_color=bg_color,
+                    phone_position=phone_position
+                )
+            elif animation_style == "cinematic":
+                # Dramatic rotation animation
                 frame = create_animated_iphone_frame(
                     video_frame=video_frame,
                     time_progress=time_progress,
                     total_duration=video_duration,
                     output_size=(WIDTH, HEIGHT),
-                    bg_color=bg_color if bg_color != (255, 255, 255) else (100, 25, 25)
+                    bg_color=bg_color
                 )
             else:
                 # Simple floating animation
-                use_gradient = bg_color != (255, 255, 255)
                 frame = create_simple_float_frame(
                     video_frame=video_frame,
                     time_seconds=time_seconds,
                     output_size=(WIDTH, HEIGHT),
                     bg_color=bg_color,
-                    use_gradient=use_gradient
+                    use_gradient=True
                 )
             
             # Save frame
+            frame_path = frames_dir / f"frame_{i:05d}.png"
+            frame.save(frame_path, "PNG")
+            
+            if i % 30 == 0:
+                logger.info(f"Frame {i}/{total_frames}")
             frame_path = frames_dir / f"frame_{i:05d}.png"
             frame.save(frame_path, "PNG")
             

@@ -2485,14 +2485,21 @@ class DeviceMockupRequest(BaseModel):
     video_url: str  # URL of uploaded video to show on device
     device_type: str = "phone"  # phone, tablet, laptop
     rotation: float = 12  # 3D rotation angle
-    bg_color: List[int] = [100, 25, 25]  # Background color RGB (dark red gradient by default)
-    animation_style: str = "cinematic"  # "float" or "cinematic"
+    bg_color: List[int] = [60, 80, 60]  # Background color RGB (greenish like reference)
+    animation_style: str = "cinematic"  # "float", "cinematic", or "phone_text"
+    text: str = ""  # Text to show alongside phone (for phone_text style)
+    phone_position: str = "left"  # "left" or "right" (for phone_text style)
 
 @api_router.post("/device-mockup/create")
 async def create_device_mockup(request: DeviceMockupRequest, background_tasks: BackgroundTasks):
     """
     Create video showing uploaded content on a 3D device (phone/tablet/laptop).
     Use this for app interface demos.
+    
+    Animation styles:
+    - "float": Simple floating animation
+    - "cinematic": Dramatic rotation with dark gradient
+    - "phone_text": Phone on side with animated text
     """
     # Validate video exists
     video_url = request.video_url
@@ -2507,10 +2514,14 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
     
     project_id = str(uuid.uuid4())
     
+    style_desc = f"3D {request.device_type} ({request.animation_style})"
+    if request.text:
+        style_desc += f" + text: {request.text[:20]}..."
+    
     # Create initial project record in DB so polling works
     await db.video_projects.insert_one({
         "id": project_id,
-        "prompt": f"3D {request.device_type} mockup ({request.animation_style})",
+        "prompt": style_desc,
         "format_id": "device_mockup",
         "status": "processing",
         "progress": 10,
@@ -2526,7 +2537,9 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         request.device_type,
         request.rotation,
         tuple(request.bg_color),
-        request.animation_style
+        request.animation_style,
+        request.text,
+        request.phone_position
     )
     
     return {"id": project_id, "status": "processing"}
@@ -2538,7 +2551,9 @@ async def process_device_mockup(
     device_type: str,
     rotation: float,
     bg_color: tuple,
-    animation_style: str = "cinematic"
+    animation_style: str = "cinematic",
+    text: str = "",
+    phone_position: str = "left"
 ):
     """Background task to render video on device mockup"""
     try:
@@ -2551,7 +2566,9 @@ async def process_device_mockup(
             rotation_y=rotation,
             fps=30,
             bg_color=bg_color,
-            animation_style=animation_style
+            animation_style=animation_style,
+            text=text,
+            phone_position=phone_position
         )
         
         if result:
