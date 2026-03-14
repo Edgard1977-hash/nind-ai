@@ -293,12 +293,12 @@ def render_phone_frame(
     # Apply perspective
     transformed = apply_perspective(phone, rotation_y, rotation_x)
     
-    # Scale to fit with margins
-    margin_y = int(out_h * 0.18)
-    margin_x = int(out_w * 0.18)
+    # Scale to fit with LARGE margins - phone must be SMALL enough to fit completely
+    margin_y = int(out_h * 0.25)  # 25% margin top and bottom
+    margin_x = int(out_w * 0.25)  # 25% margin sides
     
     available_h = out_h - 2 * margin_y
-    max_h = int(available_h * 0.58)
+    max_h = int(available_h * 0.50)  # Only 50% of available space = 25% of screen
     
     scale = max_h / 820
     final_w = int(transformed.width * scale)
