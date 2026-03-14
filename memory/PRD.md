@@ -1,27 +1,41 @@
-# VidFlux AI - Product Requirements Document v13
+# VidFlux AI - Product Requirements Document v14
 
 ## LATEST UPDATE (March 14, 2026)
 
-### Fixed Issues in This Session ✅
-1. **Phone now fills 100% of screen** - `phone_scale=1.05` ensures full-screen coverage
-2. **Smooth dynamic animation** - Continuous sine-wave rotation from -35° to +35°
-3. **Strong 3D perspective** - Enhanced perspective transform for dramatic effect
-4. **Phone + Text layout** - Working layout with phone on side and animated text
+### Critical Rule Applied ✅
+**Phone is ALWAYS FULLY VISIBLE** - no cropping, no cutting, no visual errors allowed.
 
-### Animation System (iphone_compositor.py v6)
+### What Was Fixed
+1. **Phone fully visible** - `phone_scale_start=0.50`, `phone_scale_end=0.75` ensure phone never exceeds 75% of screen
+2. **Safe margins** - 10% horizontal, 8% vertical margins prevent edge cropping
+3. **Camera animation** - zoom + rotate like reference video
+4. **Float animation** - simple gentle floating
+5. **9:16 & 16:9 support** - both portrait and landscape formats
+6. **Gradient backgrounds** - custom colors with spotlight effect
+7. **Phone positions** - center, left, right
 
-**Key Parameters:**
-- `phone_scale = 1.05` - Phone fills 105% of screen height (slightly extends beyond edges)
-- `rotation = 35° * sin(time_progress * π * 2)` - Smooth oscillation between -35° and +35°
-- `float_y = 25 * sin(time_progress * π * 4)` - Subtle vertical bobbing
-- `float_x = 15 * sin(time_progress * π * 3)` - Horizontal drift
+### Animation System (iphone_compositor.py v8)
 
 **Animation Styles:**
 | Style | Description |
 |-------|-------------|
-| `float` | Phone fills screen, rotates -35°↔+35°, subtle floating |
-| `cinematic` | Dramatic rotation with scaling effects |
-| `phone_text` | Phone on side (75% height) with animated text |
+| `camera` | Camera movement (zoom + rotate) - like reference video |
+| `float` | Simple floating with gentle rotation (±15°) |
+| `phone_text` | Phone on side with animated text |
+
+**Scale Parameters (ensures FULL visibility):**
+- `phone_scale_start = 0.50` - Phone takes 50% of screen at start
+- `phone_scale_end = 0.75` - Phone takes max 75% at end (zoom in)
+- Margins: 10% horizontal, 8% vertical
+
+**Phone Positions:**
+- `center` - Centered on screen (default)
+- `left` - Left side with margin
+- `right` - Right side with margin
+
+**Aspect Ratios:**
+- `9:16` - Portrait (1080x1920) - default
+- `16:9` - Landscape (1920x1080)
 
 ### API Endpoints
 
@@ -30,61 +44,74 @@ POST /api/device-mockup/create
 {
   "video_url": "/api/uploads/video.mp4",
   "device_type": "phone",
-  "rotation": 12,
-  "bg_color": [30, 35, 32],
-  "animation_style": "float",  // "float", "cinematic", "phone_text"
-  "text": "Your Text Here",    // For phone_text style
-  "phone_position": "right"    // "left" or "right"
+  "bg_color": [80, 20, 20],       // Gradient start (dark red)
+  "bg_color2": [25, 8, 8],        // Gradient end (optional)
+  "animation_style": "camera",    // "camera", "float", "phone_text"
+  "phone_position": "center",     // "center", "left", "right"
+  "aspect_ratio": "9:16",         // "9:16" or "16:9"
+  "text": "Your Text"             // For phone_text style only
 }
 ```
 
-### Technical Details
-
-**iphone_compositor.py v6 Functions:**
-- `load_iphone_render(angle)` → Loads pre-rendered iPhone at specified angle
-- `crop_to_phone_bounds(img)` → Removes padding, returns actual phone bounds
-- `apply_strong_3d_transform(img, rotation_y)` → Strong perspective transform
-- `composite_video_on_screen(phone, mask, video)` → Places video in screen area
-- `render_dynamic_phone(video_frame, time_progress, ...)` → Main animation renderer
-- `render_phone_with_text(video_frame, text_lines, time_progress, ...)` → Phone+text layout
-
-**Pre-rendered iPhone Angles:**
-- Available: 5°, 8°, 10°, 12°, 15°, 16°, 20°, 25°, 30°, 35°, 40°
-- Location: `/app/backend/iphone_renders/iphone_rot_*.png`
+### Test Results (Session 8)
+- **Backend Tests:** 100% (15/15 passed)
+- **Phone FULLY visible:** ✅ Verified at all progress points
+- **Camera animation:** ✅ Working
+- **Float animation:** ✅ Working
+- **9:16 portrait:** ✅ Working
+- **16:9 landscape:** ✅ Working
+- **Positions (center/left/right):** ✅ Working
+- **Custom gradients:** ✅ Working
 
 ### Files Structure
 ```
 /app/backend/
-├── iphone_compositor.py      # v6 - 100% screen, strong 3D, smooth animation
-├── iphone_renders/           # 11 pre-rendered angles
+├── iphone_compositor.py      # v8 - ALWAYS FULLY VISIBLE guarantee
+├── iphone_renders/           # Pre-rendered iPhone angles
 ├── universal_effects.py      # render_video_on_device()
 ├── server.py                 # API endpoints
 └── tests/
-    └── test_device_mockup.py # API tests
+    ├── test_device_mockup_v8.py
+    └── test_api_quick.py
 ```
 
-### Test Results (Session 7)
-- **Backend Tests:** 100% (11/11 passed)
-- **Phone fills screen:** ✅ Verified
-- **Smooth animation:** ✅ Verified
-- **3D perspective:** ✅ Verified
-- **Phone+text layout:** ✅ Verified
-- **Error handling:** ✅ Verified
+## Animation Rules (MUST FOLLOW)
+
+1. **Full animation request:**
+   - Phone can be left, center, or right
+   - Use smooth animations (camera zoom+rotate or float)
+   - Device MUST be fully visible, no cropping
+
+2. **Simple 3D phone request:**
+   - Default position: center
+   - User can specify left/right
+   - User chooses format (16:9 or 9:16)
+
+3. **Background gradients:**
+   - System correctly applies user-specified gradients
+   - Default: dark red gradient like reference
+
+4. **Quality rule:**
+   - Result MUST look quality and complete
+   - If phone is cropped/deformed = INCORRECT
+   - If animation looks bad = INCORRECT
 
 ## Completed Tasks
 1. ✅ 3D iPhone mockup rendering
-2. ✅ Video compositing on screen
-3. ✅ Smooth sine-wave animation
-4. ✅ 100% screen fill
-5. ✅ Phone + text layout
-6. ✅ Multiple animation styles (float, cinematic, phone_text)
+2. ✅ Phone ALWAYS FULLY VISIBLE
+3. ✅ Camera animation (zoom + rotate)
+4. ✅ Float animation (gentle floating)
+5. ✅ 9:16 and 16:9 formats
+6. ✅ Custom gradient backgrounds
+7. ✅ Phone positions (center/left/right)
+8. ✅ Phone + text layout
 
 ## Pending Tasks (P1)
 - Integrate device_mockup into universal AI generator
-- Add more device types (tablet, laptop) with same quality
+- Add tablet/laptop device types with same quality
 
 ## Future Tasks (P2+)
-- Sora 2 video generation integration
+- Sora 2 video generation
 - Stock video search
 - User authentication
 - Stripe subscriptions
