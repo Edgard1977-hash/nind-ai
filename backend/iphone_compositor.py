@@ -173,24 +173,34 @@ def apply_perspective(img: Image.Image, rotation_y: float, rotation_x: float = 0
     
     w, h = img.size
     
-    # Calculate distortion
+    # Add padding to prevent clipping during transform
+    padding = int(max(w, h) * 0.3)
+    padded_w = w + 2 * padding
+    padded_h = h + 2 * padding
+    
+    # Create padded image
+    padded = Image.new('RGBA', (padded_w, padded_h), (0, 0, 0, 0))
+    padded.paste(img, (padding, padding), img)
+    
+    # Calculate distortion on padded image
+    pw, ph = padded_w, padded_h
     angle_y = math.radians(rotation_y)
     compress = abs(math.sin(angle_y)) * 0.25
     shift = abs(math.sin(angle_y)) * 0.05
     
-    cy = int(h * compress)
-    sx = int(w * shift)
+    cy = int(ph * compress)
+    sx = int(pw * shift)
     
-    src = [(0, 0), (w, 0), (w, h), (0, h)]
+    src = [(0, 0), (pw, 0), (pw, ph), (0, ph)]
     
     if rotation_y >= 0:
-        dst = [(0, 0), (w - sx, cy), (w - sx, h - cy), (0, h)]
+        dst = [(0, 0), (pw - sx, cy), (pw - sx, ph - cy), (0, ph)]
     else:
-        dst = [(sx, cy), (w, 0), (w, h), (sx, h - cy)]
+        dst = [(sx, cy), (pw, 0), (pw, ph), (sx, ph - cy)]
     
     # Apply X rotation
     if abs(rotation_x) > 1:
-        cx = int(w * abs(math.sin(math.radians(rotation_x))) * 0.12)
+        cx = int(pw * abs(math.sin(math.radians(rotation_x))) * 0.12)
         if rotation_x > 0:
             dst[0] = (dst[0][0] + cx, dst[0][1])
             dst[1] = (dst[1][0] - cx, dst[1][1])
@@ -199,7 +209,9 @@ def apply_perspective(img: Image.Image, rotation_y: float, rotation_x: float = 0
             dst[3] = (dst[3][0] + cx, dst[3][1])
     
     coeffs = _calc_coeffs(src, dst)
-    return img.transform((w, h), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
+    result = padded.transform((pw, ph), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
+    
+    return result
 
 
 def _calc_coeffs(src, dst):
@@ -293,42 +305,52 @@ def render_phone_frame(
     # Apply perspective
     transformed = apply_perspective(phone, rotation_y, rotation_x)
     
-    # Scale to fit with LARGE margins - phone must be SMALL enough to fit completely
-    margin_y = int(out_h * 0.25)  # 25% margin top and bottom
-    margin_x = int(out_w * 0.25)  # 25% margin sides
+    # Crop to actual content (remove transparent padding)
+    arr = np.array(transformed)
+    alpha = arr[:,:,3]
+    rows = np.any(alpha > 10, axis=1)
+    cols = np.any(alpha > 10, axis=0)
     
-    available_h = out_h - 2 * margin_y
-    max_h = int(available_h * 0.50)  # Only 50% of available space = 25% of screen
+    if rows.any() and cols.any():
+        y1, y2 = np.where(rows)[0][[0, -1]]
+        x1, x2 = np.where(cols)[0][[0, -1]]
+        # Add small padding
+        pad = 5
+        y1 = max(0, y1 - pad)
+        y2 = min(transformed.height, y2 + pad)
+        x1 = max(0, x1 - pad)
+        x2 = min(transformed.width, x2 + pad)
+        cropped = transformed.crop((x1, y1, x2, y2))
+    else:
+        cropped = transformed
     
-    scale = max_h / 820
-    final_w = int(transformed.width * scale)
-    final_h = int(820 * scale)
+    # Now scale the CROPPED phone to fit screen
+    # Phone should take 65% of screen height
+    target_h = int(out_h * 0.65)
+    scale = target_h / cropped.height
+    final_w = int(cropped.width * scale)
+    final_h = int(cropped.height * scale)
     
-    # Check width fit
-    if final_w > (out_w - 2 * margin_x):
-        scale = (out_w - 2 * margin_x) / transformed.width
-        final_w = int(transformed.width * scale)
-        final_h = int(820 * scale)
+    # Check if fits width with margin
+    margin = int(out_w * 0.08)
+    if final_w > (out_w - 2 * margin):
+        scale = (out_w - 2 * margin) / cropped.width
+        final_w = int(cropped.width * scale)
+        final_h = int(cropped.height * scale)
     
-    scaled = transformed.resize((final_w, final_h), Image.Resampling.LANCZOS)
+    scaled = cropped.resize((final_w, final_h), Image.Resampling.LANCZOS)
     
     # Float animation
     float_y = int(12 * math.sin(time_progress * math.pi * 2.5))
     float_x = int(8 * math.sin(time_progress * math.pi * 2))
     
-    # Position
-    if position == "center":
-        pos_x = (out_w - final_w) // 2 + float_x
-    elif position == "left":
-        pos_x = margin_x + float_x
-    else:
-        pos_x = out_w - final_w - margin_x + float_x
-    
+    # Center position
+    pos_x = (out_w - final_w) // 2 + float_x
     pos_y = (out_h - final_h) // 2 + float_y
     
-    # Bounds check
-    pos_x = max(margin_x, min(pos_x, out_w - final_w - margin_x))
-    pos_y = max(margin_y, min(pos_y, out_h - final_h - margin_y))
+    # Ensure within bounds
+    pos_x = max(margin, min(pos_x, out_w - final_w - margin))
+    pos_y = max(margin, min(pos_y, out_h - final_h - margin))
     
     # Background
     bg = create_gradient_bg(out_w, out_h, bg_color1, bg_color2).convert('RGBA')
