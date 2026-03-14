@@ -1,6 +1,11 @@
 """
-iPhone 16 3D compositor v5
-100% phone size, real-time 3D transforms for smooth dynamic animation
+iPhone 16 3D compositor v6
+FULL SCREEN phone + DYNAMIC 3D animation matching reference video
+Key improvements:
+- Phone fills 100% of screen height
+- Strong 3D perspective rotation (30-40 degrees)
+- Smooth sine-wave animation
+- No choppy transitions
 """
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -9,88 +14,119 @@ from pathlib import Path
 import math
 
 
-def get_base_iphone() -> tuple:
-    """Load base iPhone render and screen mask (angle 12 as base)."""
+def load_iphone_render(angle: int = 12) -> tuple:
+    """Load iPhone render at specific angle and extract screen mask."""
     renders_dir = Path("/app/backend/iphone_renders")
-    path = renders_dir / "iphone_rot_12.png"
     
+    # Find closest available angle
+    available = [5, 8, 10, 12, 15, 16, 20, 25, 30, 35, 40]
+    closest = min(available, key=lambda x: abs(x - angle))
+    
+    path = renders_dir / f"iphone_rot_{closest}.png"
     if not path.exists():
-        # Fallback to any available
-        for f in renders_dir.glob("iphone_rot_*.png"):
-            path = f
-            break
+        path = renders_dir / "iphone_rot_12.png"
     
     original = Image.open(path).convert("RGBA")
     
-    # Get screen mask from original (pink area)
+    # Extract screen mask (pink/magenta area)
     arr = np.array(original)
     r, g, b = arr[:,:,0], arr[:,:,1], arr[:,:,2]
     a = arr[:,:,3] if arr.shape[2] == 4 else np.ones_like(r) * 255
+    
+    # Pink detection: high R, low G, high B
     pink_mask = (r > 150) & (g < 100) & (b > 150) & (a > 150)
     mask = Image.fromarray((pink_mask * 255).astype(np.uint8), mode='L')
-    mask = mask.filter(ImageFilter.MinFilter(7))
+    mask = mask.filter(ImageFilter.MinFilter(5))  # Erode slightly
     
-    # Remove pink from render
-    arr_copy = arr.copy()
+    # Remove pink pixels from render (replace with black)
+    arr_clean = arr.copy()
     pink_pixels = (r > 100) & (b > 100) & (g < r) & (g < b)
-    arr_copy[pink_pixels, 0] = 0
-    arr_copy[pink_pixels, 1] = 0
-    arr_copy[pink_pixels, 2] = 0
-    cleaned = Image.fromarray(arr_copy, mode='RGBA')
+    arr_clean[pink_pixels, 0] = 0
+    arr_clean[pink_pixels, 1] = 0
+    arr_clean[pink_pixels, 2] = 0
+    cleaned = Image.fromarray(arr_clean, mode='RGBA')
     
-    return cleaned, mask
+    return cleaned, mask, closest
 
 
-def apply_3d_rotation(img: Image.Image, rotation_y: float, rotation_x: float = 0) -> Image.Image:
+def crop_to_phone_bounds(img: Image.Image) -> tuple:
+    """Crop image to actual phone bounds (remove padding)."""
+    arr = np.array(img)
+    if arr.shape[2] < 4:
+        return img, (0, 0, img.size[0], img.size[1])
+    
+    alpha = arr[:,:,3]
+    rows = np.any(alpha > 30, axis=1)
+    cols = np.any(alpha > 30, axis=0)
+    
+    if not (rows.any() and cols.any()):
+        return img, (0, 0, img.size[0], img.size[1])
+    
+    y1, y2 = np.where(rows)[0][[0, -1]]
+    x1, x2 = np.where(cols)[0][[0, -1]]
+    
+    # Add small margin
+    margin = 5
+    y1 = max(0, y1 - margin)
+    y2 = min(img.size[1], y2 + margin)
+    x1 = max(0, x1 - margin)
+    x2 = min(img.size[0], x2 + margin)
+    
+    cropped = img.crop((x1, y1, x2, y2))
+    return cropped, (x1, y1, x2, y2)
+
+
+def apply_strong_3d_transform(img: Image.Image, rotation_y: float) -> Image.Image:
     """
-    Apply 3D rotation effect using perspective transform.
-    rotation_y: rotation around Y axis (left-right tilt) in degrees
-    rotation_x: rotation around X axis (forward-back tilt) in degrees
+    Apply strong 3D perspective transform.
+    rotation_y: rotation in degrees (-45 to +45 recommended)
+    Positive = phone rotated to the right (left edge closer)
     """
-    if abs(rotation_y) < 0.5 and abs(rotation_x) < 0.5:
+    if abs(rotation_y) < 1:
         return img
     
-    width, height = img.size
+    w, h = img.size
     
-    # Calculate perspective distortion
-    # More rotation = more skew
-    skew_y = math.tan(math.radians(rotation_y)) * 0.12
-    skew_x = math.tan(math.radians(rotation_x)) * 0.08
+    # Stronger perspective effect
+    # At 30 degrees, one edge should compress by ~15-20%
+    angle_rad = math.radians(abs(rotation_y))
+    compress_factor = math.sin(angle_rad) * 0.35  # How much the far edge compresses
+    shift_factor = math.sin(angle_rad) * 0.08  # Horizontal shift
     
-    # Source corners
-    src = [(0, 0), (width, 0), (width, height), (0, height)]
+    src = [(0, 0), (w, 0), (w, h), (0, h)]
     
-    # Calculate destination corners based on rotation
-    if rotation_y >= 0:
-        # Rotated right - left side appears closer
-        left_shrink = abs(skew_y) * height * 0.3
+    if rotation_y > 0:
+        # Rotated right - right edge appears farther/smaller
+        compress = int(h * compress_factor)
+        shift = int(w * shift_factor)
         dst = [
-            (width * abs(skew_y) * 0.2, left_shrink),           # top-left moves right and down
-            (width, 0),                                          # top-right stays
-            (width, height),                                     # bottom-right stays
-            (width * abs(skew_y) * 0.2, height - left_shrink),  # bottom-left moves right and up
+            (0, 0),                      # top-left stays
+            (w - shift, compress),       # top-right moves left and down
+            (w - shift, h - compress),   # bottom-right moves left and up  
+            (0, h),                       # bottom-left stays
         ]
     else:
-        # Rotated left - right side appears closer
-        right_shrink = abs(skew_y) * height * 0.3
+        # Rotated left - left edge appears farther/smaller
+        compress = int(h * compress_factor)
+        shift = int(w * shift_factor)
         dst = [
-            (0, 0),                                               # top-left stays
-            (width - width * abs(skew_y) * 0.2, right_shrink),   # top-right moves left and down
-            (width - width * abs(skew_y) * 0.2, height - right_shrink),  # bottom-right moves
-            (0, height),                                          # bottom-left stays
+            (shift, compress),           # top-left moves right and down
+            (w, 0),                       # top-right stays
+            (w, h),                       # bottom-right stays
+            (shift, h - compress),       # bottom-left moves right and up
         ]
     
-    # Calculate perspective coefficients
-    coeffs = find_coeffs(src, dst)
+    # Calculate perspective transform coefficients
+    coeffs = find_perspective_coeffs(src, dst)
     
-    # Apply transform
-    result = img.transform((width, height), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
+    # Apply with high quality resampling
+    result = img.transform((w, h), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
     
     return result
 
 
-def find_coeffs(src, dst):
-    """Calculate perspective transform coefficients."""
+def find_perspective_coeffs(src, dst):
+    """Calculate 8-point perspective transform matrix."""
     matrix = []
     for s, d in zip(src, dst):
         matrix.append([s[0], s[1], 1, 0, 0, 0, -d[0]*s[0], -d[0]*s[1]])
@@ -101,32 +137,37 @@ def find_coeffs(src, dst):
     return tuple(res.flatten())
 
 
-def composite_video_on_screen(iphone: Image.Image, mask: Image.Image, video: Image.Image) -> Image.Image:
-    """Put video on iPhone screen using mask."""
+def composite_video_on_screen(phone: Image.Image, mask: Image.Image, video: Image.Image) -> Image.Image:
+    """Composite video frame onto phone screen using mask."""
     mask_arr = np.array(mask)
     rows = np.any(mask_arr > 50, axis=1)
     cols = np.any(mask_arr > 50, axis=0)
     
     if not (rows.any() and cols.any()):
-        return iphone
+        return phone
     
     y1, y2 = np.where(rows)[0][[0, -1]]
     x1, x2 = np.where(cols)[0][[0, -1]]
     
-    screen_w, screen_h = x2 - x1, y2 - y1
-    if screen_w <= 10 or screen_h <= 10:
-        return iphone
+    screen_w = x2 - x1
+    screen_h = y2 - y1
     
+    if screen_w < 20 or screen_h < 20:
+        return phone
+    
+    # Resize video to fit screen
     video_resized = video.resize((screen_w, screen_h), Image.Resampling.LANCZOS)
     
-    result = iphone.copy()
+    # Create result with video composited
+    result = phone.copy()
     result_arr = np.array(result)
     video_arr = np.array(video_resized.convert("RGBA"))
     
-    mask_eroded = mask.filter(ImageFilter.MinFilter(5))
-    mask_crop = np.array(mask_eroded)[y1:y2, x1:x2].astype(float) / 255.0
+    # Use mask for blending
+    mask_crop = np.array(mask)[y1:y2, x1:x2].astype(float) / 255.0
     mask_crop = mask_crop[:, :, np.newaxis]
     
+    # Blend video with phone where mask is active
     result_arr[y1:y2, x1:x2] = (
         result_arr[y1:y2, x1:x2] * (1 - mask_crop) + video_arr * mask_crop
     ).astype(np.uint8)
@@ -134,89 +175,113 @@ def composite_video_on_screen(iphone: Image.Image, mask: Image.Image, video: Ima
     return Image.fromarray(result_arr, mode='RGBA')
 
 
-def create_dark_gradient(width: int, height: int, base_color: tuple = (25, 35, 30)) -> Image.Image:
-    """Dark gradient background with subtle spotlight."""
+def create_spotlight_background(width: int, height: int, base_color: tuple = (30, 35, 32)) -> Image.Image:
+    """Create dark background with subtle spotlight from below."""
     y, x = np.mgrid[0:height, 0:width]
     
-    # Spotlight from bottom
-    cx, cy = width // 2, height + 300
+    # Spotlight from bottom center
+    cx, cy = width // 2, height + 400
     dist = np.sqrt((x - cx)**2 + (y - cy)**2)
-    max_dist = np.sqrt(width**2 + (height + 300)**2)
+    max_dist = np.sqrt((width/2)**2 + (height + 400)**2)
     t = np.clip(dist / max_dist, 0, 1)
     
-    r = np.clip(base_color[0] + 30 * (1 - t), 0, 255).astype(np.uint8)
-    g = np.clip(base_color[1] + 40 * (1 - t), 0, 255).astype(np.uint8)
-    b = np.clip(base_color[2] + 30 * (1 - t), 0, 255).astype(np.uint8)
+    # Subtle lighting effect
+    brightness = (1 - t) * 0.3
+    r = np.clip(base_color[0] + brightness * 40, 0, 255).astype(np.uint8)
+    g = np.clip(base_color[1] + brightness * 50, 0, 255).astype(np.uint8)
+    b = np.clip(base_color[2] + brightness * 40, 0, 255).astype(np.uint8)
     
     return Image.fromarray(np.stack([r, g, b], axis=-1), mode='RGB')
 
 
-def create_shadow(phone_bounds: tuple, output_size: tuple) -> Image.Image:
-    """Create floor shadow under phone."""
+def create_phone_shadow(phone_bounds: tuple, output_size: tuple, rotation: float = 0) -> Image.Image:
+    """Create realistic floor shadow under phone."""
     shadow = Image.new('RGBA', output_size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(shadow)
     
     px, py, pw, ph = phone_bounds
-    sw = int(pw * 0.5)
-    sh = int(pw * 0.1)
-    sx = px + (pw - sw) // 2
-    sy = py + ph - sh // 2
     
-    for i in range(25, 0, -1):
-        alpha = int(35 * (i / 25))
-        exp = (25 - i) * 4
-        draw.ellipse([sx - exp, sy - exp//3, sx + sw + exp, sy + sh + exp//3], 
-                     fill=(0, 0, 0, alpha))
+    # Shadow is ellipse under phone
+    shadow_w = int(pw * 0.6)
+    shadow_h = int(pw * 0.15)
+    shadow_x = px + (pw - shadow_w) // 2
+    shadow_y = py + ph - shadow_h // 2
     
-    return shadow.filter(ImageFilter.GaussianBlur(15))
+    # Offset shadow based on rotation
+    shadow_x += int(rotation * 1.5)
+    
+    # Draw soft shadow with multiple layers
+    for i in range(30, 0, -1):
+        alpha = int(40 * (i / 30))
+        expand = (30 - i) * 5
+        draw.ellipse([
+            shadow_x - expand, 
+            shadow_y - expand//4, 
+            shadow_x + shadow_w + expand, 
+            shadow_y + shadow_h + expand//3
+        ], fill=(0, 0, 0, alpha))
+    
+    return shadow.filter(ImageFilter.GaussianBlur(20))
+
+
+def ease_in_out_sine(t: float) -> float:
+    """Smooth sine-based easing for natural motion."""
+    return -(math.cos(math.pi * t) - 1) / 2
 
 
 def render_dynamic_phone(
     video_frame: Image.Image,
     time_progress: float,  # 0.0 to 1.0
     output_size: tuple = (1080, 1920),
-    bg_color: tuple = (25, 35, 30),
-    phone_scale: float = 0.92  # 92% of screen height for full look with margins
+    bg_color: tuple = (30, 35, 32),
+    phone_scale: float = 1.05  # >1.0 to fill screen fully
 ) -> Image.Image:
     """
-    Render phone with REAL dynamic animation.
-    Rotation and position change smoothly every frame.
+    Render phone with smooth, dynamic 3D animation.
+    Phone fills ~100% of screen height with continuous rotation.
     """
-    # Get base iPhone
-    iphone, mask = get_base_iphone()
+    # Load phone render
+    phone, mask, base_angle = load_iphone_render(12)
     
-    # Put video on screen FIRST (before rotation)
-    composited = composite_video_on_screen(iphone, mask, video_frame)
+    # Composite video onto screen BEFORE transforms
+    composited = composite_video_on_screen(phone, mask, video_frame)
     
-    # DYNAMIC ANIMATION - these values change every frame!
-    # Rotation oscillates: -15 to +15 degrees
-    rotation = 15 * math.sin(time_progress * math.pi * 2)
+    # Crop to actual phone bounds (remove padding)
+    cropped, bounds = crop_to_phone_bounds(composited)
     
-    # Apply 3D rotation transform
-    rotated = apply_3d_rotation(composited, rotation)
+    # DYNAMIC ANIMATION
+    # Rotation: oscillates between -35 and +35 degrees
+    # Using sine wave for smooth, continuous motion
+    rotation = 35 * math.sin(time_progress * math.pi * 2)
     
-    # Scale to fit output
+    # Apply 3D perspective transform
+    transformed = apply_strong_3d_transform(cropped, rotation)
+    
+    # Scale to fill output height
     target_h = int(output_size[1] * phone_scale)
-    scale = target_h / rotated.height
-    new_w = int(rotated.width * scale)
-    new_h = int(rotated.height * scale)
-    scaled = rotated.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    scale_ratio = target_h / transformed.height
+    new_w = int(transformed.width * scale_ratio)
+    new_h = int(transformed.height * scale_ratio)
+    scaled = transformed.resize((new_w, new_h), Image.Resampling.LANCZOS)
     
-    # Position with floating animation
-    float_y = 30 * math.sin(time_progress * math.pi * 4)  # Float up/down
-    float_x = 15 * math.sin(time_progress * math.pi * 3)  # Slight horizontal
+    # Floating animation (subtle vertical bobbing)
+    float_offset_y = int(25 * math.sin(time_progress * math.pi * 4))
+    float_offset_x = int(15 * math.sin(time_progress * math.pi * 3))
     
-    x = (output_size[0] - scaled.width) // 2 + int(float_x)
-    y = (output_size[1] - scaled.height) // 2 + int(float_y)
+    # Center phone in frame
+    x = (output_size[0] - scaled.width) // 2 + float_offset_x
+    y = (output_size[1] - scaled.height) // 2 + float_offset_y
     
-    # Ensure visible
-    y = max(10, min(y, output_size[1] - scaled.height - 10))
+    # Allow phone to extend beyond frame edges (for 100% fill)
+    # Clamp to keep at least 80% visible
+    min_visible = int(scaled.height * 0.1)
+    y = max(-min_visible, min(y, output_size[1] - scaled.height + min_visible))
     
     # Create background
-    bg = create_dark_gradient(output_size[0], output_size[1], bg_color).convert("RGBA")
+    bg = create_spotlight_background(output_size[0], output_size[1], bg_color).convert("RGBA")
     
     # Add shadow
-    shadow = create_shadow((x, y, scaled.width, scaled.height), output_size)
+    shadow = create_phone_shadow((x, y, scaled.width, scaled.height), output_size, rotation)
     bg = Image.alpha_composite(bg, shadow)
     
     # Paste phone
@@ -230,93 +295,139 @@ def render_phone_with_text(
     text_lines: list,
     time_progress: float,
     output_size: tuple = (1080, 1920),
-    bg_color: tuple = (25, 35, 30),
-    phone_position: str = "left"
+    bg_color: tuple = (30, 35, 32),
+    phone_position: str = "right"  # "left" or "right"
 ) -> Image.Image:
-    """Phone on side with animated text."""
-    iphone, mask = get_base_iphone()
-    composited = composite_video_on_screen(iphone, mask, video_frame)
+    """
+    Render phone on one side with animated text on the other.
+    Matches reference video layout.
+    """
+    # Load and composite phone
+    phone, mask, _ = load_iphone_render(12)
+    composited = composite_video_on_screen(phone, mask, video_frame)
+    cropped, _ = crop_to_phone_bounds(composited)
     
-    # Animation
-    rotation = 20 + 10 * math.sin(time_progress * math.pi * 2)
-    rotated = apply_3d_rotation(composited, rotation)
+    # Constant rotation angle (like reference)
+    rotation = 30 if phone_position == "right" else -30
+    transformed = apply_strong_3d_transform(cropped, rotation)
     
-    # Smaller phone to fit with text
-    target_h = int(output_size[1] * 0.6)
-    scale = target_h / rotated.height
-    scaled = rotated.resize((int(rotated.width * scale), int(rotated.height * scale)), Image.Resampling.LANCZOS)
+    # Scale phone to ~65% of screen height (leaves room for text)
+    target_h = int(output_size[1] * 0.75)
+    scale_ratio = target_h / transformed.height
+    new_w = int(transformed.width * scale_ratio)
+    new_h = int(transformed.height * scale_ratio)
+    scaled = transformed.resize((new_w, new_h), Image.Resampling.LANCZOS)
     
-    float_y = 20 * math.sin(time_progress * math.pi * 3)
+    # Floating animation
+    float_y = int(20 * math.sin(time_progress * math.pi * 3))
     
-    if phone_position == "left":
-        phone_x = output_size[0] // 5
-        text_x = output_size[0] // 2 + 50
+    # Position phone
+    if phone_position == "right":
+        phone_x = output_size[0] - scaled.width - 20
+        text_x = 60
+        text_align = "left"
     else:
-        phone_x = output_size[0] * 3 // 5
-        text_x = 50
+        phone_x = 20
+        text_x = output_size[0] - 60
+        text_align = "right"
     
-    phone_y = (output_size[1] - scaled.height) // 2 + int(float_y)
+    phone_y = (output_size[1] - scaled.height) // 2 + float_y
     
-    bg = create_dark_gradient(output_size[0], output_size[1], bg_color).convert("RGBA")
+    # Create background
+    bg = create_spotlight_background(output_size[0], output_size[1], bg_color).convert("RGBA")
     
-    shadow = create_shadow((phone_x, phone_y, scaled.width, scaled.height), output_size)
+    # Add shadow
+    shadow = create_phone_shadow((phone_x, phone_y, scaled.width, scaled.height), output_size, rotation)
     bg = Image.alpha_composite(bg, shadow)
+    
+    # Paste phone
     bg.paste(scaled, (phone_x, phone_y), scaled)
     
-    # Draw text
+    # Draw animated text
     try:
-        font_big = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 72)
-        font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 36)
+        font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        font_big = ImageFont.truetype(font_path, 64)
+        font_small = ImageFont.truetype(font_path, 36)
     except:
         font_big = font_small = ImageFont.load_default()
     
     text_layer = Image.new('RGBA', output_size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(text_layer)
     
-    text_y = output_size[1] // 2 - len(text_lines) * 50
+    # Center text vertically
+    total_text_height = len(text_lines) * 80
+    text_start_y = (output_size[1] - total_text_height) // 2
     
     for i, line in enumerate(text_lines):
-        prog = max(0, min(1, (time_progress - i * 0.1) * 3))
-        alpha = int(255 * prog)
-        slide = int(40 * (1 - prog))
+        # Staggered fade-in animation
+        line_progress = max(0, min(1, (time_progress - i * 0.1) * 2.5))
+        alpha = int(255 * ease_in_out_sine(line_progress))
+        slide_x = int(50 * (1 - ease_in_out_sine(line_progress)))
         
         font = font_big if i == 0 else font_small
-        draw.text((text_x + slide, text_y + i * 90), line, font=font, fill=(255, 255, 255, alpha))
+        line_y = text_start_y + i * 80
+        
+        if text_align == "left":
+            line_x = text_x + slide_x
+        else:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            line_w = bbox[2] - bbox[0]
+            line_x = text_x - line_w - slide_x
+        
+        draw.text((line_x, line_y), line, font=font, fill=(255, 255, 255, alpha))
     
     bg = Image.alpha_composite(bg, text_layer)
     return bg.convert("RGB")
 
 
-# Compatibility functions
+# ============================================
+# COMPATIBILITY WRAPPER FUNCTIONS
+# ============================================
+
+def get_base_iphone() -> tuple:
+    """Legacy compatibility - load base iPhone."""
+    phone, mask, _ = load_iphone_render(12)
+    return phone, mask
+
+
 def create_simple_float_frame(video_frame, time_seconds, output_size=(1080, 1920), 
-                               bg_color=(25, 35, 30), use_gradient=True):
+                               bg_color=(30, 35, 32), use_gradient=True):
+    """Legacy wrapper - simple floating animation."""
     progress = (time_seconds % 4.0) / 4.0
-    return render_dynamic_phone(video_frame, progress, output_size, bg_color, 0.92)
+    return render_dynamic_phone(video_frame, progress, output_size, bg_color, 1.05)
 
 
 def create_animated_iphone_frame(video_frame, time_progress, total_duration=6.0,
-                                  output_size=(1080, 1920), bg_color=(25, 35, 30)):
-    return render_dynamic_phone(video_frame, time_progress, output_size, bg_color, 0.92)
+                                  output_size=(1080, 1920), bg_color=(30, 35, 32)):
+    """Legacy wrapper - animated iPhone frame."""
+    return render_dynamic_phone(video_frame, time_progress, output_size, bg_color, 1.05)
 
 
 def create_smooth_phone_frame(video_frame, time_progress, output_size=(1080, 1920),
-                               bg_color=(25, 35, 30), position="center"):
-    return render_dynamic_phone(video_frame, time_progress, output_size, bg_color, 0.92)
+                               bg_color=(30, 35, 32), position="center"):
+    """Legacy wrapper - smooth phone animation."""
+    return render_dynamic_phone(video_frame, time_progress, output_size, bg_color, 1.05)
 
 
 def create_phone_with_text_frame(video_frame, text, time_progress, output_size=(1080, 1920),
-                                  bg_color=(25, 35, 30), phone_position="left", font_size=72):
+                                  bg_color=(30, 35, 32), phone_position="right", font_size=64):
+    """Legacy wrapper - phone with text layout."""
     lines = [text] if isinstance(text, str) else text
     return render_phone_with_text(video_frame, lines, time_progress, output_size, bg_color, phone_position)
 
 
 def blend_iphone_renders(angle):
+    """Legacy compatibility."""
     img, mask = get_base_iphone()
     return img, mask
 
+
 def composite_video_clean(iphone, video):
+    """Legacy compatibility."""
     _, mask = get_base_iphone()
     return composite_video_on_screen(iphone, mask, video)
 
+
 def select_iphone_render(rotation):
+    """Legacy compatibility."""
     return "/app/backend/iphone_renders/iphone_rot_12.png", 12
