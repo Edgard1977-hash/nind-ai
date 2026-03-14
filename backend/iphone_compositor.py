@@ -270,14 +270,16 @@ def create_smooth_phone_frame(
     # Smooth easing
     t = ease_in_out_cubic(time_progress)
     
-    # Animation: rotation goes from 8 to 35 degrees
-    rotation = 8 + 27 * t
+    # Animation: rotation goes from 8 to 25 degrees (reduced range for smoother look)
+    rotation = 8 + 17 * t
     
-    # Floating offset
-    float_offset = math.sin(time_progress * math.pi * 4) * 20
+    # Floating offset - gentle sine wave
+    float_offset = math.sin(time_progress * math.pi * 3) * 15
     
-    # Scale decreases slightly as rotation increases
-    scale = 1.0 - 0.15 * t
+    # Base scale 0.75 to fit on screen with room for shadow
+    # Slight decrease as rotation increases
+    base_scale = 0.72
+    scale = base_scale - 0.05 * t
     
     # Get smoothly interpolated iPhone render and mask
     iphone, screen_mask = blend_iphone_renders(rotation)
@@ -285,7 +287,7 @@ def create_smooth_phone_frame(
     # Composite video onto screen
     composited = composite_video_on_screen(iphone, screen_mask, video_frame)
     
-    # Scale
+    # Scale to fit on canvas
     new_w = int(composited.width * scale)
     new_h = int(composited.height * scale)
     composited = composited.resize((new_w, new_h), Image.Resampling.LANCZOS)
@@ -294,20 +296,21 @@ def create_smooth_phone_frame(
     bg = create_spotlight_gradient(output_size[0], output_size[1], bg_color)
     bg = bg.convert("RGBA")
     
-    # Calculate position
+    # Calculate position - center with some top margin
     if position == "left":
-        x = output_size[0] // 6 - composited.width // 2
+        x = output_size[0] // 4 - composited.width // 2
     elif position == "right":
-        x = output_size[0] * 5 // 6 - composited.width // 2
+        x = output_size[0] * 3 // 4 - composited.width // 2
     else:  # center
         x = (output_size[0] - composited.width) // 2
     
-    y = (output_size[1] - composited.height) // 2 + int(float_offset) - int(50 * t)
+    # Vertical position - leave room at bottom for shadow
+    y = (output_size[1] - composited.height) // 2 - 50 + int(float_offset)
     
     # Add shadow
     shadow = create_phone_shadow(composited)
     shadow_x = x + (composited.width - shadow.width) // 2
-    shadow_y = y + composited.height - 30
+    shadow_y = y + composited.height - 20
     
     # Paste shadow first
     shadow_layer = Image.new('RGBA', output_size, (0, 0, 0, 0))
@@ -448,17 +451,23 @@ def create_simple_float_frame(
     """Simple floating animation with smooth interpolation."""
     # Animation parameters
     float_period = 3.5
-    rotation_period = 4.0
+    rotation_period = 5.0
     
-    # Calculate smooth values
-    float_offset = math.sin(time_seconds * 2 * math.pi / float_period) * 25
-    rotation = 12 + 8 * math.sin(time_seconds * 2 * math.pi / rotation_period)
+    # Calculate smooth values - gentle oscillation
+    float_offset = math.sin(time_seconds * 2 * math.pi / float_period) * 20
+    rotation = 12 + 6 * math.sin(time_seconds * 2 * math.pi / rotation_period)
     
     # Get interpolated iPhone and mask
     iphone, screen_mask = blend_iphone_renders(rotation)
     
     # Composite video
     composited = composite_video_on_screen(iphone, screen_mask, video_frame)
+    
+    # Scale to fit on screen (0.72 = 72% of original)
+    scale = 0.72
+    new_w = int(composited.width * scale)
+    new_h = int(composited.height * scale)
+    composited = composited.resize((new_w, new_h), Image.Resampling.LANCZOS)
     
     # Create background
     if use_gradient:
@@ -467,14 +476,14 @@ def create_simple_float_frame(
         bg = Image.new("RGB", output_size, bg_color)
     bg = bg.convert("RGBA")
     
-    # Center position with float
+    # Center position with float offset
     x = (output_size[0] - composited.width) // 2
-    y = (output_size[1] - composited.height) // 2 + int(float_offset)
+    y = (output_size[1] - composited.height) // 2 - 40 + int(float_offset)
     
     # Add shadow
     shadow = create_phone_shadow(composited)
     shadow_x = x + (composited.width - shadow.width) // 2
-    shadow_y = y + composited.height - 30
+    shadow_y = y + composited.height - 20
     
     shadow_layer = Image.new('RGBA', output_size, (0, 0, 0, 0))
     shadow_rgba = Image.new('RGBA', shadow.size, (0, 0, 0, 0))
