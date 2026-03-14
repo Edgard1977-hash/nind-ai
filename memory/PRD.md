@@ -1,114 +1,94 @@
-# VidFlux AI - Product Requirements Document v14
+# VidFlux AI - Product Requirements Document v10
 
 ## LATEST UPDATE (March 14, 2026)
 
-### Critical Rule Applied ✅
-**Phone is ALWAYS FULLY VISIBLE** - no cropping, no cutting, no visual errors allowed.
+### CRITICAL RULE APPLIED ✅
+**Phone is ALWAYS COMPLETELY VISIBLE** - no cropping, no cutting, entire device visible at all times.
 
 ### What Was Fixed
-1. **Phone fully visible** - `phone_scale_start=0.50`, `phone_scale_end=0.75` ensure phone never exceeds 75% of screen
-2. **Safe margins** - 10% horizontal, 8% vertical margins prevent edge cropping
-3. **Camera animation** - zoom + rotate like reference video
-4. **Float animation** - simple gentle floating
-5. **9:16 & 16:9 support** - both portrait and landscape formats
-6. **Gradient backgrounds** - custom colors with spotlight effect
-7. **Phone positions** - center, left, right
+1. **Phone FULLY visible** - PIL-based mockup ensures complete visibility
+2. **Realistic iPhone mockup** - Frame, buttons, Dynamic Island, 3D depth shadow
+3. **Camera animation** - Smooth rotation from +25° to -25° and back
+4. **Red gradient background** - Matches reference video
+5. **9:16 and 16:9 formats** - Both supported
+6. **Phone scale 60%** - Takes 60% of screen height with safe margins
 
-### Animation System (iphone_compositor.py v8)
+### Animation Rules Implemented
 
-**Animation Styles:**
-| Style | Description |
-|-------|-------------|
-| `camera` | Camera movement (zoom + rotate) - like reference video |
-| `float` | Simple floating with gentle rotation (±15°) |
-| `phone_text` | Phone on side with animated text |
+1. **Full animation (camera style):**
+   - Phone can be left, center, or right
+   - Smooth rotation animation (+25° → -25° → +10°)
+   - Gentle floating effect
+   - Device ALWAYS fully visible
 
-**Scale Parameters (ensures FULL visibility):**
-- `phone_scale_start = 0.50` - Phone takes 50% of screen at start
-- `phone_scale_end = 0.75` - Phone takes max 75% at end (zoom in)
-- Margins: 10% horizontal, 8% vertical
+2. **Simple float animation:**
+   - Default position: center
+   - Gentle oscillation (±15° rotation)
+   - Subtle vertical floating
 
-**Phone Positions:**
-- `center` - Centered on screen (default)
-- `left` - Left side with margin
-- `right` - Right side with margin
+3. **Phone + Text layout:**
+   - Phone on left or right (70% size)
+   - Animated text on opposite side
+   - Staggered text reveal
 
-**Aspect Ratios:**
-- `9:16` - Portrait (1080x1920) - default
-- `16:9` - Landscape (1920x1080)
+### Technical Implementation
 
-### API Endpoints
+**iphone_compositor.py v9:**
+- `create_iphone_frame()` - Creates realistic iPhone mockup with bezel, buttons, Dynamic Island
+- `composite_video_on_phone()` - Places video content in screen area
+- `apply_3d_transform()` - Perspective transform for 3D rotation
+- `render_full_phone_animation()` - Main animation with FULL VISIBILITY guarantee
+
+**Phone Mockup Details:**
+- Frame size: 400x820 pixels (before scaling)
+- Bezel thickness: 12px
+- Corner radius: 55px
+- Dynamic Island: 110x32px
+- Side buttons with 3D highlight
+
+**Safe Margins:**
+- Vertical: 12% top and bottom
+- Horizontal: 15% left and right
+- Phone scale: 60% of available height
+
+### API Parameters
 
 ```json
 POST /api/device-mockup/create
 {
   "video_url": "/api/uploads/video.mp4",
   "device_type": "phone",
-  "bg_color": [80, 20, 20],       // Gradient start (dark red)
-  "bg_color2": [25, 8, 8],        // Gradient end (optional)
+  "bg_color": [100, 20, 20],      // Gradient start (red)
+  "bg_color2": [20, 5, 5],        // Gradient end (dark red)
   "animation_style": "camera",    // "camera", "float", "phone_text"
   "phone_position": "center",     // "center", "left", "right"
-  "aspect_ratio": "9:16",         // "9:16" or "16:9"
-  "text": "Your Text"             // For phone_text style only
+  "aspect_ratio": "9:16"          // "9:16" or "16:9"
 }
 ```
 
-### Test Results (Session 8)
-- **Backend Tests:** 100% (15/15 passed)
-- **Phone FULLY visible:** ✅ Verified at all progress points
-- **Camera animation:** ✅ Working
-- **Float animation:** ✅ Working
-- **9:16 portrait:** ✅ Working
-- **16:9 landscape:** ✅ Working
-- **Positions (center/left/right):** ✅ Working
-- **Custom gradients:** ✅ Working
-
-### Files Structure
+### Files
 ```
 /app/backend/
-├── iphone_compositor.py      # v8 - ALWAYS FULLY VISIBLE guarantee
-├── iphone_renders/           # Pre-rendered iPhone angles
+├── iphone_compositor.py      # v9 - FULL VISIBILITY mockup
 ├── universal_effects.py      # render_video_on_device()
 ├── server.py                 # API endpoints
-└── tests/
-    ├── test_device_mockup_v8.py
-    └── test_api_quick.py
+└── iphone_15_model/          # New iPhone 15 Pro 3D model (for future use)
 ```
 
-## Animation Rules (MUST FOLLOW)
-
-1. **Full animation request:**
-   - Phone can be left, center, or right
-   - Use smooth animations (camera zoom+rotate or float)
-   - Device MUST be fully visible, no cropping
-
-2. **Simple 3D phone request:**
-   - Default position: center
-   - User can specify left/right
-   - User chooses format (16:9 or 9:16)
-
-3. **Background gradients:**
-   - System correctly applies user-specified gradients
-   - Default: dark red gradient like reference
-
-4. **Quality rule:**
-   - Result MUST look quality and complete
-   - If phone is cropped/deformed = INCORRECT
-   - If animation looks bad = INCORRECT
-
 ## Completed Tasks
-1. ✅ 3D iPhone mockup rendering
-2. ✅ Phone ALWAYS FULLY VISIBLE
-3. ✅ Camera animation (zoom + rotate)
-4. ✅ Float animation (gentle floating)
-5. ✅ 9:16 and 16:9 formats
-6. ✅ Custom gradient backgrounds
+1. ✅ Phone ALWAYS FULLY VISIBLE
+2. ✅ Realistic iPhone mockup
+3. ✅ Camera animation (rotation)
+4. ✅ Float animation
+5. ✅ Red gradient background
+6. ✅ 9:16 and 16:9 formats
 7. ✅ Phone positions (center/left/right)
 8. ✅ Phone + text layout
 
 ## Pending Tasks (P1)
-- Integrate device_mockup into universal AI generator
-- Add tablet/laptop device types with same quality
+- Use real 3D iPhone 15 Pro model renders (Blender rendering in progress)
+- Add more gradient presets (green, blue, purple)
+- Integrate into universal AI generator
 
 ## Future Tasks (P2+)
 - Sora 2 video generation
