@@ -1,70 +1,59 @@
 """
-iPhone Mockup v12 - TRUE 3D with Blender Renders
-Uses pre-rendered 3D iPhone 16 models for realistic animation
-NO cropping, FULL phone visibility, real 3D appearance
+iPhone Mockup v13 - Smooth 3D Animation
+Uses single 3D render + perspective transform for fluid motion
 """
 
-# Import everything from the 3D compositor
 from iphone_compositor_3d import (
-    # Main functions
     render_3d_phone_frame,
     render_phone_frame,
     render_dynamic_phone,
     render_camera_animation,
     render_simple_float,
     render_full_phone_animation,
-    
-    # Utility functions
     load_render,
     interpolate_renders,
     find_screen_region,
     composite_screen_content,
-    apply_screen_perspective,
     create_gradient_bg,
     create_shadow,
     ease_in_out,
-    
-    # Legacy compatibility
     get_base_iphone,
     create_3d_iphone_mockup,
-    
-    # Constants
-    RENDER_DIR,
-    RENDER_ANGLES,
+    load_base_render,
+    get_phone_bounds,
+    apply_perspective_transform,
 )
 
-# Additional legacy wrappers for full backwards compatibility
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import math
+import numpy as np
+
+RENDER_DIR = "/app/backend/iphone_16_renders"
+RENDER_ANGLES = [-40, -30, -20, -10, 0, 10, 20, 30, 40]
 
 
 def render_phone_with_text(video_frame, text_lines, time_progress, output_size=(1920, 1080),
                            bg_color1=(90, 15, 15), bg_color2=(15, 5, 5),
                            phone_position="right"):
-    """Render phone with animated text on the side"""
     out_w, out_h = output_size
-    
-    # Determine phone angle and position
     rotation_y = 25 if phone_position == "right" else -25
     
-    # Get phone render with video content
-    phone = load_render(rotation_y)
-    phone_with_content = composite_screen_content(phone, video_frame, rotation_y)
+    base_phone = load_base_render()
+    phone_bounds = get_phone_bounds(base_phone)
+    phone_with_content = composite_screen_content(base_phone, video_frame, phone_bounds, rotation_y)
+    transformed = apply_perspective_transform(phone_with_content, rotation_y)
     
-    # Crop to phone bounds
-    import numpy as np
-    phone_arr = np.array(phone_with_content)
-    alpha = phone_arr[:,:,3]
+    trans_arr = np.array(transformed)
+    alpha = trans_arr[:,:,3]
     non_transparent = np.where(alpha > 10)
     
     if len(non_transparent[0]) > 0:
         y_min, y_max = non_transparent[0].min(), non_transparent[0].max()
         x_min, x_max = non_transparent[1].min(), non_transparent[1].max()
-        phone_cropped = phone_with_content.crop((x_min, y_min, x_max + 1, y_max + 1))
+        phone_cropped = transformed.crop((x_min, y_min, x_max + 1, y_max + 1))
     else:
-        phone_cropped = phone_with_content
+        phone_cropped = transformed
     
-    # Scale phone for horizontal layout (phone takes ~40% of width)
     margin = int(min(out_w, out_h) * 0.06)
     max_phone_w = int(out_w * 0.35)
     max_phone_h = int(out_h - 2 * margin)
@@ -78,10 +67,8 @@ def render_phone_with_text(video_frame, text_lines, time_progress, output_size=(
     
     phone_scaled = phone_cropped.resize((final_w, final_h), Image.Resampling.LANCZOS)
     
-    # Float animation
     float_y = int(10 * math.sin(time_progress * math.pi * 2))
     
-    # Position phone
     if phone_position == "right":
         phone_x = out_w - final_w - margin
         text_x = margin
@@ -94,17 +81,11 @@ def render_phone_with_text(video_frame, text_lines, time_progress, output_size=(
     phone_y = (out_h - final_h) // 2 + float_y
     phone_y = max(margin, min(phone_y, out_h - final_h - margin))
     
-    # Create background
     bg = create_gradient_bg(out_w, out_h, bg_color1, bg_color2).convert('RGBA')
-    
-    # Add shadow
     shadow = create_shadow(final_w, final_h, phone_x, phone_y, output_size, rotation_y)
     bg = Image.alpha_composite(bg, shadow)
-    
-    # Paste phone
     bg.paste(phone_scaled, (phone_x, phone_y), phone_scaled)
     
-    # Add text
     try:
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 
                                   int(min(out_w, out_h) * 0.04))
@@ -129,16 +110,13 @@ def render_phone_with_text(video_frame, text_lines, time_progress, output_size=(
             bbox = draw.textbbox((0, 0), line, font=font)
             x = text_x - (bbox[2] - bbox[0]) - slide
         
-        # Shadow
         draw.text((x + 2, y + 2), line, font=font, fill=(0, 0, 0, alpha_val // 3))
-        # Text
         draw.text((x, y), line, font=font, fill=(255, 255, 255, alpha_val))
     
     bg = Image.alpha_composite(bg, text_layer)
     return bg.convert('RGB')
 
 
-# More legacy function wrappers
 def create_simple_float_frame(video_frame, time_seconds, output_size=(1080, 1920),
                                bg_color=(90, 15, 15), use_gradient=True):
     return render_dynamic_phone(video_frame, (time_seconds % 4) / 4, output_size, bg_color, animation_style="float")
