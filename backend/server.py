@@ -2484,8 +2484,9 @@ class DeviceMockupRequest(BaseModel):
     """Request to create device mockup video"""
     video_url: str  # URL of uploaded video to show on device
     device_type: str = "phone"  # phone, tablet, laptop
-    rotation: float = 15  # 3D rotation angle
-    bg_color: List[int] = [255, 255, 255]  # Background color RGB
+    rotation: float = 12  # 3D rotation angle
+    bg_color: List[int] = [100, 25, 25]  # Background color RGB (dark red gradient by default)
+    animation_style: str = "cinematic"  # "float" or "cinematic"
 
 @api_router.post("/device-mockup/create")
 async def create_device_mockup(request: DeviceMockupRequest, background_tasks: BackgroundTasks):
@@ -2509,7 +2510,7 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
     # Create initial project record in DB so polling works
     await db.video_projects.insert_one({
         "id": project_id,
-        "prompt": f"3D {request.device_type} mockup",
+        "prompt": f"3D {request.device_type} mockup ({request.animation_style})",
         "format_id": "device_mockup",
         "status": "processing",
         "progress": 10,
@@ -2524,7 +2525,8 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         str(video_path),
         request.device_type,
         request.rotation,
-        tuple(request.bg_color)
+        tuple(request.bg_color),
+        request.animation_style
     )
     
     return {"id": project_id, "status": "processing"}
@@ -2535,11 +2537,12 @@ async def process_device_mockup(
     video_path: str, 
     device_type: str,
     rotation: float,
-    bg_color: tuple
+    bg_color: tuple,
+    animation_style: str = "cinematic"
 ):
     """Background task to render video on device mockup"""
     try:
-        logger.info(f"Starting device mockup render: {project_id}")
+        logger.info(f"Starting device mockup render: {project_id} ({animation_style})")
         
         result = await render_video_on_device(
             video_path=video_path,
@@ -2547,7 +2550,8 @@ async def process_device_mockup(
             device_type=device_type,
             rotation_y=rotation,
             fps=30,
-            bg_color=bg_color
+            bg_color=bg_color,
+            animation_style=animation_style
         )
         
         if result:

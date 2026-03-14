@@ -702,26 +702,27 @@ async def render_video_on_device(
     fps: int = 30,
     duration: float = None,
     bg_color: Tuple[int, int, int] = (255, 255, 255),
-    use_3d_model: bool = True  # Use real 3D iPhone model
+    use_3d_model: bool = True,
+    animation_style: str = "float"  # "float" or "cinematic"
 ) -> str:
     """
-    Render video playing on a 3D iPhone 16 mockup with smooth floating animation.
-    Uses pre-rendered 3D model frames for fast compositing.
+    Render video playing on a 3D iPhone 16 mockup with smooth animation.
     
     Args:
         video_path: Path to the video to display on device
         output_dir: Directory for output
         device_type: "phone", "tablet", "laptop"
-        rotation_y: 3D rotation angle in degrees
+        rotation_y: Base 3D rotation angle in degrees
         fps: Output FPS
         duration: Max duration (None = full video length)
-        bg_color: Background color
+        bg_color: Background color (or gradient base for cinematic)
         use_3d_model: If True, use real 3D iPhone model
+        animation_style: "float" for simple floating, "cinematic" for reference-style
     
     Returns:
         Path to rendered video with device mockup
     """
-    from iphone_compositor import create_floating_iphone_frame, select_iphone_render
+    from iphone_compositor import create_simple_float_frame, create_animated_iphone_frame
     
     output_path = output_dir / f"device_video_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"device_frames_{uuid.uuid4().hex[:8]}"
@@ -762,44 +763,39 @@ async def render_video_on_device(
         shutil.rmtree(video_frames_dir, ignore_errors=True)
         return ""
     
-    # Animation parameters
-    float_amplitude = 25  # pixels up/down
-    float_period = 3.5    # seconds for one cycle
-    rotation_amplitude = 4  # degrees left/right oscillation
-    
     # Check if 3D iPhone renders exist
     iphone_renders_exist = Path("/app/backend/iphone_renders/iphone_rot_12.png").exists()
     
     if use_3d_model and device_type == "phone" and iphone_renders_exist:
-        logger.info(f"Creating {total_frames} frames with 3D iPhone 16 model...")
+        logger.info(f"Creating {total_frames} frames with 3D iPhone 16 ({animation_style} animation)...")
         
         for i in range(total_frames):
             time_seconds = i / fps
-            
-            # Smooth floating animation
-            float_offset = math.sin(time_seconds * 2 * math.pi / float_period) * float_amplitude
-            
-            # Rotation oscillation - map to available renders (8, 12, 16)
-            rotation_offset = math.sin(time_seconds * 2 * math.pi / (float_period * 1.2)) * rotation_amplitude
-            current_rotation = rotation_y + rotation_offset
-            
-            # Select closest iPhone render
-            iphone_path = select_iphone_render(current_rotation)
-            closest_rotation = int(Path(iphone_path).stem.split("_")[-1])
             
             # Get video frame
             vf_idx = i % len(video_frame_files)
             video_frame = Image.open(video_frame_files[vf_idx]).convert("RGB")
             
-            # Create composited frame
-            frame = create_floating_iphone_frame(
-                iphone_path=iphone_path,
-                video_frame=video_frame,
-                float_offset=float_offset,
-                rotation=closest_rotation,
-                bg_color=bg_color,
-                output_size=(WIDTH, HEIGHT)
-            )
+            if animation_style == "cinematic":
+                # Reference-style animation with dark gradient background
+                time_progress = i / total_frames
+                frame = create_animated_iphone_frame(
+                    video_frame=video_frame,
+                    time_progress=time_progress,
+                    total_duration=video_duration,
+                    output_size=(WIDTH, HEIGHT),
+                    bg_color=bg_color if bg_color != (255, 255, 255) else (100, 25, 25)
+                )
+            else:
+                # Simple floating animation
+                use_gradient = bg_color != (255, 255, 255)
+                frame = create_simple_float_frame(
+                    video_frame=video_frame,
+                    time_seconds=time_seconds,
+                    output_size=(WIDTH, HEIGHT),
+                    bg_color=bg_color,
+                    use_gradient=use_gradient
+                )
             
             # Save frame
             frame_path = frames_dir / f"frame_{i:05d}.png"
@@ -810,6 +806,10 @@ async def render_video_on_device(
     else:
         # Fallback to PIL-based mockup
         logger.info(f"Using PIL-based mockup, creating {total_frames} frames...")
+        
+        float_amplitude = 25
+        float_period = 3.5
+        rotation_amplitude = 4
         
         for i in range(total_frames):
             time_seconds = i / fps

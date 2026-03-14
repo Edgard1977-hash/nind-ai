@@ -282,17 +282,18 @@ export const CreatePage = () => {
         setMontageMessage("Создаём 3D анимацию устройства...");
         setMontageProgress(10);
         
-        // Send to device mockup endpoint
+        // Send to device mockup endpoint with cinematic animation
         const response = await axios.post(`${API}/device-mockup/create`, {
           video_url: videoUrl,
           device_type: "phone",
-          rotation: 15,
-          bg_color: [255, 255, 255]
+          rotation: 12,
+          bg_color: [100, 25, 25],  // Dark red gradient
+          animation_style: "cinematic"
         });
         
         const projectId = response.data.id;
         setMontageProgress(30);
-        setMontageMessage("Рендерим 3D mockup...");
+        setMontageMessage("Рендерим cinematic анимацию...");
         
         // Poll for progress
         const pollInterval = setInterval(async () => {
@@ -303,7 +304,7 @@ export const CreatePage = () => {
             // Estimate progress based on status
             if (data.status === "processing") {
               setMontageProgress(prev => Math.min(prev + 5, 85));
-              setMontageMessage("Рендерим кадры устройства...");
+              setMontageMessage("Создаём плавную 3D анимацию...");
             }
             
             if (data.status === "completed" && data.video_url) {
@@ -312,7 +313,7 @@ export const CreatePage = () => {
               setMontageProgress(100);
               setMontageMessage("Готово!");
               setIsLoading(false);
-              toast.success("3D анимация готова!");
+              toast.success("Cinematic анимация готова!");
             } else if (data.status === "failed") {
               clearInterval(pollInterval);
               setIsLoading(false);
