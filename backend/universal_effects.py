@@ -701,11 +701,12 @@ async def render_video_on_device(
     rotation_y: float = 12,
     fps: int = 30,
     duration: float = None,
-    bg_color: Tuple[int, int, int] = (60, 80, 60),
+    bg_color: Tuple[int, int, int] = (35, 40, 35),
     use_3d_model: bool = True,
-    animation_style: str = "float",  # "float", "cinematic", or "phone_text"
+    animation_style: str = "reference",  # "reference", "center", "dramatic", "phone_text"
     text: str = "",
-    phone_position: str = "left"
+    phone_position: str = "right",
+    aspect_ratio: str = "16:9"  # "16:9" (landscape) or "9:16" (portrait)
 ) -> str:
     """
     Render video playing on a 3D iPhone 16 mockup with smooth animation.
@@ -719,9 +720,10 @@ async def render_video_on_device(
         duration: Max duration (None = full video length)
         bg_color: Background color (gradient base)
         use_3d_model: If True, use real 3D iPhone model
-        animation_style: "float", "cinematic", or "phone_text"
+        animation_style: "reference", "center", "dramatic", or "phone_text"
         text: Text to show alongside phone (for phone_text)
         phone_position: "left" or "right" (for phone_text)
+        aspect_ratio: "16:9" for landscape or "9:16" for portrait
     
     Returns:
         Path to rendered video with device mockup
@@ -729,8 +731,19 @@ async def render_video_on_device(
     from iphone_compositor import (
         create_simple_float_frame, 
         create_animated_iphone_frame,
-        create_phone_with_text_frame
+        create_phone_with_text_frame,
+        render_dynamic_phone
     )
+    
+    # Determine output dimensions based on aspect ratio
+    if aspect_ratio == "16:9":
+        output_width = 1920
+        output_height = 1080
+    else:  # 9:16
+        output_width = 1080
+        output_height = 1920
+    
+    output_size = (output_width, output_height)
     
     output_path = output_dir / f"device_video_{uuid.uuid4().hex[:8]}.mp4"
     frames_dir = output_dir / f"device_frames_{uuid.uuid4().hex[:8]}"
@@ -775,7 +788,7 @@ async def render_video_on_device(
     iphone_renders_exist = Path("/app/backend/iphone_renders/iphone_rot_12.png").exists()
     
     if use_3d_model and device_type == "phone" and iphone_renders_exist:
-        logger.info(f"Creating {total_frames} frames with 3D iPhone 16 ({animation_style} animation)...")
+        logger.info(f"Creating {total_frames} frames with 3D iPhone 16 ({animation_style} animation, {aspect_ratio})...")
         
         for i in range(total_frames):
             time_seconds = i / fps
@@ -791,27 +804,39 @@ async def render_video_on_device(
                     video_frame=video_frame,
                     text=text or "Your Text Here",
                     time_progress=time_progress,
-                    output_size=(WIDTH, HEIGHT),
+                    output_size=output_size,
                     bg_color=bg_color,
                     phone_position=phone_position
                 )
-            elif animation_style == "cinematic":
-                # Dramatic rotation animation
-                frame = create_animated_iphone_frame(
+            elif animation_style == "camera" or animation_style == "reference":
+                # Camera movement animation (zoom + rotate) like reference video
+                frame = render_dynamic_phone(
                     video_frame=video_frame,
                     time_progress=time_progress,
-                    total_duration=video_duration,
-                    output_size=(WIDTH, HEIGHT),
-                    bg_color=bg_color
+                    output_size=output_size,
+                    bg_color=bg_color,
+                    animation_style="camera",
+                    position=phone_position if phone_position in ["center", "left", "right"] else "center"
+                )
+            elif animation_style == "float":
+                # Simple floating animation
+                frame = render_dynamic_phone(
+                    video_frame=video_frame,
+                    time_progress=time_progress,
+                    output_size=output_size,
+                    bg_color=bg_color,
+                    animation_style="float",
+                    position=phone_position if phone_position in ["center", "left", "right"] else "center"
                 )
             else:
-                # Simple floating animation
-                frame = create_simple_float_frame(
+                # Static or default
+                frame = render_dynamic_phone(
                     video_frame=video_frame,
-                    time_seconds=time_seconds,
-                    output_size=(WIDTH, HEIGHT),
+                    time_progress=time_progress,
+                    output_size=output_size,
                     bg_color=bg_color,
-                    use_gradient=True
+                    animation_style="float",
+                    position="center"
                 )
             
             # Save frame
@@ -820,14 +845,9 @@ async def render_video_on_device(
             
             if i % 30 == 0:
                 logger.info(f"Frame {i}/{total_frames}")
-            frame_path = frames_dir / f"frame_{i:05d}.png"
-            frame.save(frame_path, "PNG")
-            
-            if i % 30 == 0:
-                logger.info(f"Frame {i}/{total_frames}")
     else:
         # Fallback to PIL-based mockup
-        logger.info(f"Using PIL-based mockup, creating {total_frames} frames...")
+        logger.info(f"Using PIL-based mockup, creating {total_frames} frames ({aspect_ratio})...")
         
         float_amplitude = 25
         float_period = 3.5
@@ -854,9 +874,9 @@ async def render_video_on_device(
             else:
                 mockup = create_3d_laptop_mockup(screen_frame, rotation_y=current_rotation)
             
-            bg = create_solid_bg(WIDTH, HEIGHT, bg_color)
-            mockup_x = (WIDTH - mockup.width) // 2
-            mockup_y = (HEIGHT - mockup.height) // 2
+            bg = create_solid_bg(output_width, output_height, bg_color)
+            mockup_x = (output_width - mockup.width) // 2
+            mockup_y = (output_height - mockup.height) // 2
             bg.paste(mockup, (mockup_x, mockup_y), mockup)
             
             frame_path = frames_dir / f"frame_{i:05d}.png"

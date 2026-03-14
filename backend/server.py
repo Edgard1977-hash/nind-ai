@@ -2484,22 +2484,29 @@ class DeviceMockupRequest(BaseModel):
     """Request to create device mockup video"""
     video_url: str  # URL of uploaded video to show on device
     device_type: str = "phone"  # phone, tablet, laptop
-    rotation: float = 12  # 3D rotation angle
-    bg_color: List[int] = [60, 80, 60]  # Background color RGB (greenish like reference)
-    animation_style: str = "cinematic"  # "float", "cinematic", or "phone_text"
+    rotation: float = 12  # Base 3D rotation angle
+    bg_color: List[int] = [80, 20, 20]  # Background gradient start color (dark red like reference)
+    bg_color2: List[int] = None  # Background gradient end color (optional, auto-generated if not set)
+    animation_style: str = "camera"  # "camera" (zoom+rotate), "float" (simple), "phone_text" (with text)
     text: str = ""  # Text to show alongside phone (for phone_text style)
-    phone_position: str = "left"  # "left" or "right" (for phone_text style)
+    phone_position: str = "center"  # "center", "left", "right" - position of phone
+    aspect_ratio: str = "9:16"  # "16:9" (landscape) or "9:16" (portrait)
 
 @api_router.post("/device-mockup/create")
 async def create_device_mockup(request: DeviceMockupRequest, background_tasks: BackgroundTasks):
     """
     Create video showing uploaded content on a 3D device (phone/tablet/laptop).
-    Use this for app interface demos.
+    Phone is ALWAYS FULLY VISIBLE - no cropping.
     
     Animation styles:
-    - "float": Simple floating animation
-    - "cinematic": Dramatic rotation with dark gradient
+    - "camera": Camera movement animation (zoom + rotate) like reference video
+    - "float": Simple floating animation with gentle movement
     - "phone_text": Phone on side with animated text
+    
+    Phone positions:
+    - "center": Phone centered on screen
+    - "left": Phone on left side
+    - "right": Phone on right side
     """
     # Validate video exists
     video_url = request.video_url
@@ -2539,7 +2546,8 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         tuple(request.bg_color),
         request.animation_style,
         request.text,
-        request.phone_position
+        request.phone_position,
+        request.aspect_ratio
     )
     
     return {"id": project_id, "status": "processing"}
@@ -2551,13 +2559,14 @@ async def process_device_mockup(
     device_type: str,
     rotation: float,
     bg_color: tuple,
-    animation_style: str = "cinematic",
+    animation_style: str = "reference",
     text: str = "",
-    phone_position: str = "left"
+    phone_position: str = "right",
+    aspect_ratio: str = "16:9"
 ):
     """Background task to render video on device mockup"""
     try:
-        logger.info(f"Starting device mockup render: {project_id} ({animation_style})")
+        logger.info(f"Starting device mockup render: {project_id} ({animation_style}, {aspect_ratio})")
         
         result = await render_video_on_device(
             video_path=video_path,
@@ -2568,7 +2577,8 @@ async def process_device_mockup(
             bg_color=bg_color,
             animation_style=animation_style,
             text=text,
-            phone_position=phone_position
+            phone_position=phone_position,
+            aspect_ratio=aspect_ratio
         )
         
         if result:

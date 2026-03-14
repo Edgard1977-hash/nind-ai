@@ -282,13 +282,15 @@ export const CreatePage = () => {
         setMontageMessage("Создаём 3D анимацию устройства...");
         setMontageProgress(10);
         
-        // Send to device mockup endpoint with smooth animation
+        // Send to device mockup endpoint with camera animation
         const response = await axios.post(`${API}/device-mockup/create`, {
           video_url: videoUrl,
           device_type: "phone",
           rotation: 12,
-          bg_color: [60, 80, 60],  // Greenish gradient
-          animation_style: "float"  // Smooth floating animation
+          bg_color: [80, 20, 20],  // Dark red gradient like reference
+          animation_style: "camera",  // Camera movement animation (zoom + rotate)
+          phone_position: "center",
+          aspect_ratio: "9:16"  // Portrait format
         });
         
         const projectId = response.data.id;
