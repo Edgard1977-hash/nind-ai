@@ -71,46 +71,35 @@ def get_screen_rect(phone_bounds, angle_y):
     """
     Calculate screen content area based on phone rotation angle.
     
-    At sharp angles (±40-45°), a significant portion of the phone width
-    is the visible side edge that must NOT be covered by content.
-    
-    Pixel analysis at -45°:
-    - Phone width: 313 px
-    - Side edge + bezel gap: ~44 px = ~14%
-    - Safe content should end at ~452 px (from 496 edge)
-    
-    We use a dynamic margin that scales with angle:
-    - 0°: minimal margin (just bezel ~3%)
-    - 45°: maximum margin (~15% for side edge + bezel)
+    At rotated angles, add extra margin on the side where the edge is visible
+    to prevent content from covering the phone's side frame.
     """
     px_min, py_min, px_max, py_max = phone_bounds
     pw = px_max - px_min
     ph = py_max - py_min
     
-    # Base margin (just bezel, for front view)
-    base = 0.032
-    top = 0.025
-    bottom = 0.02
+    # Base margins for bezel (front view)
+    base_h = 0.025  # horizontal bezel
+    top = 0.02
+    bottom = 0.015
     
-    # Additional margin for side edge at rotated angles
-    # Linear interpolation: 0% at 0°, 15% at 45°
+    # Additional margin for visible side edge at angles
+    # At 45° the side edge takes about 12-13% of phone width
     abs_angle = abs(angle_y)
     angle_factor = min(abs_angle / 45.0, 1.0)
-    
-    # Edge margin: 0% at 0°, ~15% at 45°
-    edge_margin = 0.15 * angle_factor
+    edge_margin = 0.13 * angle_factor
     
     if angle_y > 0:
-        # Positive angle (phone rotated right): LEFT side edge is visible
-        left = base + edge_margin
-        right = base
+        # Phone rotated right: LEFT side edge visible
+        left = base_h + edge_margin
+        right = base_h
     elif angle_y < 0:
-        # Negative angle (phone rotated left): RIGHT side edge is visible
-        left = base
-        right = base + edge_margin
+        # Phone rotated left: RIGHT side edge visible
+        left = base_h
+        right = base_h + edge_margin
     else:
-        left = base
-        right = base
+        left = base_h
+        right = base_h
     
     sx = px_min + int(pw * left)
     sy = py_min + int(ph * top)
@@ -144,70 +133,16 @@ def find_coeffs(src, dst):
 
 def create_mask(phone_img, rect, angle_y=0):
     """
-    Create mask for screen area using geometric approach.
-    
-    At rotated angles, the visible side edge has a varying width.
-    We use more aggressive margins to ensure content stays well inside
-    the visible screen area.
-    
-    Key insight: The screen rect already has margins from get_screen_rect(),
-    but additional masking is needed to follow the curved/tapered edge shape.
+    Create mask for screen area.
+    Uses color analysis: screen has a blue tint (B > R), 
+    while side edge is neutral gray (R ≈ G ≈ B).
     """
     sx, sy, sw, sh = rect
     arr = np.array(phone_img)
-    alpha = arr[:,:,3]
+    r_ch, g_ch, b_ch, alpha = arr[:,:,0], arr[:,:,1], arr[:,:,2], arr[:,:,3]
     
-    # Start with full white mask
-    mask = np.ones((sh, sw), dtype=np.uint8) * 255
+    mask = np.zeros((sh, sw), dtype=np.uint8)
     
-    abs_angle = abs(angle_y)
-    
-    # Calculate side edge exclusion with more aggressive margins
-    # The visible side edge is wider at the top and narrower at the bottom
-    if abs_angle > 3:
-        # Scale with angle: 0% at 0°, max at 45°
-        angle_factor = min(abs_angle / 45.0, 1.0)
-        
-        # More aggressive margins: 25% at top, 8% at bottom at 45°
-        top_edge_pct = 0.25 * angle_factor
-        bottom_edge_pct = 0.08 * angle_factor
-        
-        for y in range(sh):
-            # Linear interpolation of edge width from top to bottom
-            y_factor = y / max(sh - 1, 1)  # 0 at top, 1 at bottom
-            edge_pct = top_edge_pct * (1 - y_factor) + bottom_edge_pct * y_factor
-            edge_width = int(sw * edge_pct)
-            
-            if angle_y < 0:
-                # Negative angle: right side edge visible, mask RIGHT side
-                for x in range(max(0, sw - edge_width), sw):
-                    mask[y, x] = 0
-            else:
-                # Positive angle: left side edge visible, mask LEFT side
-                for x in range(min(edge_width, sw)):
-                    mask[y, x] = 0
-    
-    # Exclude Dynamic Island (top center area)
-    # DI is about 6% height, centered
-    di_height = int(sh * 0.06)
-    di_margin = int(sw * 0.15)
-    for y in range(min(di_height, sh)):
-        iy = sy + y
-        if iy >= arr.shape[0]:
-            continue
-        for x in range(di_margin, sw - di_margin):
-            ix = sx + x
-            if ix >= arr.shape[1]:
-                continue
-            if alpha[iy, ix] < 15:
-                mask[y, x] = 0
-                continue
-            r, g, b = arr[iy, ix, 0], arr[iy, ix, 1], arr[iy, ix, 2]
-            brightness = int(r) + int(g) + int(b)
-            if brightness < 30:
-                mask[y, x] = 0
-    
-    # Mask any transparent areas
     for y in range(sh):
         iy = sy + y
         if iy >= arr.shape[0]:
@@ -216,10 +151,28 @@ def create_mask(phone_img, rect, angle_y=0):
             ix = sx + x
             if ix >= arr.shape[1]:
                 continue
+            
             if alpha[iy, ix] < 15:
-                mask[y, x] = 0
+                continue
+            
+            r, g, b = int(r_ch[iy, ix]), int(g_ch[iy, ix]), int(b_ch[iy, ix])
+            brightness = r + g + b
+            
+            # Screen material has:
+            # - brightness in range 90-120
+            # - blue tint: B > R by at least 5
+            # - B > G by at least 5
+            is_screen = (
+                90 <= brightness <= 120 and
+                b > r + 5 and
+                b > g + 5
+            )
+            
+            if is_screen:
+                mask[y, x] = 255
     
-    return Image.fromarray(mask, 'L').filter(ImageFilter.GaussianBlur(1.5))
+    # Light blur for smooth edges
+    return Image.fromarray(mask, 'L').filter(ImageFilter.GaussianBlur(0.8))
 
 
 def composite(phone, video, angle):
