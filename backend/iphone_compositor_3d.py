@@ -325,8 +325,17 @@ def render_3d_phone_frame(video, time_progress, output_size=(1080,1920),
 # Compat
 def render_phone_frame(v,t,s=(1080,1920),c1=(90,15,15),c2=(15,5,5),p="c",a="camera"):
     return render_3d_phone_frame(v,t,s,c1,c2,a)
-def render_dynamic_phone(v,t,s=(1080,1920),c=(90,15,15),c2=None,ps=0.55,a="camera",p="c"):
-    return render_3d_phone_frame(v,t,s,c,c2 or tuple(max(0,x-70)for x in c),a)
+def render_dynamic_phone(video_frame=None, time_progress=0, output_size=(1080,1920), bg_color=(90,15,15), 
+                         bg_color2=None, phone_scale=0.55, animation_style="camera", position="center",
+                         v=None, t=None, s=None, c=None, c2=None, ps=None, a=None, p=None):
+    # Support both old positional style and new named arguments
+    vf = video_frame if video_frame is not None else v
+    tp = time_progress if time_progress != 0 else (t if t is not None else 0)
+    os = output_size if output_size != (1080,1920) else (s if s is not None else (1080,1920))
+    bc = bg_color if bg_color != (90,15,15) else (c if c is not None else (90,15,15))
+    bc2 = bg_color2 or c2 or tuple(max(0,x-70) for x in bc)
+    astyle = animation_style if animation_style != "camera" else (a if a is not None else "camera")
+    return render_3d_phone_frame(vf, tp, os, bc, bc2, astyle)
 def render_camera_animation(v,t,s=(1080,1920),c1=(90,15,15),c2=(15,5,5),**k):
     return render_3d_phone_frame(v,t,s,c1,c2,"camera")
 def render_simple_float(v,t,s=(1080,1920),c1=(90,15,15),c2=(15,5,5),**k):
@@ -343,3 +352,8 @@ def apply_perspective_transform(i,a,x=0): return apply_perspective(i,a)
 def find_screen_region(p): return get_screen_rect(get_phone_bounds(p),0)
 def composite_screen_content(p,v,a=0): return composite(p,v,a)
 def composite_screen_locked(p,v): return composite(p,v,0)
+
+
+# Compatibility aliases
+def create_gradient_bg(w, h, c1, c2): return gradient(w, h, c1, c2)
+def create_shadow(pw, ph, px, py, size, angle): return shadow(pw, ph, px, py, size, angle)
