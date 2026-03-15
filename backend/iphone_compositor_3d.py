@@ -388,3 +388,9 @@ def apply_perspective_transform(img, angle_y, angle_x=0):
 def find_screen_region(phone_img):
     bounds = get_phone_bounds(phone_img)
     return get_screen_rect(bounds)
+
+# Aliases for backwards compatibility
+composite_screen_content = composite_screen_locked
+
+def ease_in_out(t):
+    return -(math.cos(math.pi * t) - 1) / 2
