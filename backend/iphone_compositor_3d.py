@@ -1,9 +1,6 @@
 """
-iPhone 16 3D Compositor v5 - FIXED SCREEN CONTENT
-- 91 pre-rendered angles (step 1°) for maximum smoothness  
-- Content LOCKED to screen - no floating
-- No status bar - just black bars for non-matching videos
-- Full screen for matching aspect ratio
+iPhone 16 3D Compositor v11 - CORRECT edge handling
+Based on pixel analysis: at 40°, edge is 43px out of 373px = 11.5%
 """
 
 from PIL import Image, ImageDraw, ImageFilter
@@ -13,384 +10,336 @@ import os
 
 RENDER_DIR = "/app/backend/iphone_16_renders_final"
 FALLBACK_DIR = "/app/backend/iphone_16_renders_ultra"
+FALLBACK_DIR2 = "/app/backend/iphone_16_renders_hd"
 
 AVAILABLE_ANGLES = list(range(-45, 46, 1))
-
-# Fixed screen position as percentage of phone bounds
-# These are carefully calibrated for the iPhone 16 model
-SCREEN_MARGIN = {
-    'left': 0.048,
-    'right': 0.048, 
-    'top': 0.022,
-    'bottom': 0.018
-}
-
-IPHONE_SCREEN_RATIO = 19.5 / 9
 
 
 def get_render_path(angle):
     nearest = min(AVAILABLE_ANGLES, key=lambda x: abs(x - angle))
     sign = '+' if nearest >= 0 else ''
-    
-    # Try final renders first
-    path = os.path.join(RENDER_DIR, f"iphone_{sign}{nearest:03d}.png")
-    if os.path.exists(path):
-        return path
-    
-    # Fallback to ultra renders (step 2)
-    nearest_2 = min(list(range(-45, 46, 2)), key=lambda x: abs(x - angle))
-    sign_2 = '+' if nearest_2 >= 0 else ''
-    path_2 = os.path.join(FALLBACK_DIR, f"iphone_{sign_2}{nearest_2:03d}.png")
-    if os.path.exists(path_2):
-        return path_2
-    
+    for d in [RENDER_DIR, FALLBACK_DIR, FALLBACK_DIR2]:
+        p = os.path.join(d, f"iphone_{sign}{nearest:03d}.png")
+        if os.path.exists(p):
+            return p
+        for o in [0, 1, -1, 2, -2, 3, -3]:
+            t = nearest + o
+            s = '+' if t >= 0 else ''
+            p2 = os.path.join(d, f"iphone_{s}{t:03d}.png")
+            if os.path.exists(p2):
+                return p2
     return None
 
 
 def load_render_at_angle(angle):
-    path = get_render_path(angle)
-    if path and os.path.exists(path):
-        return Image.open(path).convert('RGBA')
-    # Last fallback
-    for d in [RENDER_DIR, FALLBACK_DIR]:
-        p = os.path.join(d, "iphone_+000.png")
-        if os.path.exists(p):
-            return Image.open(p).convert('RGBA')
-    raise FileNotFoundError("No renders found")
+    p = get_render_path(angle)
+    if p:
+        return Image.open(p).convert('RGBA')
+    for d in [RENDER_DIR, FALLBACK_DIR, FALLBACK_DIR2]:
+        for t in [0, 10, -10]:
+            s = '+' if t >= 0 else ''
+            p = os.path.join(d, f"iphone_{s}{t:03d}.png")
+            if os.path.exists(p):
+                return Image.open(p).convert('RGBA')
+    raise FileNotFoundError("No renders")
 
 
 def interpolate_renders(angle):
-    """Smooth interpolation between adjacent angles"""
     angle = max(-45, min(45, angle))
-    
-    # Find surrounding angles
-    lower = max(a for a in AVAILABLE_ANGLES if a <= angle)
-    upper = min(a for a in AVAILABLE_ANGLES if a >= angle)
-    
+    lower = max((a for a in AVAILABLE_ANGLES if a <= angle), default=-45)
+    upper = min((a for a in AVAILABLE_ANGLES if a >= angle), default=45)
     if lower == upper:
         return load_render_at_angle(lower)
-    
-    lower_img = load_render_at_angle(lower)
-    upper_img = load_render_at_angle(upper)
-    
-    t = (angle - lower) / (upper - lower)
-    return Image.blend(lower_img, upper_img, t)
+    try:
+        li, ui = load_render_at_angle(lower), load_render_at_angle(upper)
+        return Image.blend(li, ui, (angle - lower) / (upper - lower))
+    except:
+        return load_render_at_angle(round(angle))
 
 
 def get_phone_bounds(img):
-    """Get tight bounding box of phone"""
     arr = np.array(img)
-    alpha = arr[:,:,3]
-    mask = alpha > 10
-    
-    if not mask.any():
+    m = arr[:,:,3] > 10
+    if not m.any():
         return (0, 0, img.width, img.height)
-    
-    rows = mask.any(axis=1)
-    cols = mask.any(axis=0)
-    y_min, y_max = np.where(rows)[0][[0, -1]]
-    x_min, x_max = np.where(cols)[0][[0, -1]]
-    
-    return (int(x_min), int(y_min), int(x_max), int(y_max))
+    rows, cols = m.any(1), m.any(0)
+    return (int(np.where(cols)[0][0]), int(np.where(rows)[0][0]),
+            int(np.where(cols)[0][-1]), int(np.where(rows)[0][-1]))
 
 
-def get_screen_rect(phone_bounds):
-    """Get fixed screen rectangle within phone bounds"""
+def get_screen_rect(phone_bounds, angle_y):
+    """
+    Calculate screen content area based on phone rotation angle.
+    
+    At sharp angles (±40-45°), a significant portion of the phone width
+    is the visible side edge that must NOT be covered by content.
+    
+    Pixel analysis at -45°:
+    - Phone width: 313 px
+    - Side edge + bezel gap: ~44 px = ~14%
+    - Safe content should end at ~452 px (from 496 edge)
+    
+    We use a dynamic margin that scales with angle:
+    - 0°: minimal margin (just bezel ~3%)
+    - 45°: maximum margin (~15% for side edge + bezel)
+    """
     px_min, py_min, px_max, py_max = phone_bounds
     pw = px_max - px_min
     ph = py_max - py_min
     
-    # Calculate screen bounds with fixed margins
-    sx = px_min + int(pw * SCREEN_MARGIN['left'])
-    sy = py_min + int(ph * SCREEN_MARGIN['top'])
-    sw = pw - int(pw * (SCREEN_MARGIN['left'] + SCREEN_MARGIN['right']))
-    sh = ph - int(ph * (SCREEN_MARGIN['top'] + SCREEN_MARGIN['bottom']))
+    # Base margin (just bezel, for front view)
+    base = 0.032
+    top = 0.025
+    bottom = 0.02
     
-    return (sx, sy, sw, sh)
-
-
-def create_screen_mask(phone_img, screen_rect):
-    """Create precise mask for screen area only"""
-    sx, sy, sw, sh = screen_rect
+    # Additional margin for side edge at rotated angles
+    # Linear interpolation: 0% at 0°, 15% at 45°
+    abs_angle = abs(angle_y)
+    angle_factor = min(abs_angle / 45.0, 1.0)
     
-    phone_arr = np.array(phone_img)
-    alpha = phone_arr[:,:,3]
-    r, g, b = phone_arr[:,:,0], phone_arr[:,:,1], phone_arr[:,:,2]
+    # Edge margin: 0% at 0°, ~15% at 45°
+    edge_margin = 0.15 * angle_factor
     
-    # Create mask only within screen rect
-    mask = np.zeros((phone_img.height, phone_img.width), dtype=np.uint8)
-    
-    for y in range(sy, min(sy + sh, phone_img.height)):
-        for x in range(sx, min(sx + sw, phone_img.width)):
-            if alpha[y, x] > 10:
-                pr, pg, pb = r[y, x], g[y, x], b[y, x]
-                
-                # Dynamic Island is very dark black
-                is_dynamic_island = pr < 15 and pg < 15 and pb < 18
-                
-                # Screen area is dark but not pure black
-                is_screen = pr < 90 and pg < 90 and pb < 110
-                
-                if is_screen and not is_dynamic_island:
-                    mask[y, x] = 255
-    
-    return Image.fromarray(mask, mode='L')
-
-
-def prepare_video_content(video_frame, screen_w, screen_h):
-    """
-    Prepare video for screen display.
-    - If aspect matches iPhone: fill entire screen
-    - If not: center with black bars (no status bar)
-    """
-    video_w, video_h = video_frame.size
-    video_ratio = video_h / video_w
-    screen_ratio = screen_h / screen_w
-    
-    # Create black screen canvas
-    screen = Image.new('RGB', (screen_w, screen_h), (0, 0, 0))
-    
-    # Check if video matches iPhone aspect (within 15% tolerance)
-    ratio_diff = abs(video_ratio - IPHONE_SCREEN_RATIO) / IPHONE_SCREEN_RATIO
-    
-    if ratio_diff <= 0.15:
-        # Matching ratio - fill entire screen
-        video_resized = video_frame.resize((screen_w, screen_h), Image.Resampling.LANCZOS)
-        screen.paste(video_resized, (0, 0))
+    if angle_y > 0:
+        # Positive angle (phone rotated right): LEFT side edge is visible
+        left = base + edge_margin
+        right = base
+    elif angle_y < 0:
+        # Negative angle (phone rotated left): RIGHT side edge is visible
+        left = base
+        right = base + edge_margin
     else:
-        # Non-matching - center with black bars (NO status bar)
-        scale = min(screen_w / video_w, screen_h / video_h)
-        new_w = int(video_w * scale)
-        new_h = int(video_h * scale)
-        
-        video_resized = video_frame.resize((new_w, new_h), Image.Resampling.LANCZOS)
-        
-        # Center
-        x = (screen_w - new_w) // 2
-        y = (screen_h - new_h) // 2
-        screen.paste(video_resized, (x, y))
+        left = base
+        right = base
     
-    return screen
+    sx = px_min + int(pw * left)
+    sy = py_min + int(ph * top)
+    sw = px_max - sx - int(pw * right)
+    sh = py_max - sy - int(ph * bottom)
+    
+    return (sx, sy, max(1, sw), max(1, sh))
 
 
-def composite_screen_locked(phone_img, video_frame):
+def apply_perspective(img, angle_y):
+    if abs(angle_y) < 3:
+        return img
+    w, h = img.size
+    c = abs(math.sin(math.radians(angle_y))) * 0.12
+    v = int(h * c * 0.5)
+    if angle_y > 0:
+        coeffs = find_coeffs([(0,0),(w,0),(w,h),(0,h)], [(0,0),(w,v),(w,h-v),(0,h)])
+    else:
+        coeffs = find_coeffs([(0,0),(w,0),(w,h),(0,h)], [(0,v),(w,0),(w,h),(0,h-v)])
+    return img.transform((w, h), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
+
+
+def find_coeffs(src, dst):
+    m = []
+    for s, d in zip(src, dst):
+        m.append([d[0], d[1], 1, 0, 0, 0, -s[0]*d[0], -s[0]*d[1]])
+        m.append([0, 0, 0, d[0], d[1], 1, -s[1]*d[0], -s[1]*d[1]])
+    return tuple(np.linalg.lstsq(np.array(m, dtype=np.float64), 
+                np.array([p for pair in src for p in pair], dtype=np.float64), rcond=None)[0])
+
+
+def create_mask(phone_img, rect, angle_y=0):
     """
-    Composite video onto phone with LOCKED positioning.
-    Content stays fixed within screen bounds.
+    Create mask for screen area using geometric approach.
+    
+    At rotated angles, the visible side edge has a varying width.
+    We use more aggressive margins to ensure content stays well inside
+    the visible screen area.
+    
+    Key insight: The screen rect already has margins from get_screen_rect(),
+    but additional masking is needed to follow the curved/tapered edge shape.
     """
-    result = phone_img.copy()
+    sx, sy, sw, sh = rect
+    arr = np.array(phone_img)
+    alpha = arr[:,:,3]
     
-    # Get phone and screen bounds
-    phone_bounds = get_phone_bounds(phone_img)
-    screen_rect = get_screen_rect(phone_bounds)
-    sx, sy, sw, sh = screen_rect
+    # Start with full white mask
+    mask = np.ones((sh, sw), dtype=np.uint8) * 255
     
-    if sw <= 0 or sh <= 0:
+    abs_angle = abs(angle_y)
+    
+    # Calculate side edge exclusion with more aggressive margins
+    # The visible side edge is wider at the top and narrower at the bottom
+    if abs_angle > 3:
+        # Scale with angle: 0% at 0°, max at 45°
+        angle_factor = min(abs_angle / 45.0, 1.0)
+        
+        # More aggressive margins: 25% at top, 8% at bottom at 45°
+        top_edge_pct = 0.25 * angle_factor
+        bottom_edge_pct = 0.08 * angle_factor
+        
+        for y in range(sh):
+            # Linear interpolation of edge width from top to bottom
+            y_factor = y / max(sh - 1, 1)  # 0 at top, 1 at bottom
+            edge_pct = top_edge_pct * (1 - y_factor) + bottom_edge_pct * y_factor
+            edge_width = int(sw * edge_pct)
+            
+            if angle_y < 0:
+                # Negative angle: right side edge visible, mask RIGHT side
+                for x in range(max(0, sw - edge_width), sw):
+                    mask[y, x] = 0
+            else:
+                # Positive angle: left side edge visible, mask LEFT side
+                for x in range(min(edge_width, sw)):
+                    mask[y, x] = 0
+    
+    # Exclude Dynamic Island (top center area)
+    # DI is about 6% height, centered
+    di_height = int(sh * 0.06)
+    di_margin = int(sw * 0.15)
+    for y in range(min(di_height, sh)):
+        iy = sy + y
+        if iy >= arr.shape[0]:
+            continue
+        for x in range(di_margin, sw - di_margin):
+            ix = sx + x
+            if ix >= arr.shape[1]:
+                continue
+            if alpha[iy, ix] < 15:
+                mask[y, x] = 0
+                continue
+            r, g, b = arr[iy, ix, 0], arr[iy, ix, 1], arr[iy, ix, 2]
+            brightness = int(r) + int(g) + int(b)
+            if brightness < 30:
+                mask[y, x] = 0
+    
+    # Mask any transparent areas
+    for y in range(sh):
+        iy = sy + y
+        if iy >= arr.shape[0]:
+            continue
+        for x in range(sw):
+            ix = sx + x
+            if ix >= arr.shape[1]:
+                continue
+            if alpha[iy, ix] < 15:
+                mask[y, x] = 0
+    
+    return Image.fromarray(mask, 'L').filter(ImageFilter.GaussianBlur(1.5))
+
+
+def composite(phone, video, angle):
+    result = phone.copy()
+    bounds = get_phone_bounds(phone)
+    rect = get_screen_rect(bounds, angle)
+    sx, sy, sw, sh = rect
+    
+    if sw <= 10 or sh <= 10:
         return result
     
-    # Prepare video content for this screen size
-    screen_content = prepare_video_content(video_frame, sw, sh)
-    screen_rgba = screen_content.convert('RGBA')
+    vid = video.resize((sw, sh), Image.Resampling.LANCZOS)
+    vid = apply_perspective(vid, angle)
+    if vid.mode != 'RGBA':
+        vid = vid.convert('RGBA')
     
-    # Create precise screen mask
-    mask = create_screen_mask(phone_img, screen_rect)
-    
-    # Crop mask to screen area
-    mask_cropped = mask.crop((sx, sy, sx + sw, sy + sh))
-    
-    # Slight blur for smooth edges
-    mask_cropped = mask_cropped.filter(ImageFilter.GaussianBlur(1))
-    
-    # Paste content at exact screen position
-    result.paste(screen_rgba, (sx, sy), mask_cropped)
-    
+    mask = create_mask(phone, rect, angle)
+    result.paste(vid, (sx, sy), mask)
     return result
 
 
-def create_gradient_bg(w, h, c1, c2):
+def gradient(w, h, c1, c2):
     y, x = np.mgrid[0:h, 0:w]
-    cx, cy = w // 2, h // 2
-    dist = np.sqrt((x - cx)**2 + (y - cy)**2)
-    max_dist = math.sqrt((w/2)**2 + (h/2)**2)
-    t = np.clip(dist / max_dist, 0, 1) ** 0.6
-    
-    r = (c1[0] * (1 - t) + c2[0] * t).astype(np.uint8)
-    g = (c1[1] * (1 - t) + c2[1] * t).astype(np.uint8)
-    b = (c1[2] * (1 - t) + c2[2] * t).astype(np.uint8)
-    
-    return Image.fromarray(np.stack([r, g, b], axis=-1), mode='RGB')
+    d = np.sqrt((x-w/2)**2 + (y-h/2)**2)
+    t = np.clip(d / (math.sqrt(w*w+h*h)/2), 0, 1) ** 0.6
+    return Image.fromarray(np.stack([
+        (c1[0]*(1-t)+c2[0]*t).astype(np.uint8),
+        (c1[1]*(1-t)+c2[1]*t).astype(np.uint8),
+        (c1[2]*(1-t)+c2[2]*t).astype(np.uint8)
+    ], -1), 'RGB')
 
 
-def create_shadow(phone_w, phone_h, pos_x, pos_y, output_size, angle):
-    shadow = Image.new('RGBA', output_size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(shadow)
-    
-    sw = int(phone_w * 0.45)
-    sh = int(phone_w * 0.05)
-    sx = pos_x + (phone_w - sw) // 2 + int(angle * 0.4)
-    sy = pos_y + phone_h + 15
-    sy = min(sy, output_size[1] - sh - 10)
-    
-    for i in range(25, 0, -1):
-        a = int(20 * (i / 25))
-        exp = (25 - i) * 4
-        draw.ellipse([sx - exp, sy - exp//4, sx + sw + exp, sy + sh + exp//4], fill=(0, 0, 0, a))
-    
-    return shadow.filter(ImageFilter.GaussianBlur(12))
+def shadow(pw, ph, px, py, size, angle):
+    s = Image.new('RGBA', size, (0,0,0,0))
+    d = ImageDraw.Draw(s)
+    sw, sh = int(pw*0.4), int(pw*0.04)
+    sx = px + (pw-sw)//2 + int(angle*0.5)
+    sy = min(py + ph + 12, size[1] - sh - 8)
+    for i in range(20, 0, -1):
+        d.ellipse([sx-(20-i)*3, sy-(20-i)//4*3, sx+sw+(20-i)*3, sy+sh+(20-i)//4*3], 
+                  fill=(0,0,0,int(18*i/20)))
+    return s.filter(ImageFilter.GaussianBlur(10))
 
 
-def ease_smooth(t):
-    """Extra smooth easing"""
-    return t * t * t * (t * (t * 6 - 15) + 10)
+def ease(t):
+    return t*t*t*(t*(t*6-15)+10)
+
+def ease_in_out(t):
+    return -(math.cos(math.pi*t)-1)/2
 
 
-def render_3d_phone_frame(video_frame, time_progress, output_size=(1080, 1920),
-                          bg_color1=(90, 15, 15), bg_color2=(15, 5, 5), animation_style="camera"):
-    """
-    Render 3D iPhone with ultra-smooth animation.
-    Screen content is LOCKED in place.
-    """
-    out_w, out_h = output_size
+def render_3d_phone_frame(video, time_progress, output_size=(1080,1920),
+                          bg1=(90,15,15), bg2=(15,5,5), animation_style="camera"):
+    ow, oh = output_size
     
-    # VERY SLOW and SMOOTH animation with small angle range
     if animation_style == "camera":
-        # Slower motion: ±15° range (smaller than before)
-        if time_progress < 0.45:
-            t = ease_smooth(time_progress / 0.45)
-            angle_y = 14 - 4 * t  # 14 -> 10
-        elif time_progress < 0.75:
-            t = ease_smooth((time_progress - 0.45) / 0.30)
-            angle_y = 10 - 24 * t  # 10 -> -14
+        if time_progress < 0.5:
+            t = ease(time_progress / 0.5)
+            angle = 40 - 35*t
+            zoom = 1.0 + 0.12*t
         else:
-            t = ease_smooth((time_progress - 0.75) / 0.25)
-            angle_y = -14 + 20 * t  # -14 -> 6
+            t = ease((time_progress-0.5)/0.5)
+            angle = 5 - 18*t
+            zoom = 1.12 + 0.08*t
     elif animation_style == "float":
-        # Very gentle: ±10°
-        angle_y = 10 * math.sin(time_progress * math.pi * 1.2)
+        angle = 12 * math.sin(time_progress * math.pi * 1.5)
+        zoom = 1.0
     else:
-        angle_y = 8
+        angle, zoom = 8, 1.0
     
-    # Get phone render at current angle
-    phone_render = interpolate_renders(angle_y)
+    phone = interpolate_renders(angle)
+    phone = composite(phone, video, angle)
     
-    # Composite with LOCKED screen content
-    phone_with_content = composite_screen_locked(phone_render, video_frame)
+    arr = np.array(phone)
+    m = arr[:,:,3] > 10
+    if m.any():
+        rows, cols = m.any(1), m.any(0)
+        phone = phone.crop((np.where(cols)[0][0], np.where(rows)[0][0],
+                           np.where(cols)[0][-1]+1, np.where(rows)[0][-1]+1))
     
-    # Crop to phone bounds
-    phone_arr = np.array(phone_with_content)
-    alpha = phone_arr[:,:,3]
-    mask = alpha > 10
+    scale = oh * 0.60 / phone.height * zoom
+    fw, fh = int(phone.width*scale), int(phone.height*scale)
+    margin = int(ow*0.05)
+    if fw > ow-2*margin:
+        r = (ow-2*margin)/fw
+        fw, fh = int(fw*r), int(fh*r)
+    if fh > oh-2*margin:
+        r = (oh-2*margin)/fh
+        fw, fh = int(fw*r), int(fh*r)
     
-    if mask.any():
-        rows = mask.any(axis=1)
-        cols = mask.any(axis=0)
-        y_min, y_max = np.where(rows)[0][[0, -1]]
-        x_min, x_max = np.where(cols)[0][[0, -1]]
-        pad = 2
-        y_min = max(0, y_min - pad)
-        y_max = min(phone_with_content.height, y_max + pad)
-        x_min = max(0, x_min - pad)
-        x_max = min(phone_with_content.width, x_max + pad)
-        cropped = phone_with_content.crop((x_min, y_min, x_max, y_max))
-    else:
-        cropped = phone_with_content
+    phone = phone.resize((fw, fh), Image.Resampling.LANCZOS)
     
-    # Scale to fit output
-    target_h = int(out_h * 0.65)
-    scale = target_h / cropped.height
-    final_w = int(cropped.width * scale)
-    final_h = int(cropped.height * scale)
+    px = max(margin, min((ow-fw)//2 + int(angle*1.2), ow-fw-margin))
+    py = (oh-fh)//2
     
-    margin = int(out_w * 0.08)
-    if final_w > (out_w - 2 * margin):
-        scale = (out_w - 2 * margin) / cropped.width
-        final_w = int(cropped.width * scale)
-        final_h = int(cropped.height * scale)
-    
-    phone_scaled = cropped.resize((final_w, final_h), Image.Resampling.LANCZOS)
-    
-    # Very gentle float
-    float_y = int(5 * math.sin(time_progress * math.pi * 1.8))
-    float_x = int(3 * math.sin(time_progress * math.pi * 1.2))
-    
-    pos_x = (out_w - final_w) // 2 + float_x
-    pos_y = (out_h - final_h) // 2 + float_y
-    
-    pos_x = max(margin, min(pos_x, out_w - final_w - margin))
-    pos_y = max(margin, min(pos_y, out_h - final_h - margin))
-    
-    # Background
-    bg = create_gradient_bg(out_w, out_h, bg_color1, bg_color2).convert('RGBA')
-    
-    # Shadow
-    shadow = create_shadow(final_w, final_h, pos_x, pos_y, output_size, angle_y)
-    bg = Image.alpha_composite(bg, shadow)
-    
-    # Paste phone
-    bg.paste(phone_scaled, (pos_x, pos_y), phone_scaled)
+    bg = gradient(ow, oh, bg1, bg2).convert('RGBA')
+    bg = Image.alpha_composite(bg, shadow(fw, fh, px, py, output_size, angle))
+    bg.paste(phone, (px, py), phone)
     
     return bg.convert('RGB')
 
 
-# Compatibility wrappers
-def render_phone_frame(video_frame, time_progress, output_size=(1080, 1920),
-                       bg_color1=(90, 15, 15), bg_color2=(15, 5, 5),
-                       position="center", animation_style="camera"):
-    return render_3d_phone_frame(video_frame, time_progress, output_size, bg_color1, bg_color2, animation_style)
-
-
-def render_dynamic_phone(video_frame, time_progress, output_size=(1080, 1920),
-                         bg_color=(90, 15, 15), bg_color2=None, phone_scale=0.55,
-                         animation_style="camera", position="center"):
-    if bg_color2 is None:
-        bg_color2 = tuple(max(0, c - 70) for c in bg_color)
-    return render_3d_phone_frame(video_frame, time_progress, output_size, bg_color, bg_color2, animation_style)
-
-
-def render_camera_animation(video_frame, time_progress, output_size=(1080, 1920),
-                            bg_color1=(90, 15, 15), bg_color2=(15, 5, 5), position="center", **kwargs):
-    return render_3d_phone_frame(video_frame, time_progress, output_size, bg_color1, bg_color2, "camera")
-
-
-def render_simple_float(video_frame, time_progress, output_size=(1080, 1920),
-                        bg_color1=(90, 15, 15), bg_color2=(15, 5, 5), position="center", **kwargs):
-    return render_3d_phone_frame(video_frame, time_progress, output_size, bg_color1, bg_color2, "float")
-
-
-def render_full_phone_animation(video_frame, time_progress, output_size=(1080, 1920),
-                                bg_color1=(90, 15, 15), bg_color2=(15, 5, 5), position="center", **kwargs):
-    return render_3d_phone_frame(video_frame, time_progress, output_size, bg_color1, bg_color2, "camera")
-
-
+# Compat
+def render_phone_frame(v,t,s=(1080,1920),c1=(90,15,15),c2=(15,5,5),p="c",a="camera"):
+    return render_3d_phone_frame(v,t,s,c1,c2,a)
+def render_dynamic_phone(v,t,s=(1080,1920),c=(90,15,15),c2=None,ps=0.55,a="camera",p="c"):
+    return render_3d_phone_frame(v,t,s,c,c2 or tuple(max(0,x-70)for x in c),a)
+def render_camera_animation(v,t,s=(1080,1920),c1=(90,15,15),c2=(15,5,5),**k):
+    return render_3d_phone_frame(v,t,s,c1,c2,"camera")
+def render_simple_float(v,t,s=(1080,1920),c1=(90,15,15),c2=(15,5,5),**k):
+    return render_3d_phone_frame(v,t,s,c1,c2,"float")
+def render_full_phone_animation(v,t,s=(1080,1920),c1=(90,15,15),c2=(15,5,5),**k):
+    return render_3d_phone_frame(v,t,s,c1,c2,"camera")
 def get_base_iphone():
-    img = load_render_at_angle(0)
-    mask = Image.new('L', img.size, 255)
-    return img, mask
-
-
-def create_3d_iphone_mockup(screen_content, rotation_y=25, frame_width=400, frame_height=820):
-    phone = load_render_at_angle(rotation_y)
-    return composite_screen_locked(phone, screen_content)
-
-
-def load_render(angle):
-    return load_render_at_angle(angle)
-
-
-def load_base_render():
-    return load_render_at_angle(0)
-
-
-def apply_perspective_transform(img, angle_y, angle_x=0):
-    return img
-
-
-def find_screen_region(phone_img):
-    bounds = get_phone_bounds(phone_img)
-    return get_screen_rect(bounds)
-
-# Aliases for backwards compatibility
-composite_screen_content = composite_screen_locked
-
-def ease_in_out(t):
-    return -(math.cos(math.pi * t) - 1) / 2
+    i=load_render_at_angle(0); return i,Image.new('L',i.size,255)
+def create_3d_iphone_mockup(c,r=25,w=400,h=820):
+    return composite(load_render_at_angle(r),c,r)
+def load_render(a): return load_render_at_angle(a)
+def load_base_render(): return load_render_at_angle(0)
+def apply_perspective_transform(i,a,x=0): return apply_perspective(i,a)
+def find_screen_region(p): return get_screen_rect(get_phone_bounds(p),0)
+def composite_screen_content(p,v,a=0): return composite(p,v,a)
+def composite_screen_locked(p,v): return composite(p,v,0)
