@@ -76,10 +76,10 @@ def get_screen_rect(phone_bounds, angle_y):
     pw = px_max - px_min
     ph = py_max - py_min
     
-    # Margins to create realistic bezel effect (not too close to edge)
+    # Margins - minimal top/bottom to fill screen
     margin_h = 0.025      # horizontal margin
-    margin_top = 0.02     # top margin
-    margin_bottom = 0.015 # bottom margin
+    margin_top = 0.003    # minimal top
+    margin_bottom = 0.003 # minimal bottom
     
     # Calculate screen rect
     sx = px_min + int(pw * margin_h)
