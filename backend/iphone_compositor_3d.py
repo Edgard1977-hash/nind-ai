@@ -76,8 +76,8 @@ def get_screen_rect(phone_bounds, angle_y):
     pw = px_max - px_min
     ph = py_max - py_min
     
-    # Margins - minimal top/bottom to fill screen
-    margin_h = 0.025      # horizontal margin
+    # Minimal margins - video fills almost entire screen
+    margin_h = 0.008      # very small horizontal margin
     margin_top = 0.003    # minimal top
     margin_bottom = 0.003 # minimal bottom
     
@@ -242,6 +242,14 @@ def ease_in_out(t):
     return -(math.cos(math.pi*t)-1)/2
 
 
+def smooth_position(angle, base_x, width, margin):
+    """Calculate smooth phone position based on angle"""
+    # Use smooth sine-based offset instead of linear
+    offset = math.sin(math.radians(angle)) * width * 0.08
+    x = base_x + offset
+    return max(margin, min(int(x), width - margin))
+
+
 def render_3d_phone_frame(video, time_progress, output_size=(1080,1920),
                           bg1=(90,15,15), bg2=(15,5,5), animation_style="camera"):
     ow, oh = output_size
@@ -283,7 +291,9 @@ def render_3d_phone_frame(video, time_progress, output_size=(1080,1920),
     
     phone = phone.resize((fw, fh), Image.Resampling.LANCZOS)
     
-    px = max(margin, min((ow-fw)//2 + int(angle*1.2), ow-fw-margin))
+    # Smooth position calculation
+    base_x = (ow - fw) // 2
+    px = smooth_position(angle, base_x, ow - fw, margin)
     py = (oh-fh)//2
     
     bg = gradient(ow, oh, bg1, bg2).convert('RGBA')
