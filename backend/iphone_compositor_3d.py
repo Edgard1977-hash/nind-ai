@@ -168,11 +168,36 @@ def create_mask(phone_img, rect, angle_y=0):
     return Image.fromarray(mask, 'L').filter(ImageFilter.GaussianBlur(0.8))
 
 
+def get_base_screen_size():
+    """
+    Get base screen size from phone at 0 degrees.
+    Used to maintain consistent video scaling across all angles.
+    """
+    phone = load_render_at_angle(0)
+    bounds = get_phone_bounds(phone)
+    pw = bounds[2] - bounds[0]
+    ph = bounds[3] - bounds[1]
+    # Use same margins as get_screen_rect
+    margin_h = 0.008
+    margin_top = 0.003
+    margin_bottom = 0.003
+    sw = pw - int(pw * margin_h * 2)
+    sh = ph - int(ph * (margin_top + margin_bottom))
+    return sw, sh
+
+# Cache base screen size
+_BASE_SCREEN_SIZE = None
+
 def composite(phone, video, angle):
     """
     Composite video onto phone screen.
     Preserves original video aspect ratio with letterbox/pillarbox (black bars).
+    Video size is calculated based on 0-degree screen size to prevent scaling during animation.
     """
+    global _BASE_SCREEN_SIZE
+    if _BASE_SCREEN_SIZE is None:
+        _BASE_SCREEN_SIZE = get_base_screen_size()
+    
     result = phone.copy()
     bounds = get_phone_bounds(phone)
     rect = get_screen_rect(bounds, angle)
@@ -181,32 +206,38 @@ def composite(phone, video, angle):
     if sw <= 10 or sh <= 10:
         return result
     
+    # Use BASE screen size for video scaling (prevents size changes during animation)
+    base_sw, base_sh = _BASE_SCREEN_SIZE
+    
     vw, vh = video.size
     video_ratio = vw / vh
-    screen_ratio = sw / sh
+    base_ratio = base_sw / base_sh
     
-    # Fit video preserving aspect ratio
-    if video_ratio > screen_ratio:
-        # Video is wider - fit by width, add letterbox (black bars top/bottom)
-        new_w = sw
-        new_h = int(sw / video_ratio)
+    # Calculate video size based on BASE screen (not current rotated screen)
+    if video_ratio > base_ratio:
+        # Video is wider - fit by width
+        vid_w = base_sw
+        vid_h = int(base_sw / video_ratio)
     else:
-        # Video is taller - fit by height, add pillarbox (black bars left/right)
-        new_h = sh
-        new_w = int(sh * video_ratio)
+        # Video is taller - fit by height
+        vid_h = base_sh
+        vid_w = int(base_sh * video_ratio)
     
-    # Resize video preserving aspect ratio
-    vid_resized = video.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    # Resize video ONCE to fixed size
+    vid_resized = video.resize((vid_w, vid_h), Image.Resampling.LANCZOS)
     
-    # Create black background for the screen area
-    vid = Image.new('RGBA', (sw, sh), (0, 0, 0, 255))
+    # Create container matching BASE screen size
+    vid_container = Image.new('RGBA', (base_sw, base_sh), (0, 0, 0, 255))
     
-    # Center the resized video on black background
-    paste_x = (sw - new_w) // 2
-    paste_y = (sh - new_h) // 2
+    # Center video in container
+    paste_x = (base_sw - vid_w) // 2
+    paste_y = (base_sh - vid_h) // 2
     if vid_resized.mode != 'RGBA':
         vid_resized = vid_resized.convert('RGBA')
-    vid.paste(vid_resized, (paste_x, paste_y))
+    vid_container.paste(vid_resized, (paste_x, paste_y))
+    
+    # NOW resize container to match current screen rect
+    vid = vid_container.resize((sw, sh), Image.Resampling.LANCZOS)
     
     # Apply perspective transform
     vid = apply_perspective(vid, angle)
