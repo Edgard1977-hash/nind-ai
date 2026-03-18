@@ -69,40 +69,23 @@ def get_phone_bounds(img):
 
 def get_screen_rect(phone_bounds, angle_y):
     """
-    Calculate screen content area based on phone rotation angle.
-    
-    At rotated angles, add small margin on the side where the edge is visible.
+    Calculate screen content area.
+    Uses fixed proportions relative to phone bounds for stability during animation.
     """
     px_min, py_min, px_max, py_max = phone_bounds
     pw = px_max - px_min
     ph = py_max - py_min
     
-    # Base margins for bezel (front view)
-    base_h = 0.015  # horizontal bezel
-    top = 0.012
-    bottom = 0.008
+    # Fixed margins as percentage of phone dimensions
+    margin_h = 0.01
+    margin_top = 0.005
+    margin_bottom = 0.005
     
-    # Small margin for visible side edge at angles
-    abs_angle = abs(angle_y)
-    angle_factor = min(abs_angle / 45.0, 1.0)
-    edge_margin = 0.04 * angle_factor  # Reduced to 4%
-    
-    if angle_y > 0:
-        # Phone rotated right: LEFT side edge visible
-        left = base_h + edge_margin
-        right = base_h
-    elif angle_y < 0:
-        # Phone rotated left: RIGHT side edge visible
-        left = base_h
-        right = base_h + edge_margin
-    else:
-        left = base_h
-        right = base_h
-    
-    sx = px_min + int(pw * left)
-    sy = py_min + int(ph * top)
-    sw = px_max - sx - int(pw * right)
-    sh = py_max - sy - int(ph * bottom)
+    # Calculate screen rect
+    sx = px_min + int(pw * margin_h)
+    sy = py_min + int(ph * margin_top)
+    sw = pw - int(pw * margin_h * 2)
+    sh = ph - int(ph * (margin_top + margin_bottom))
     
     return (sx, sy, max(1, sw), max(1, sh))
 
@@ -176,7 +159,8 @@ def create_mask(phone_img, rect, angle_y=0):
 def composite(phone, video, angle):
     """
     Composite video onto phone screen.
-    Preserves video aspect ratio - fits video into screen with letterbox/pillarbox.
+    For best results, video should match screen aspect ratio (~9:16).
+    If video has different ratio, it's center-cropped to fill screen.
     """
     result = phone.copy()
     bounds = get_phone_bounds(phone)
@@ -186,31 +170,27 @@ def composite(phone, video, angle):
     if sw <= 10 or sh <= 10:
         return result
     
-    # Preserve video aspect ratio - fit into screen area
     vw, vh = video.size
     video_ratio = vw / vh
     screen_ratio = sw / sh
     
-    if video_ratio > screen_ratio:
-        # Video is wider - fit by width, add letterbox (black bars top/bottom)
-        new_w = sw
-        new_h = int(sw / video_ratio)
-    else:
-        # Video is taller - fit by height, add pillarbox (black bars left/right)
-        new_h = sh
-        new_w = int(sh * video_ratio)
+    # Center crop if aspect ratios differ significantly
+    if abs(video_ratio - screen_ratio) > 0.01:
+        if video_ratio > screen_ratio:
+            # Video is wider - crop sides to match screen ratio
+            new_vw = int(vh * screen_ratio)
+            crop_x = (vw - new_vw) // 2
+            video = video.crop((crop_x, 0, crop_x + new_vw, vh))
+        else:
+            # Video is taller - crop top/bottom
+            new_vh = int(vw / screen_ratio)
+            crop_y = (vh - new_vh) // 2
+            video = video.crop((0, crop_y, vw, crop_y + new_vh))
     
-    # Resize video preserving aspect ratio
-    vid_resized = video.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    # Resize to screen size
+    vid = video.resize((sw, sh), Image.Resampling.LANCZOS)
     
-    # Create black background for the screen area
-    vid = Image.new('RGBA', (sw, sh), (0, 0, 0, 255))
-    
-    # Center the resized video
-    paste_x = (sw - new_w) // 2
-    paste_y = (sh - new_h) // 2
-    vid.paste(vid_resized, (paste_x, paste_y))
-    
+    # Apply perspective transform
     vid = apply_perspective(vid, angle)
     if vid.mode != 'RGBA':
         vid = vid.convert('RGBA')
