@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Paperclip, ArrowUp, X } from "lucide-react";
+import { User, Paperclip, ArrowUp, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import axios from "axios";
 import AuthPopup from "../components/custom/AuthPopup";
 import ProfilePage from "../components/custom/ProfilePage";
 
@@ -49,6 +51,7 @@ export const MainPage = () => {
   const [attachments, setAttachments] = useState([]);
   const [uploadingFiles, setUploadingFiles] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Word rotation animation
   useEffect(() => {
@@ -112,7 +115,7 @@ export const MainPage = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!user) {
       setShowAuthPopup(true);
       return;
@@ -120,9 +123,66 @@ export const MainPage = () => {
     
     if (!prompt.trim() && attachments.length === 0) return;
     
-    // Navigate to profile with loading state
-    setShowProfile(true);
-    // TODO: Start generation
+    setIsGenerating(true);
+    
+    try {
+      // Prepare request data
+      const requestData = {
+        prompt: prompt.trim(),
+        format_id: "auto",
+        language: "auto"
+      };
+      
+      // Add attached files if any
+      if (attachments.length > 0) {
+        // Upload attachments first if they have files
+        const uploadedUrls = [];
+        for (const att of attachments) {
+          if (att.file && !att.uploadedUrl) {
+            const formData = new FormData();
+            formData.append("file", att.file);
+            const uploadRes = await axios.post(`${API}/upload`, formData, {
+              headers: { "Content-Type": "multipart/form-data" }
+            });
+            uploadedUrls.push(uploadRes.data.url);
+          } else if (att.uploadedUrl) {
+            uploadedUrls.push(att.uploadedUrl);
+          }
+        }
+        
+        // Check if it's a video for device mockup
+        const videoAttachment = attachments.find(a => a.type === "video");
+        if (videoAttachment && uploadedUrls.length > 0) {
+          // Create device mockup
+          const response = await axios.post(`${API}/device-mockup/create`, {
+            video_url: uploadedUrls[0],
+            device_type: "phone",
+            rotation: 12,
+            bg_color: [15, 15, 20],
+            animation_style: "camera",
+            phone_position: "center",
+            aspect_ratio: "9:16"
+          });
+          
+          toast.success("Создаём 3D анимацию...");
+          navigate(`/video/${response.data.id}`);
+          return;
+        }
+        
+        // Images for product ads
+        requestData.product_images = uploadedUrls;
+      }
+      
+      // Send to video generation API
+      const response = await axios.post(`${API}/video/generate`, requestData);
+      
+      toast.success("Генерация началась!");
+      navigate(`/video/${response.data.id}`);
+    } catch (error) {
+      console.error("Failed to start generation:", error);
+      toast.error("Ошибка при запуске генерации");
+      setIsGenerating(false);
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -286,6 +346,7 @@ export const MainPage = () => {
             placeholder="Создать контент…"
             className="prompt-textarea"
             rows={1}
+            disabled={isGenerating}
             data-testid="prompt-input"
           />
           
@@ -297,10 +358,14 @@ export const MainPage = () => {
             <button 
               className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
               onClick={handleSubmit}
-              disabled={!prompt.trim() && attachments.length === 0}
+              disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
               data-testid="send-button"
             >
-              <ArrowUp className="w-5 h-5" />
+              {isGenerating ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <ArrowUp className="w-5 h-5" />
+              )}
             </button>
           </div>
           

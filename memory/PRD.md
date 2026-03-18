@@ -1,121 +1,84 @@
-# VidFlux AI - Product Requirements Document v11
+# Slind AI - Product Requirements Document
 
-## LATEST UPDATE (March 14, 2026)
+## Original Problem Statement
+AI-powered content generation platform (video, motion design, logos, promo videos). The user requested a modern, dark-themed UI with Google/Apple authentication and seamless content generation.
 
-### MAJOR ACHIEVEMENT: TRUE 3D iPhone 16 Implementation ✅
+## Core Features
 
-**Problem Solved:**
-- User repeatedly rejected all previous 2D PIL-based mockups as "not looking like 3D"
-- Phone was getting cropped during animations
-- Visual quality did not match user's reference videos
+### 1. Main Page UI ✅
+- Dark background (#0C0C0E) with cyan gradient glow
+- Animated heading cycling through "Сделаю [видео-монтаж]", "Сделаю [логотип]", etc.
+- Multi-line text input with icons (file attachment, audio, submit)
+- Profile icon with credits display for logged-in users
 
-**Solution Implemented:**
-- Downloaded and rendered user's iPhone 16 3D model using Blender
-- Created 9 pre-rendered views at angles: -40°, -30°, -20°, -10°, 0°, +10°, +20°, +30°, +40°
-- Smooth interpolation between angles for fluid animation
-- Screen content replacement with Dynamic Island preservation
-- Full phone visibility guaranteed at all times
+### 2. Authentication
+- **Google Auth** ✅ (implemented via Emergent-managed OAuth)
+- **Apple Auth** ⏳ (not implemented)
+- Slide-up popup for login/registration
+- Service name: "Slind AI"
 
-### Technical Implementation
+### 3. Video Generation ✅
+- `/api/video/generate` - AI video generation from prompts
+- `/api/device-mockup/create` - 3D phone animation with user video
+- Progress tracking on `/video/:id` page
+- Multiple video formats supported (see VIDEO_FORMATS in server.py)
 
-**New Files:**
-- `/app/backend/iphone_16_model/` - iPhone 16 Black 3D model (GLB)
-- `/app/backend/iphone_16_renders/` - Pre-rendered PNG images at various angles
-- `/app/backend/iphone_compositor_3d.py` - New 3D compositor using Blender renders
-- `/app/backend/render_iphone16_v2.py` - Blender rendering script
+### 4. User Profile
+- Team management (add users by @username)
+- Avatar, username, subscription plan display
+- Generated videos list
 
-**Key Functions:**
-```python
-# Load pre-rendered 3D iPhone
-load_render(angle: int) -> Image
+### 5. File Uploads
+- Thumbnail previews above text input
+- Progress indicator for video uploads
+- Chunked uploads for large files
 
-# Smooth interpolation between angles
-interpolate_renders(angle: float) -> Image
+## Architecture
 
-# Replace screen content preserving Dynamic Island
-composite_screen_content(phone_img, screen_content, angle) -> Image
-
-# Main rendering function
-render_3d_phone_frame(video_frame, time_progress, output_size, bg_color1, bg_color2, animation_style) -> Image
+```
+/app/
+├── backend/
+│   ├── server.py           # FastAPI server, auth, video generation
+│   ├── video_service.py    # Video processing utilities
+│   ├── universal_effects.py # 3D device mockup rendering
+│   └── animation_renderer.py # Animation effects
+└── frontend/
+    ├── src/
+    │   ├── pages/
+    │   │   ├── MainPage.jsx    # Main UI
+    │   │   ├── CreatePage.jsx  # Legacy create page
+    │   │   └── VideoPage.jsx   # Video progress/result
+    │   └── components/custom/
+    │       ├── AuthPopup.jsx   # Login modal
+    │       ├── AuthCallback.jsx # OAuth callback handler
+    │       └── ProfilePage.jsx # User profile
+    └── package.json
 ```
 
-**Animation Styles:**
-1. `camera` - Multi-stage rotation: 30° → 20° → -30° → 10°
-2. `float` - Gentle oscillating rotation ±20°
-3. `phone_text` - Phone on side with animated text
+## API Endpoints
 
-### Visual Quality Guarantees
+- `POST /api/video/generate` - Start video generation
+- `GET /api/video/:id` - Get video status/result
+- `POST /api/device-mockup/create` - Create 3D phone animation
+- `POST /api/auth/google` - Start Google OAuth
+- `POST /api/auth/callback` - OAuth callback
+- `GET /api/auth/me` - Get current user
 
-1. **Phone ALWAYS 100% visible** - No cropping under any circumstances
-2. **True 3D appearance** - Real Blender-rendered model with proper lighting
-3. **Dynamic Island preserved** - Screen replacement masks around it
-4. **Smooth animation** - Interpolation between pre-rendered angles
-5. **Professional shadows** - Soft shadow under phone
+## On Hold / Future Tasks
+- 3D iPhone animation refinement (video spilling over bezel issue)
+- Stripe subscriptions
+- Sora 2 Integration
+- Stock Video Search
+- Marketplace for video templates
 
-### API Usage
+## Changelog
 
-```json
-POST /api/device-mockup/create
-{
-  "video_url": "/api/uploads/video.mp4",
-  "device_type": "phone",
-  "bg_color": [90, 15, 15],
-  "animation_style": "camera",
-  "aspect_ratio": "9:16"
-}
-```
+### 2025-03-18
+- Fixed video generation from MainPage (was TODO, now implemented)
+- Added loading state to submit button
+- Generation now redirects to /video/:id page
 
-### File Structure
-```
-/app/backend/
-├── iphone_16_model/
-│   ├── source/
-│   │   └── iphone_16_black.glb
-│   └── textures/
-├── iphone_16_renders/
-│   ├── iphone16_angle_-40.png
-│   ├── iphone16_angle_-30.png
-│   ├── ...
-│   └── iphone16_angle_40.png
-├── iphone_compositor_3d.py   # 3D compositor
-├── iphone_compositor.py      # Wrapper (imports from 3d)
-├── universal_effects.py      # Updated to use 3D renders
-└── server.py                 # API endpoints
-```
-
-## Completed Tasks
-
-### P0 (Critical) - ALL DONE ✅
-1. ✅ True 3D iPhone 16 rendering using Blender
-2. ✅ Phone ALWAYS FULLY VISIBLE - no cropping
-3. ✅ Screen content replacement with Dynamic Island
-4. ✅ Camera animation (multi-stage rotation)
-5. ✅ Float animation
-6. ✅ Red gradient background
-7. ✅ 9:16 and 16:9 format support
-8. ✅ API endpoint working
-
-### P1 (Important) - Pending
-1. Phone + Text layout with new 3D model
-2. Integration into universal AI generator
-3. More gradient presets
-
-### P2 (Future)
-1. Sora 2 video generation integration
-2. Stock video search
-3. User authentication
-4. Stripe subscriptions
-5. Template marketplace
-
-## Known Issues - RESOLVED
-- ~~Phone model cropped during animation~~ - FIXED with pre-rendered 3D
-- ~~Animation looks 2D, not 3D~~ - FIXED with Blender renders
-- ~~Purple artifact on screen~~ - FIXED with proper masking
-
-## Testing Verification
-- [x] Single frame rendering
-- [x] Animation sequence
-- [x] API endpoint
-- [x] Video output
-- [x] Full phone visibility
-- [x] Dynamic Island preservation
+### Previous
+- Implemented new dark-themed UI
+- Added Google OAuth via Emergent-managed service
+- Created MainPage, AuthPopup, ProfilePage, VideoPage components
