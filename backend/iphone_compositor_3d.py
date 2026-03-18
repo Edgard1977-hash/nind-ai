@@ -71,23 +71,21 @@ def get_screen_rect(phone_bounds, angle_y):
     """
     Calculate screen content area based on phone rotation angle.
     
-    At rotated angles, add extra margin on the side where the edge is visible
-    to prevent content from covering the phone's side frame.
+    At rotated angles, add small margin on the side where the edge is visible.
     """
     px_min, py_min, px_max, py_max = phone_bounds
     pw = px_max - px_min
     ph = py_max - py_min
     
     # Base margins for bezel (front view)
-    base_h = 0.025  # horizontal bezel
-    top = 0.02
-    bottom = 0.015
+    base_h = 0.015  # horizontal bezel
+    top = 0.012
+    bottom = 0.008
     
-    # Additional margin for visible side edge at angles
-    # At 45° the side edge takes about 12-13% of phone width
+    # Small margin for visible side edge at angles
     abs_angle = abs(angle_y)
     angle_factor = min(abs_angle / 45.0, 1.0)
-    edge_margin = 0.13 * angle_factor
+    edge_margin = 0.04 * angle_factor  # Reduced to 4%
     
     if angle_y > 0:
         # Phone rotated right: LEFT side edge visible
@@ -176,6 +174,10 @@ def create_mask(phone_img, rect, angle_y=0):
 
 
 def composite(phone, video, angle):
+    """
+    Composite video onto phone screen.
+    Preserves video aspect ratio - fits video into screen with letterbox/pillarbox.
+    """
     result = phone.copy()
     bounds = get_phone_bounds(phone)
     rect = get_screen_rect(bounds, angle)
@@ -184,7 +186,31 @@ def composite(phone, video, angle):
     if sw <= 10 or sh <= 10:
         return result
     
-    vid = video.resize((sw, sh), Image.Resampling.LANCZOS)
+    # Preserve video aspect ratio - fit into screen area
+    vw, vh = video.size
+    video_ratio = vw / vh
+    screen_ratio = sw / sh
+    
+    if video_ratio > screen_ratio:
+        # Video is wider - fit by width, add letterbox (black bars top/bottom)
+        new_w = sw
+        new_h = int(sw / video_ratio)
+    else:
+        # Video is taller - fit by height, add pillarbox (black bars left/right)
+        new_h = sh
+        new_w = int(sh * video_ratio)
+    
+    # Resize video preserving aspect ratio
+    vid_resized = video.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    
+    # Create black background for the screen area
+    vid = Image.new('RGBA', (sw, sh), (0, 0, 0, 255))
+    
+    # Center the resized video
+    paste_x = (sw - new_w) // 2
+    paste_y = (sh - new_h) // 2
+    vid.paste(vid_resized, (paste_x, paste_y))
+    
     vid = apply_perspective(vid, angle)
     if vid.mode != 'RGBA':
         vid = vid.convert('RGBA')
