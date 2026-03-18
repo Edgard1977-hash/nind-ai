@@ -76,10 +76,10 @@ def get_screen_rect(phone_bounds, angle_y):
     pw = px_max - px_min
     ph = py_max - py_min
     
-    # Fixed margins as percentage of phone dimensions
-    margin_h = 0.01
-    margin_top = 0.005
-    margin_bottom = 0.005
+    # Margins to create realistic bezel effect (not too close to edge)
+    margin_h = 0.025      # horizontal margin
+    margin_top = 0.02     # top margin
+    margin_bottom = 0.015 # bottom margin
     
     # Calculate screen rect
     sx = px_min + int(pw * margin_h)
@@ -91,15 +91,27 @@ def get_screen_rect(phone_bounds, angle_y):
 
 
 def apply_perspective(img, angle_y):
+    """
+    Apply perspective transform to video to match phone rotation.
+    Larger coefficient = more pronounced 3D effect.
+    """
     if abs(angle_y) < 3:
         return img
     w, h = img.size
-    c = abs(math.sin(math.radians(angle_y))) * 0.12
+    
+    # Perspective strength - increased for more realistic 3D look
+    # 0.18 gives noticeable but not extreme perspective
+    strength = 0.18
+    c = abs(math.sin(math.radians(angle_y))) * strength
     v = int(h * c * 0.5)
+    
     if angle_y > 0:
+        # Phone rotated right - right side of video appears further
         coeffs = find_coeffs([(0,0),(w,0),(w,h),(0,h)], [(0,0),(w,v),(w,h-v),(0,h)])
     else:
+        # Phone rotated left - left side of video appears further
         coeffs = find_coeffs([(0,0),(w,0),(w,h),(0,h)], [(0,v),(w,0),(w,h),(0,h-v)])
+    
     return img.transform((w, h), Image.Transform.PERSPECTIVE, coeffs, Image.Resampling.BICUBIC)
 
 
