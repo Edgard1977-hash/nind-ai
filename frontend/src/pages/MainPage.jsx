@@ -86,6 +86,14 @@ export const MainPage = () => {
     }
   }, []);
 
+  // Check for user from auth callback
+  useEffect(() => {
+    if (window.location.hash?.includes('session_id=')) {
+      // Auth callback will handle this
+      return;
+    }
+  }, []);
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {

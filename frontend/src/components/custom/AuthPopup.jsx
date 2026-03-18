@@ -58,14 +58,15 @@ export const AuthPopup = ({ isOpen, onClose, onSuccess }) => {
   const handleGoogleLogin = () => {
     // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
     const redirectUri = `${FRONTEND_URL}/auth/callback`;
-    const authUrl = `https://demobackend.emergentagent.com/auth/v1/env/oauth/google?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUri)}`;
     window.location.href = authUrl;
   };
 
   const handleAppleLogin = () => {
     // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    // Apple OAuth uses same Emergent Auth endpoint
     const redirectUri = `${FRONTEND_URL}/auth/callback`;
-    const authUrl = `https://demobackend.emergentagent.com/auth/v1/env/oauth/apple?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUri)}`;
     window.location.href = authUrl;
   };
 

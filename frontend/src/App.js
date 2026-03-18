@@ -1,21 +1,36 @@
 import "@/index.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import MainPage from "@/pages/MainPage";
 import CreatePage from "@/pages/CreatePage";
 import VideoPage from "@/pages/VideoPage";
 import AuthCallback from "@/components/custom/AuthCallback";
 
+// Check for session_id in URL before rendering normal routes
+function AppRouter() {
+  const location = useLocation();
+  
+  // CRITICAL: Check URL fragment for session_id synchronously during render
+  // This prevents race conditions with auth state
+  if (location.hash?.includes('session_id=')) {
+    return <AuthCallback />;
+  }
+  
+  return (
+    <Routes>
+      <Route path="/" element={<MainPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/create" element={<CreatePage />} />
+      <Route path="/video/:id" element={<VideoPage />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/create" element={<CreatePage />} />
-          <Route path="/video/:id" element={<VideoPage />} />
-        </Routes>
+        <AppRouter />
       </BrowserRouter>
       <Toaster position="top-center" richColors />
     </div>
