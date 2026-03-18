@@ -171,8 +171,7 @@ def create_mask(phone_img, rect, angle_y=0):
 def composite(phone, video, angle):
     """
     Composite video onto phone screen.
-    For best results, video should match screen aspect ratio (~9:16).
-    If video has different ratio, it's center-cropped to fill screen.
+    Preserves original video aspect ratio with letterbox/pillarbox (black bars).
     """
     result = phone.copy()
     bounds = get_phone_bounds(phone)
@@ -186,21 +185,28 @@ def composite(phone, video, angle):
     video_ratio = vw / vh
     screen_ratio = sw / sh
     
-    # Center crop if aspect ratios differ significantly
-    if abs(video_ratio - screen_ratio) > 0.01:
-        if video_ratio > screen_ratio:
-            # Video is wider - crop sides to match screen ratio
-            new_vw = int(vh * screen_ratio)
-            crop_x = (vw - new_vw) // 2
-            video = video.crop((crop_x, 0, crop_x + new_vw, vh))
-        else:
-            # Video is taller - crop top/bottom
-            new_vh = int(vw / screen_ratio)
-            crop_y = (vh - new_vh) // 2
-            video = video.crop((0, crop_y, vw, crop_y + new_vh))
+    # Fit video preserving aspect ratio
+    if video_ratio > screen_ratio:
+        # Video is wider - fit by width, add letterbox (black bars top/bottom)
+        new_w = sw
+        new_h = int(sw / video_ratio)
+    else:
+        # Video is taller - fit by height, add pillarbox (black bars left/right)
+        new_h = sh
+        new_w = int(sh * video_ratio)
     
-    # Resize to screen size
-    vid = video.resize((sw, sh), Image.Resampling.LANCZOS)
+    # Resize video preserving aspect ratio
+    vid_resized = video.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    
+    # Create black background for the screen area
+    vid = Image.new('RGBA', (sw, sh), (0, 0, 0, 255))
+    
+    # Center the resized video on black background
+    paste_x = (sw - new_w) // 2
+    paste_y = (sh - new_h) // 2
+    if vid_resized.mode != 'RGBA':
+        vid_resized = vid_resized.convert('RGBA')
+    vid.paste(vid_resized, (paste_x, paste_y))
     
     # Apply perspective transform
     vid = apply_perspective(vid, angle)
