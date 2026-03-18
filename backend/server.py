@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import asyncio
 import base64
 import json
@@ -190,6 +190,35 @@ class VideoProject(BaseModel):
     error: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+# ==================== AUTH MODELS ====================
+
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    user_id: str
+    email: str
+    name: str
+    picture: Optional[str] = None
+    username: Optional[str] = None
+    plan: str = "free"
+    credits: int = 100
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class UserSession(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    user_id: str
+    session_token: str
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SessionRequest(BaseModel):
+    session_id: str
+
 
 # ==================== VIDEO FORMATS ====================
 
@@ -2040,9 +2069,158 @@ async def process_video_generation(project_id: str):
 
 @api_router.get("/")
 async def root():
-    return {"message": "VidFlux AI API"}
+    return {"message": "Slind AI API"}
 
-@api_router.get("/formats")
+
+# ==================== AUTH ROUTES ====================
+
+from fastapi.responses import RedirectResponse, Response
+
+# REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+
+@api_router.post("/auth/session")
+async def exchange_session(request: SessionRequest, response: Response):
+    """Exchange session_id for session_token and user data"""
+    try:
+        # Call Emergent Auth to get user data
+        async with httpx.AsyncClient() as client:
+            auth_response = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": request.session_id}
+            )
+            
+            if auth_response.status_code != 200:
+                raise HTTPException(status_code=401, detail="Invalid session")
+            
+            auth_data = auth_response.json()
+        
+        email = auth_data["email"]
+        session_token = auth_data["session_token"]
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": email}, {"_id": 0})
+        
+        if existing_user:
+            user_id = existing_user["user_id"]
+            # Update user data if needed
+            await db.users.update_one(
+                {"user_id": user_id},
+                {"$set": {
+                    "name": auth_data["name"],
+                    "picture": auth_data.get("picture"),
+                    "updated_at": datetime.now(timezone.utc)
+                }}
+            )
+        else:
+            # Create new user
+            user_id = f"user_{uuid.uuid4().hex[:12]}"
+            username = f"@{auth_data['name'].lower().replace(' ', '')}{uuid.uuid4().hex[:4]}"
+            
+            new_user = {
+                "user_id": user_id,
+                "email": email,
+                "name": auth_data["name"],
+                "picture": auth_data.get("picture"),
+                "username": username,
+                "plan": "free",
+                "credits": 100,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await db.users.insert_one(new_user)
+        
+        # Create session
+        expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        session_doc = {
+            "user_id": user_id,
+            "session_token": session_token,
+            "expires_at": expires_at,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        # Delete old sessions for this user
+        await db.user_sessions.delete_many({"user_id": user_id})
+        await db.user_sessions.insert_one(session_doc)
+        
+        # Get updated user
+        user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+        
+        # Set cookie
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            path="/",
+            max_age=7 * 24 * 60 * 60
+        )
+        
+        return user
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Auth error: {e}")
+        raise HTTPException(status_code=500, detail="Authentication failed")
+
+
+@api_router.get("/auth/me")
+async def get_current_user(request: Request):
+    """Get current authenticated user"""
+    # Get session token from cookie or header
+    session_token = request.cookies.get("session_token")
+    
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header[7:]
+    
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Find session
+    session_doc = await db.user_sessions.find_one(
+        {"session_token": session_token}, 
+        {"_id": 0}
+    )
+    
+    if not session_doc:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Check expiry
+    expires_at = session_doc["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Session expired")
+    
+    # Get user
+    user = await db.users.find_one(
+        {"user_id": session_doc["user_id"]}, 
+        {"_id": 0}
+    )
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    return user
+
+
+@api_router.post("/auth/logout")
+async def logout(request: Request, response: Response):
+    """Logout user"""
+    session_token = request.cookies.get("session_token")
+    
+    if session_token:
+        await db.user_sessions.delete_many({"session_token": session_token})
+    
+    response.delete_cookie(key="session_token", path="/")
+    return {"message": "Logged out"}
+
+
+# ==================== FORMAT ROUTES ====================
 async def get_formats():
     """Get all video formats"""
     return {

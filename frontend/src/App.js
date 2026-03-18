@@ -1,22 +1,20 @@
 import "@/index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
-import HomePage from "@/pages/HomePage";
+import MainPage from "@/pages/MainPage";
 import CreatePage from "@/pages/CreatePage";
 import VideoPage from "@/pages/VideoPage";
-import PricingPage from "@/pages/PricingPage";
-import SubscriptionSuccessPage from "@/pages/SubscriptionSuccessPage";
+import AuthCallback from "@/components/custom/AuthCallback";
 
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<MainPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/create" element={<CreatePage />} />
           <Route path="/video/:id" element={<VideoPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-center" richColors />
