@@ -9,22 +9,14 @@ import ProfilePage from "../components/custom/ProfilePage";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Animated words for the heading
-const ANIMATED_WORDS = [
-  "любой контент",
-  "видео-монтаж",
-  "моушн-дизайн",
-  "логотип",
-  "Промо-видео",
-  "карточку товара"
-];
-
-// Audio wave icon component - three vertical bars
+// Audio wave icon component - 5 bars (from user image)
 const AudioWaveIcon = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <rect x="6" y="8" width="3" height="8" rx="1.5"/>
-    <rect x="10.5" y="4" width="3" height="16" rx="1.5"/>
-    <rect x="15" y="8" width="3" height="8" rx="1.5"/>
+    <rect x="2" y="9" width="3" height="6" rx="1.5"/>
+    <rect x="6.5" y="6" width="3" height="12" rx="1.5"/>
+    <rect x="11" y="3" width="3" height="18" rx="1.5"/>
+    <rect x="15.5" y="6" width="3" height="12" rx="1.5"/>
+    <rect x="20" y="9" width="3" height="6" rx="1.5"/>
   </svg>
 );
 
@@ -42,9 +34,6 @@ export const MainPage = () => {
   
   // State
   const [prompt, setPrompt] = useState("");
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState("visible"); // visible, strikethrough, fadeout, fadein
   const [user, setUser] = useState(null);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -52,30 +41,6 @@ export const MainPage = () => {
   const [uploadingFiles, setUploadingFiles] = useState({});
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Word rotation animation
-  useEffect(() => {
-    const wordDuration = 4000;
-    
-    const interval = setInterval(() => {
-      setAnimationPhase("strikethrough");
-      
-      setTimeout(() => {
-        setAnimationPhase("fadeout");
-      }, 400);
-      
-      setTimeout(() => {
-        setCurrentWordIndex((prev) => (prev + 1) % ANIMATED_WORDS.length);
-        setAnimationPhase("fadein");
-      }, 800);
-      
-      setTimeout(() => {
-        setAnimationPhase("visible");
-      }, 1200);
-    }, wordDuration);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Check auth status
   useEffect(() => {
@@ -96,16 +61,6 @@ export const MainPage = () => {
       return;
     }
   }, []);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      const scrollHeight = textareaRef.current.scrollHeight;
-      const maxHeight = 240; // ~10 lines
-      textareaRef.current.style.height = Math.min(scrollHeight, maxHeight) + "px";
-    }
-  }, [prompt]);
 
   const handleProfileClick = () => {
     if (user) {
@@ -262,8 +217,12 @@ export const MainPage = () => {
 
   return (
     <div className="main-page" data-testid="main-page">
-      {/* Cyan glow at bottom */}
-      <div className="cyan-glow" />
+      {/* Animated liquid gradient background */}
+      <div className="liquid-gradient-bg">
+        <div className="gradient-blob blob-1" />
+        <div className="gradient-blob blob-2" />
+        <div className="gradient-blob blob-3" />
+      </div>
       
       {/* Header */}
       <header className="main-header">
@@ -287,13 +246,10 @@ export const MainPage = () => {
         </button>
       </header>
 
-      {/* Animated heading */}
-      <div className="animated-heading">
-        <span className="heading-static">Сделаю </span>
-        <span className={`heading-animated ${animationPhase}`}>
-          {ANIMATED_WORDS[currentWordIndex]}
-          <span className="strikethrough-line" />
-        </span>
+      {/* Static heading */}
+      <div className="static-heading">
+        <h1 className="heading-main">Создавай лучше и легче</h1>
+        <p className="heading-sub">Делай любой контент с ИИ</p>
       </div>
 
       {/* Input area */}
@@ -345,7 +301,7 @@ export const MainPage = () => {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Создать контент…"
             className="prompt-textarea"
-            rows={1}
+            rows={3}
             disabled={isGenerating}
             data-testid="prompt-input"
           />
