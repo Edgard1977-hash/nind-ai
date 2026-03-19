@@ -44,7 +44,7 @@ body {
   overflow: hidden;
 }
 
-/* Animated Liquid Gradient Background */
+/* Animated Liquid Gradient Background with Pulse */
 .liquid-gradient-bg {
   position: fixed;
   inset: 0;
@@ -53,11 +53,48 @@ body {
   background: var(--bg-main);
 }
 
+/* Main gradient glow layer - bottom center */
+.liquid-gradient-bg::before {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -15%;
+  width: 130%;
+  height: 90%;
+  background: radial-gradient(
+    ellipse 70% 50% at 50% 100%,
+    rgba(0, 221, 255, 0.75) 0%,
+    rgba(0, 200, 240, 0.55) 15%,
+    rgba(0, 170, 210, 0.35) 30%,
+    rgba(0, 140, 180, 0.18) 50%,
+    rgba(0, 100, 140, 0.08) 70%,
+    transparent 85%
+  );
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Secondary shimmer layer - adds movement */
+.liquid-gradient-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -5%;
+  width: 110%;
+  height: 75%;
+  background: radial-gradient(
+    ellipse 55% 45% at 35% 100%,
+    rgba(0, 255, 255, 0.6) 0%,
+    rgba(0, 230, 250, 0.4) 20%,
+    rgba(0, 190, 220, 0.2) 45%,
+    transparent 70%
+  );
+  animation: pulse-glow-alt 5s ease-in-out infinite 1s;
+}
+
 .gradient-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.8;
+  filter: blur(90px);
   mix-blend-mode: screen;
 }
 
@@ -66,50 +103,83 @@ body {
   height: 80vw;
   max-width: 600px;
   max-height: 600px;
-  background: radial-gradient(circle, rgba(0, 221, 255, 0.6) 0%, rgba(0, 180, 220, 0.35) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 230, 255, 0.8) 0%, rgba(0, 190, 230, 0.5) 35%, transparent 70%);
   bottom: -30%;
   left: -20%;
-  animation: blob-move-1 20s ease-in-out infinite;
+  animation: blob-move-1 12s ease-in-out infinite, blob-pulse 3s ease-in-out infinite;
 }
 
 .blob-2 {
   width: 70vw;
   height: 70vw;
-  max-width: 500px;
-  max-height: 500px;
-  background: radial-gradient(circle, rgba(0, 200, 240, 0.5) 0%, rgba(0, 150, 200, 0.25) 40%, transparent 70%);
-  bottom: -10%;
+  max-width: 550px;
+  max-height: 550px;
+  background: radial-gradient(circle, rgba(0, 250, 255, 0.7) 0%, rgba(0, 210, 240, 0.4) 35%, transparent 70%);
+  bottom: -20%;
   right: -25%;
-  animation: blob-move-2 18s ease-in-out infinite;
+  animation: blob-move-2 15s ease-in-out infinite, blob-pulse 4s ease-in-out infinite 0.5s;
 }
 
 .blob-3 {
-  width: 60vw;
-  height: 60vw;
+  width: 55vw;
+  height: 55vw;
   max-width: 450px;
   max-height: 450px;
-  background: radial-gradient(circle, rgba(0, 240, 255, 0.4) 0%, rgba(0, 180, 200, 0.2) 40%, transparent 70%);
-  bottom: 5%;
-  left: 20%;
-  animation: blob-move-3 25s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(0, 255, 240, 0.6) 0%, rgba(0, 220, 220, 0.35) 35%, transparent 70%);
+  bottom: -5%;
+  left: 30%;
+  animation: blob-move-3 18s ease-in-out infinite, blob-pulse 3.5s ease-in-out infinite 1s;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    opacity: 0.85;
+    transform: scale(1) translateY(0);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.08) translateY(-2%);
+  }
+}
+
+@keyframes pulse-glow-alt {
+  0%, 100% { 
+    opacity: 0.7;
+    transform: translateX(0) scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: translateX(8%) scale(1.1);
+  }
+}
+
+@keyframes blob-pulse {
+  0%, 100% { 
+    opacity: 0.75;
+    filter: blur(90px);
+  }
+  50% { 
+    opacity: 1;
+    filter: blur(110px);
+  }
 }
 
 @keyframes blob-move-1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(15%, -8%) scale(1.15); }
-  50% { transform: translate(8%, -5%) scale(0.9); }
-  75% { transform: translate(-8%, 8%) scale(1.1); }
+  25% { transform: translate(12%, -6%) scale(1.1); }
+  50% { transform: translate(6%, -3%) scale(0.95); }
+  75% { transform: translate(-6%, 6%) scale(1.05); }
 }
 
 @keyframes blob-move-2 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-12%, -12%) scale(1.2); }
-  66% { transform: translate(8%, -8%) scale(0.85); }
+  33% { transform: translate(-10%, -10%) scale(1.15); }
+  66% { transform: translate(6%, -6%) scale(0.9); }
 }
 
 @keyframes blob-move-3 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-20%, 15%) scale(1.2); }
+  50% { transform: translate(-15%, 10%) scale(1.12); }
 }
 
 /* Header */
