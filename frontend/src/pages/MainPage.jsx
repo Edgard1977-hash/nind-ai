@@ -264,47 +264,46 @@ export const MainPage = () => {
       <div className="input-area">
         {/* Outer container */}
         <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
-          {/* Inner container - full width at top */}
-          <div className="input-inner">
-            {/* Attachments inside inner container */}
-            {attachments.length > 0 && (
-              <div className="attachments-row">
-                {attachments.map((attachment) => (
-                  <div key={attachment.id} className="attachment-item">
-                    {attachment.type === "video" && attachment.uploading ? (
-                      <div className="attachment-uploading">
-                        <div 
-                          className="attachment-preview-blur"
-                          style={{ backgroundImage: `url(${attachment.preview})` }}
-                        />
-                        <span className="upload-progress">{Math.round(attachment.progress)}%</span>
-                      </div>
-                    ) : (
-                      <img 
-                        src={attachment.preview} 
-                        alt="Attachment" 
-                        className="attachment-preview"
+          {/* Attachments in outer container */}
+          {attachments.length > 0 && (
+            <div className="attachments-row">
+              {attachments.map((attachment) => (
+                <div key={attachment.id} className="attachment-item">
+                  {attachment.type === "video" && attachment.uploading ? (
+                    <div className="attachment-uploading">
+                      <div 
+                        className="attachment-preview-blur"
+                        style={{ backgroundImage: `url(${attachment.preview})` }}
                       />
-                    )}
-                    <button 
-                      className="attachment-remove"
-                      onClick={() => removeAttachment(attachment.id)}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                      <span className="upload-progress">{Math.round(attachment.progress)}%</span>
+                    </div>
+                  ) : (
+                    <img 
+                      src={attachment.preview} 
+                      alt="Attachment" 
+                      className="attachment-preview"
+                    />
+                  )}
+                  <button 
+                    className="attachment-remove"
+                    onClick={() => removeAttachment(attachment.id)}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
-            {/* Textarea */}
+          {/* Inner container - textarea only */}
+          <div className="input-inner">
             <textarea
               ref={textareaRef}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Создать контент…"
               className="prompt-textarea"
-              rows={3}
+              rows={2}
               disabled={isGenerating}
               data-testid="prompt-input"
             />
