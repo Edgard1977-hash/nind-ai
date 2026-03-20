@@ -5,15 +5,16 @@
 @tailwind utilities;
 
 :root {
-  --bg-main: #0C0C0E;
+  --bg-main: #000000;
   --cyan: #00DDFF;
   --cyan-glow: rgba(0, 221, 255, 0.4);
   --white: #FFFFFF;
   --gray-light: rgba(255, 255, 255, 0.7);
   --gray-medium: rgba(255, 255, 255, 0.5);
   --gray-dark: rgba(255, 255, 255, 0.15);
-  --input-bg: #3C3C3C;
-  --radius-lg: 24px;
+  --input-outer: #0D0B0D;
+  --input-inner: #181718;
+  --radius-lg: 35px;
   --radius-md: 24px;
   --radius-btn: 35px;
 }
@@ -198,7 +199,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: var(--input-bg);
+  background: var(--input-outer);
   border-radius: var(--radius-lg);
   font-size: 14px;
   font-weight: 600;
@@ -213,7 +214,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--input-bg);
+  background: var(--input-outer);
   border: none;
   display: flex;
   align-items: center;
@@ -271,19 +272,47 @@ body {
   margin-top: auto;
 }
 
-.attachments-container {
+/* Outer container - darker background */
+.input-outer {
+  position: relative;
   display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  padding: 10px;
+  background: var(--input-outer);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s ease;
+}
+
+.input-outer.uploading {
+  border-color: transparent;
+}
+
+/* Inner container - lighter background */
+.input-inner {
+  flex: 1;
+  background: var(--input-inner);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Attachments inside inner container */
+.attachments-row {
+  display: flex;
+  gap: 10px;
   overflow-x: auto;
-  padding: 4px;
+  padding-bottom: 8px;
 }
 
 .attachment-item {
   position: relative;
-  width: 80px;
-  height: 80px;
-  border-radius: var(--radius-lg);
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -314,7 +343,7 @@ body {
 .upload-progress {
   position: relative;
   z-index: 1;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--white);
 }
@@ -323,10 +352,10 @@ body {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   border: none;
   display: flex;
   align-items: center;
@@ -335,25 +364,81 @@ body {
   color: var(--white);
 }
 
-/* Input container */
-.input-container {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto auto;
-  gap: 8px 12px;
-  padding: 16px;
-  background: var(--input-bg);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: border-color 0.3s ease;
-  min-height: 120px;
+/* Textarea */
+.prompt-textarea {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  min-height: 72px;
+  width: 100%;
 }
 
-.input-container.uploading {
-  border-color: transparent;
+.prompt-textarea::placeholder {
+  color: var(--gray-medium);
 }
 
+/* Icon buttons in outer container */
+.input-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gray-medium);
+  transition: color 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.input-icon-btn:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.input-icon-btn.outer-left {
+  align-self: center;
+}
+
+/* Right side actions */
+.outer-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Send button */
+.send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--white);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--bg-main);
+  opacity: 0.4;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.send-button.active {
+  opacity: 1;
+}
+
+.send-button:active {
+  transform: scale(0.95);
+}
+
+/* Uploading border animation */
 .uploading-border {
   position: absolute;
   inset: -1px;
@@ -374,86 +459,6 @@ body {
 @keyframes rotate-border {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-.input-icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--gray-medium);
-  transition: color 0.2s ease, background 0.2s ease;
-  flex-shrink: 0;
-}
-
-.input-icon-btn:hover {
-  color: var(--white);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.input-icon-btn.left {
-  grid-row: 1;
-  grid-column: 1;
-  align-self: start;
-}
-
-.prompt-textarea {
-  grid-row: 1 / 3;
-  grid-column: 2;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--white);
-  font-family: 'Inter', sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  resize: none;
-  min-height: 80px;
-  height: 80px;
-  padding: 0;
-  vertical-align: top;
-}
-
-.prompt-textarea::placeholder {
-  color: var(--gray-medium);
-}
-
-.input-actions {
-  grid-row: 1 / 3;
-  grid-column: 3;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.send-button {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--white);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--bg-main);
-  opacity: 0.4;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.send-button.active {
-  opacity: 1;
-}
-
-.send-button:active {
-  transform: scale(0.95);
 }
 
 /* ===== AUTH POPUP ===== */

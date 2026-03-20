@@ -20,6 +20,14 @@ const AudioWaveIcon = ({ className }) => (
   </svg>
 );
 
+// Microphone icon
+const MicIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+  </svg>
+);
+
 // Credit icon - four pointed star with rounded petals
 const CreditIcon = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -254,61 +262,67 @@ export const MainPage = () => {
 
       {/* Input area */}
       <div className="input-area">
-        {/* Attachments */}
-        {attachments.length > 0 && (
-          <div className="attachments-container">
-            {attachments.map((attachment) => (
-              <div key={attachment.id} className="attachment-item">
-                {attachment.type === "video" && attachment.uploading ? (
-                  <div className="attachment-uploading">
-                    <div 
-                      className="attachment-preview-blur"
-                      style={{ backgroundImage: `url(${attachment.preview})` }}
-                    />
-                    <span className="upload-progress">{Math.round(attachment.progress)}%</span>
-                  </div>
-                ) : (
-                  <img 
-                    src={attachment.preview} 
-                    alt="Attachment" 
-                    className="attachment-preview"
-                  />
-                )}
-                <button 
-                  className="attachment-remove"
-                  onClick={() => removeAttachment(attachment.id)}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Input field */}
-        <div className={`input-container ${isUploading ? "uploading" : ""}`}>
+        {/* Outer container */}
+        <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
+          {/* Attach button - outer left */}
           <button 
-            className="input-icon-btn left"
+            className="input-icon-btn outer-left"
             onClick={() => fileInputRef.current?.click()}
             data-testid="attach-button"
           >
             <Paperclip className="w-5 h-5" />
           </button>
-          
-          <textarea
-            ref={textareaRef}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Создать контент…"
-            className="prompt-textarea"
-            rows={3}
-            disabled={isGenerating}
-            data-testid="prompt-input"
-          />
-          
-          <div className="input-actions">
-            <button className="input-icon-btn" data-testid="audio-button">
-              <AudioWaveIcon className="w-5 h-5" />
+
+          {/* Inner container */}
+          <div className="input-inner">
+            {/* Attachments inside inner container */}
+            {attachments.length > 0 && (
+              <div className="attachments-row">
+                {attachments.map((attachment) => (
+                  <div key={attachment.id} className="attachment-item">
+                    {attachment.type === "video" && attachment.uploading ? (
+                      <div className="attachment-uploading">
+                        <div 
+                          className="attachment-preview-blur"
+                          style={{ backgroundImage: `url(${attachment.preview})` }}
+                        />
+                        <span className="upload-progress">{Math.round(attachment.progress)}%</span>
+                      </div>
+                    ) : (
+                      <img 
+                        src={attachment.preview} 
+                        alt="Attachment" 
+                        className="attachment-preview"
+                      />
+                    )}
+                    <button 
+                      className="attachment-remove"
+                      onClick={() => removeAttachment(attachment.id)}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Создать контент…"
+              className="prompt-textarea"
+              rows={3}
+              disabled={isGenerating}
+              data-testid="prompt-input"
+            />
+          </div>
+
+          {/* Right side buttons - outer */}
+          <div className="outer-right-actions">
+            <button className="input-icon-btn" data-testid="mic-button">
+              <MicIcon className="w-5 h-5" />
             </button>
             
             <button 
