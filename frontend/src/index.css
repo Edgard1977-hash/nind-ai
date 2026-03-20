@@ -52,71 +52,58 @@ body {
   inset: 0;
   overflow: hidden;
   z-index: 0;
-  background: linear-gradient(
-    180deg,
-    #0f0f0f 0%,
-    #0f0f0f 15%,
-    #121a1a 25%,
-    #1a2d2d 35%,
-    #254545 45%,
-    #306060 52%,
-    #3d7a7a 58%,
-    #4a9595 64%,
-    #58aaaa 70%,
-    #65bfbf 76%,
-    #72d2d2 82%,
-    #7ee3e3 88%,
-    #8aefef 94%,
-    #95f5f5 100%
-  );
+  background: #0C0C0E;
 }
 
-/* Subtle animated shimmer */
+/* Side and bottom gradients */
 .gradient-blob {
   position: absolute;
-  filter: blur(120px);
+  filter: blur(80px);
   will-change: transform;
   border-radius: 50%;
 }
 
+/* Left side glow */
 .blob-1 {
-  width: 100%;
-  height: 50%;
-  background: rgba(130, 230, 230, 0.3);
-  bottom: -10%;
-  left: -20%;
-  animation: blob-drift-1 15s ease-in-out infinite;
-}
-
-.blob-2 {
-  width: 80%;
-  height: 40%;
-  background: rgba(100, 200, 200, 0.25);
-  bottom: 0%;
-  right: -15%;
-  animation: blob-drift-2 18s ease-in-out infinite;
-}
-
-.blob-3 {
   width: 60%;
-  height: 35%;
-  background: rgba(80, 180, 180, 0.2);
-  bottom: 10%;
-  left: 20%;
-  animation: blob-drift-3 12s ease-in-out infinite;
+  height: 80%;
+  background: radial-gradient(ellipse at center, rgba(0, 180, 180, 0.7) 0%, rgba(0, 150, 150, 0.4) 40%, transparent 70%);
+  bottom: -20%;
+  left: -30%;
+  animation: blob-drift-1 12s ease-in-out infinite;
 }
 
-/* Light vignette */
+/* Right side glow */
+.blob-2 {
+  width: 60%;
+  height: 80%;
+  background: radial-gradient(ellipse at center, rgba(0, 200, 200, 0.65) 0%, rgba(0, 160, 160, 0.35) 40%, transparent 70%);
+  bottom: -20%;
+  right: -30%;
+  animation: blob-drift-2 14s ease-in-out infinite;
+}
+
+/* Bottom center glow */
+.blob-3 {
+  width: 80%;
+  height: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 190, 190, 0.6) 0%, rgba(0, 155, 155, 0.3) 45%, transparent 70%);
+  bottom: -25%;
+  left: 10%;
+  animation: blob-drift-3 10s ease-in-out infinite;
+}
+
+/* Subtle vignette */
 .liquid-gradient-bg::before {
   content: '';
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse 90% 80% at 50% 50%,
+    ellipse 70% 60% at 50% 45%,
     transparent 0%,
-    transparent 60%,
-    rgba(0, 0, 0, 0.15) 85%,
-    rgba(0, 0, 0, 0.25) 100%
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 80%,
+    rgba(0, 0, 0, 0.35) 100%
   );
   z-index: 2;
   pointer-events: none;
