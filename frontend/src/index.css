@@ -276,9 +276,9 @@ body {
 .input-outer {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
-  padding: 10px;
+  padding: 12px;
   background: var(--input-outer);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -289,15 +289,29 @@ body {
   border-color: transparent;
 }
 
-/* Inner container - lighter background */
+/* Inner container - lighter background, full width at top */
 .input-inner {
-  flex: 1;
+  width: 100%;
   background: var(--input-inner);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Bottom row with buttons */
+.input-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.input-bottom-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Attachments inside inner container */
@@ -382,7 +396,7 @@ body {
   color: var(--gray-medium);
 }
 
-/* Icon buttons in outer container */
+/* Icon buttons */
 .input-icon-btn {
   width: 40px;
   height: 40px;
@@ -401,17 +415,6 @@ body {
 .input-icon-btn:hover {
   color: var(--white);
   background: rgba(255, 255, 255, 0.1);
-}
-
-.input-icon-btn.outer-left {
-  align-self: center;
-}
-
-/* Right side actions */
-.outer-right-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 /* Send button */

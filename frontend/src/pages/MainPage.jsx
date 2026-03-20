@@ -264,16 +264,7 @@ export const MainPage = () => {
       <div className="input-area">
         {/* Outer container */}
         <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
-          {/* Attach button - outer left */}
-          <button 
-            className="input-icon-btn outer-left"
-            onClick={() => fileInputRef.current?.click()}
-            data-testid="attach-button"
-          >
-            <Paperclip className="w-5 h-5" />
-          </button>
-
-          {/* Inner container */}
+          {/* Inner container - full width at top */}
           <div className="input-inner">
             {/* Attachments inside inner container */}
             {attachments.length > 0 && (
@@ -319,24 +310,34 @@ export const MainPage = () => {
             />
           </div>
 
-          {/* Right side buttons - outer */}
-          <div className="outer-right-actions">
-            <button className="input-icon-btn" data-testid="mic-button">
-              <MicIcon className="w-5 h-5" />
-            </button>
-            
+          {/* Bottom row with all buttons */}
+          <div className="input-bottom-row">
             <button 
-              className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
-              onClick={handleSubmit}
-              disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
-              data-testid="send-button"
+              className="input-icon-btn"
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="attach-button"
             >
-              {isGenerating ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <ArrowUp className="w-5 h-5" />
-              )}
+              <Paperclip className="w-5 h-5" />
             </button>
+
+            <div className="input-bottom-right">
+              <button className="input-icon-btn" data-testid="mic-button">
+                <MicIcon className="w-5 h-5" />
+              </button>
+              
+              <button 
+                className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
+                onClick={handleSubmit}
+                disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
+                data-testid="send-button"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <ArrowUp className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
           
           <input
