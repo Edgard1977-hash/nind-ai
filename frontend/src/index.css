@@ -52,42 +52,52 @@ body {
   inset: 0;
   overflow: hidden;
   z-index: 0;
-  background: #0C0C0E;
+  background: linear-gradient(
+    to bottom,
+    #0C0C0E 0%,
+    #0C0C0E 25%,
+    #0a1a1a 40%,
+    #0d3535 55%,
+    #10605a 70%,
+    #15807a 82%,
+    #1a9a92 90%,
+    #20b0a8 100%
+  );
 }
 
-/* Main gradient - cyan/turquoise from bottom like reference */
+/* Subtle animated glow at bottom */
 .gradient-blob {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(100px);
   will-change: transform;
+  opacity: 0.5;
 }
 
 .blob-1 {
-  width: 150vw;
-  height: 80vh;
-  background: radial-gradient(ellipse at center, rgba(0, 210, 200, 0.9) 0%, rgba(0, 180, 180, 0.6) 30%, transparent 70%);
-  bottom: -30%;
-  left: -25%;
-  animation: blob-breathe-1 8s ease-in-out infinite;
+  width: 200%;
+  height: 40%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(30, 180, 170, 0.6) 0%, transparent 60%);
+  bottom: -10%;
+  left: -50%;
+  animation: blob-subtle-1 10s ease-in-out infinite;
 }
 
 .blob-2 {
-  width: 120vw;
-  height: 70vh;
-  background: radial-gradient(ellipse at center, rgba(0, 220, 210, 0.8) 0%, rgba(0, 190, 190, 0.5) 35%, transparent 70%);
-  bottom: -25%;
-  right: -30%;
-  animation: blob-breathe-2 10s ease-in-out infinite;
+  width: 150%;
+  height: 35%;
+  background: radial-gradient(ellipse at 30% 100%, rgba(25, 160, 155, 0.5) 0%, transparent 55%);
+  bottom: -5%;
+  left: -25%;
+  animation: blob-subtle-2 12s ease-in-out infinite;
 }
 
 .blob-3 {
-  width: 100vw;
-  height: 60vh;
-  background: radial-gradient(ellipse at center, rgba(0, 200, 190, 0.7) 0%, rgba(0, 170, 170, 0.4) 40%, transparent 70%);
-  bottom: -20%;
-  left: 0%;
-  animation: blob-breathe-3 12s ease-in-out infinite;
+  width: 150%;
+  height: 35%;
+  background: radial-gradient(ellipse at 70% 100%, rgba(35, 190, 180, 0.5) 0%, transparent 55%);
+  bottom: -5%;
+  right: -25%;
+  animation: blob-subtle-3 14s ease-in-out infinite;
 }
 
 /* Vignette overlay */
@@ -96,34 +106,19 @@ body {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse 80% 60% at 50% 50%,
+    ellipse 80% 70% at 50% 50%,
     transparent 0%,
-    transparent 40%,
-    rgba(0, 0, 0, 0.3) 70%,
-    rgba(0, 0, 0, 0.5) 100%
+    transparent 50%,
+    rgba(0, 0, 0, 0.25) 80%,
+    rgba(0, 0, 0, 0.4) 100%
   );
   z-index: 2;
   pointer-events: none;
 }
 
-/* Top dark fade */
+/* Remove the top dark fade - gradient handles it */
 .liquid-gradient-bg::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(
-    to bottom,
-    #0C0C0E 0%,
-    #0C0C0E 20%,
-    rgba(12, 12, 14, 0.9) 40%,
-    rgba(12, 12, 14, 0.5) 70%,
-    transparent 100%
-  );
-  z-index: 3;
-  pointer-events: none;
+  display: none;
 }
 
 /* Noise texture overlay */
@@ -137,19 +132,19 @@ body {
   background-repeat: repeat;
 }
 
-@keyframes blob-breathe-1 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.9; }
-  50% { transform: translate(3%, -3%) scale(1.05); opacity: 1; }
+@keyframes blob-subtle-1 {
+  0%, 100% { transform: translateX(0) scale(1); opacity: 0.5; }
+  50% { transform: translateX(3%) scale(1.02); opacity: 0.6; }
 }
 
-@keyframes blob-breathe-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.85; }
-  50% { transform: translate(-4%, -2%) scale(1.08); opacity: 0.95; }
+@keyframes blob-subtle-2 {
+  0%, 100% { transform: translateX(0) scale(1); opacity: 0.45; }
+  50% { transform: translateX(-2%) scale(1.03); opacity: 0.55; }
 }
 
-@keyframes blob-breathe-3 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-  50% { transform: translate(2%, -4%) scale(1.06); opacity: 0.9; }
+@keyframes blob-subtle-3 {
+  0%, 100% { transform: translateX(0) scale(1); opacity: 0.45; }
+  50% { transform: translateX(2%) scale(1.02); opacity: 0.5; }
 }
 
 /* Header */
