@@ -55,32 +55,30 @@ body {
   background: #000000;
 }
 
-/* Thin curved side glows - true cyan/turquoise */
+/* Curved side glows - true turquoise */
 .gradient-blob {
   position: absolute;
-  filter: blur(35px);
+  filter: blur(30px);
   will-change: transform;
 }
 
-/* Left side curved glow */
+/* Left side curved glow - ellipse shape */
 .blob-1 {
-  width: 50px;
-  height: 60%;
-  background: linear-gradient(to right, rgba(0, 200, 255, 0.4) 0%, transparent 100%);
-  top: 20%;
-  left: -15px;
-  border-radius: 0 100% 100% 0;
+  width: 120px;
+  height: 90%;
+  background: radial-gradient(ellipse 100% 50% at 0% 50%, rgba(0, 210, 230, 0.7) 0%, rgba(0, 190, 210, 0.4) 30%, transparent 60%);
+  top: 5%;
+  left: -60px;
   animation: blob-drift-1 10s ease-in-out infinite;
 }
 
-/* Right side curved glow */
+/* Right side curved glow - ellipse shape */
 .blob-2 {
-  width: 50px;
-  height: 60%;
-  background: linear-gradient(to left, rgba(0, 200, 255, 0.4) 0%, transparent 100%);
-  top: 20%;
-  right: -15px;
-  border-radius: 100% 0 0 100%;
+  width: 120px;
+  height: 90%;
+  background: radial-gradient(ellipse 100% 50% at 100% 50%, rgba(0, 210, 230, 0.7) 0%, rgba(0, 190, 210, 0.4) 30%, transparent 60%);
+  top: 5%;
+  right: -60px;
   animation: blob-drift-2 12s ease-in-out infinite;
 }
 
