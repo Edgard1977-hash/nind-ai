@@ -232,6 +232,9 @@ export const MainPage = () => {
         <div className="gradient-blob blob-3" />
       </div>
       
+      {/* Noise texture overlay */}
+      <div className="noise-overlay" />
+      
       {/* Header */}
       <header className="main-header">
         {user && (
