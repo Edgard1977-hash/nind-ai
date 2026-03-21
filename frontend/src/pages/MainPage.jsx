@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Paperclip, ArrowUp, X, Loader2 } from "lucide-react";
+import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import AuthPopup from "../components/custom/AuthPopup";
@@ -9,14 +9,10 @@ import ProfilePage from "../components/custom/ProfilePage";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Audio wave icon component - 5 bars (from user image)
-const AudioWaveIcon = ({ className }) => (
+// Slind Logo component
+const SlindLogo = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <rect x="2" y="9" width="3" height="6" rx="1.5"/>
-    <rect x="6.5" y="6" width="3" height="12" rx="1.5"/>
-    <rect x="11" y="3" width="3" height="18" rx="1.5"/>
-    <rect x="15.5" y="6" width="3" height="12" rx="1.5"/>
-    <rect x="20" y="9" width="3" height="6" rx="1.5"/>
+    <path d="M12 2C12 2 14 7 14.5 9.5C17 10 22 12 22 12C22 12 17 14 14.5 14.5C14 17 12 22 12 22C12 22 10 17 9.5 14.5C7 14 2 12 2 12C2 12 7 10 9.5 9.5C10 7 12 2 12 2Z"/>
   </svg>
 );
 
@@ -28,12 +24,18 @@ const MicIcon = ({ className }) => (
   </svg>
 );
 
-// Credit icon - four pointed star with rounded petals
-const CreditIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 2C12 2 13.5 8 14 10C15.5 10.5 22 12 22 12C22 12 15.5 13.5 14 14C13.5 16 12 22 12 22C12 22 10.5 16 10 14C8.5 13.5 2 12 2 12C2 12 8.5 10.5 10 10C10.5 8 12 2 12 2Z"/>
-  </svg>
-);
+// Format categories
+const FORMAT_TABS = ["Все", "Новые", "Видео", "Фото", "Монтаж", "Анимации"];
+
+// Placeholder formats
+const FORMATS = [
+  { id: 1, name: "Формат", color: "#2a2a2e" },
+  { id: 2, name: "Формат", color: "#2a2a2e" },
+  { id: 3, name: "Формат", color: "#2a2a2e" },
+  { id: 4, name: "Формат", color: "#2a2a2e" },
+  { id: 5, name: "Формат", color: "#2a2a2e" },
+  { id: 6, name: "Формат", color: "#2a2a2e" },
+];
 
 export const MainPage = () => {
   const navigate = useNavigate();
@@ -45,10 +47,13 @@ export const MainPage = () => {
   const [user, setUser] = useState(null);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showFormatsPopup, setShowFormatsPopup] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [uploadingFiles, setUploadingFiles] = useState({});
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState("Все");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Check auth status
   useEffect(() => {
@@ -62,22 +67,6 @@ export const MainPage = () => {
     }
   }, []);
 
-  // Check for user from auth callback
-  useEffect(() => {
-    if (window.location.hash?.includes('session_id=')) {
-      // Auth callback will handle this
-      return;
-    }
-  }, []);
-
-  const handleProfileClick = () => {
-    if (user) {
-      setShowProfile(true);
-    } else {
-      setShowAuthPopup(true);
-    }
-  };
-
   const handleSubmit = async () => {
     if (!user) {
       setShowAuthPopup(true);
@@ -89,16 +78,13 @@ export const MainPage = () => {
     setIsGenerating(true);
     
     try {
-      // Prepare request data
       const requestData = {
         prompt: prompt.trim(),
         format_id: "auto",
         language: "auto"
       };
       
-      // Add attached files if any
       if (attachments.length > 0) {
-        // Upload attachments first if they have files
         const uploadedUrls = [];
         for (const att of attachments) {
           if (att.file && !att.uploadedUrl) {
@@ -113,10 +99,8 @@ export const MainPage = () => {
           }
         }
         
-        // Check if it's a video for device mockup
         const videoAttachment = attachments.find(a => a.type === "video");
         if (videoAttachment && uploadedUrls.length > 0) {
-          // Create device mockup
           const response = await axios.post(`${API}/device-mockup/create`, {
             video_url: uploadedUrls[0],
             device_type: "phone",
@@ -132,13 +116,10 @@ export const MainPage = () => {
           return;
         }
         
-        // Images for product ads
         requestData.product_images = uploadedUrls;
       }
       
-      // Send to video generation API
       const response = await axios.post(`${API}/video/generate`, requestData);
-      
       toast.success("Генерация началась!");
       navigate(`/video/${response.data.id}`);
     } catch (error) {
@@ -150,51 +131,26 @@ export const MainPage = () => {
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
+    
     files.forEach(file => {
       const id = Date.now() + Math.random();
       const isVideo = file.type.startsWith("video/");
       
-      // Create preview
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = (event) => {
         setAttachments(prev => [...prev, {
           id,
-          file,
-          preview: e.target.result,
           type: isVideo ? "video" : "image",
-          uploading: isVideo,
+          preview: event.target.result,
+          file,
+          uploading: false,
           progress: 0
         }]);
-        
-        if (isVideo) {
-          setIsUploading(true);
-          // Simulate upload progress
-          simulateUpload(id);
-        }
       };
       reader.readAsDataURL(file);
     });
     
     e.target.value = "";
-  };
-
-  const simulateUpload = (id) => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setAttachments(prev => prev.map(a => 
-          a.id === id ? { ...a, uploading: false, progress: 100 } : a
-        ));
-        setIsUploading(false);
-      } else {
-        setAttachments(prev => prev.map(a => 
-          a.id === id ? { ...a, progress } : a
-        ));
-      }
-    }, 200);
   };
 
   const removeAttachment = (id) => {
@@ -213,6 +169,14 @@ export const MainPage = () => {
     setShowProfile(false);
   };
 
+  const handleGetStarted = () => {
+    if (user) {
+      setShowProfile(true);
+    } else {
+      setShowAuthPopup(true);
+    }
+  };
+
   if (showProfile && user) {
     return (
       <ProfilePage 
@@ -225,136 +189,199 @@ export const MainPage = () => {
 
   return (
     <div className="main-page" data-testid="main-page">
-      {/* Animated liquid gradient background */}
-      <div className="liquid-gradient-bg">
-        <div className="gradient-blob blob-1" />
-        <div className="gradient-blob blob-2" />
-        <div className="gradient-blob blob-3" />
-      </div>
+      {/* Background */}
+      <div className="liquid-gradient-bg" />
       
-      {/* Noise texture overlay */}
-      <div className="noise-overlay" />
-      
-      {/* Header */}
-      <header className="main-header">
-        {user && (
-          <div className="credits-badge" data-testid="credits-badge">
-            <CreditIcon className="w-4 h-4" />
-            <span>{user.credits || 0}</span>
+      {/* Fixed Header with blur */}
+      <header className="fixed-header">
+        <div className="header-blur" />
+        <div className="header-content">
+          <div className="logo-container">
+            <SlindLogo className="logo-icon" />
+            <span className="logo-text">Slind</span>
           </div>
-        )}
-        
-        <button 
-          className="avatar-button"
-          onClick={handleProfileClick}
-          data-testid="profile-button"
-        >
-          {user?.avatar ? (
-            <img src={user.avatar} alt="Avatar" className="avatar-image" />
-          ) : (
-            <User className="w-5 h-5 text-white/70" />
-          )}
-        </button>
+          
+          <button 
+            className="get-started-btn"
+            onClick={handleGetStarted}
+            data-testid="get-started-btn"
+          >
+            Get started
+          </button>
+        </div>
       </header>
 
-      {/* Static heading */}
-      <div className="static-heading">
-        <h1 className="heading-main">Создавай лучше и легче</h1>
-        <p className="heading-sub">Делай любой контент с ИИ</p>
-      </div>
+      {/* Main content - scrollable */}
+      <div className="main-content">
+        {/* Heading section */}
+        <div className="heading-section">
+          <h1 className="heading-main">Create more better</h1>
+          <p className="heading-sub">Make content entirely with AI</p>
+        </div>
 
-      {/* Input area */}
-      <div className="input-area">
-        {/* Outer container */}
-        <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
-          {/* Attachments in outer container */}
-          {attachments.length > 0 && (
-            <div className="attachments-row">
-              {attachments.map((attachment) => (
-                <div key={attachment.id} className="attachment-item">
-                  {attachment.type === "video" && attachment.uploading ? (
-                    <div className="attachment-uploading">
-                      <div 
-                        className="attachment-preview-blur"
-                        style={{ backgroundImage: `url(${attachment.preview})` }}
+        {/* Input area - centered */}
+        <div className="input-area">
+          <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
+            {attachments.length > 0 && (
+              <div className="attachments-row">
+                {attachments.map((attachment) => (
+                  <div key={attachment.id} className="attachment-item">
+                    {attachment.type === "video" && attachment.uploading ? (
+                      <div className="attachment-uploading">
+                        <div 
+                          className="attachment-preview-blur"
+                          style={{ backgroundImage: `url(${attachment.preview})` }}
+                        />
+                        <span className="upload-progress">{Math.round(attachment.progress)}%</span>
+                      </div>
+                    ) : (
+                      <img 
+                        src={attachment.preview} 
+                        alt="Attachment" 
+                        className="attachment-preview"
                       />
-                      <span className="upload-progress">{Math.round(attachment.progress)}%</span>
-                    </div>
+                    )}
+                    <button 
+                      className="attachment-remove"
+                      onClick={() => removeAttachment(attachment.id)}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="input-inner">
+              <textarea
+                ref={textareaRef}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Создать контент…"
+                className="prompt-textarea"
+                rows={2}
+                disabled={isGenerating}
+                data-testid="prompt-input"
+              />
+            </div>
+
+            <div className="input-bottom-row">
+              <button 
+                className="input-icon-btn"
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="attach-button"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+
+              <div className="input-bottom-right">
+                <button className="input-icon-btn" data-testid="mic-button">
+                  <MicIcon className="w-5 h-5" />
+                </button>
+                
+                <button 
+                  className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
+                  onClick={handleSubmit}
+                  disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
+                  data-testid="send-button"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <img 
-                      src={attachment.preview} 
-                      alt="Attachment" 
-                      className="attachment-preview"
-                    />
+                    <ArrowUp className="w-5 h-5" />
                   )}
-                  <button 
-                    className="attachment-remove"
-                    onClick={() => removeAttachment(attachment.id)}
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+                </button>
+              </div>
+            </div>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            
+            {isUploading && <div className="uploading-border" />}
+          </div>
+        </div>
+
+        {/* Formats section */}
+        <div className="formats-section">
+          <h2 className="formats-title">Форматы</h2>
+          
+          <div className="formats-container">
+            <div className="formats-scroll">
+              {FORMATS.map((format) => (
+                <div key={format.id} className="format-card">
+                  <div 
+                    className="format-preview"
+                    style={{ backgroundColor: format.color }}
+                  />
+                  <span className="format-name">{format.name}</span>
                 </div>
               ))}
             </div>
-          )}
-
-          {/* Inner container - textarea only */}
-          <div className="input-inner">
-            <textarea
-              ref={textareaRef}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Создать контент…"
-              className="prompt-textarea"
-              rows={2}
-              disabled={isGenerating}
-              data-testid="prompt-input"
-            />
-          </div>
-
-          {/* Bottom row with all buttons */}
-          <div className="input-bottom-row">
+            
             <button 
-              className="input-icon-btn"
-              onClick={() => fileInputRef.current?.click()}
-              data-testid="attach-button"
+              className="view-all-btn"
+              onClick={() => setShowFormatsPopup(true)}
+              data-testid="view-all-btn"
             >
-              <Paperclip className="w-5 h-5" />
+              <span>Смотреть всё</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-
-            <div className="input-bottom-right">
-              <button className="input-icon-btn" data-testid="mic-button">
-                <MicIcon className="w-5 h-5" />
-              </button>
-              
-              <button 
-                className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
-                onClick={handleSubmit}
-                disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
-                data-testid="send-button"
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <ArrowUp className="w-5 h-5" />
-                )}
-              </button>
-            </div>
           </div>
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          
-          {/* Uploading border animation */}
-          {isUploading && <div className="uploading-border" />}
         </div>
       </div>
+
+      {/* Formats Popup */}
+      {showFormatsPopup && (
+        <div className="formats-popup-overlay" onClick={() => setShowFormatsPopup(false)}>
+          <div className="formats-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="popup-handle" />
+            
+            {/* Search */}
+            <div className="popup-search">
+              <Search className="search-icon" />
+              <input 
+                type="text"
+                placeholder="Найти формат контента"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            
+            {/* Tabs */}
+            <div className="popup-tabs">
+              {FORMAT_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  className={`popup-tab ${activeTab === tab ? "active" : ""}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            
+            {/* Grid */}
+            <div className="popup-grid">
+              {FORMATS.map((format) => (
+                <div key={format.id} className="popup-format-card">
+                  <div 
+                    className="popup-format-preview"
+                    style={{ backgroundColor: format.color }}
+                  />
+                  <span className="popup-format-name">{format.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Auth Popup */}
       <AuthPopup 
