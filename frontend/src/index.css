@@ -151,7 +151,7 @@ body {
   font-family: 'Indivisible', 'Inter', sans-serif;
   font-weight: 600;
   font-size: 32px;
-  color: var(--white);
+  color: #00E4FF;
   margin: 0;
   letter-spacing: -0.5px;
 }
@@ -211,12 +211,13 @@ body {
   border: none;
   outline: none;
   color: var(--white);
-  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-family: -apple-system, 'SF Pro Text', 'Indivisible', 'Inter', sans-serif;
   font-size: 16px;
   line-height: 1.5;
   resize: none;
   min-height: 48px;
   width: 100%;
+  caret-color: var(--cyan);
 }
 
 .prompt-textarea::placeholder {
@@ -369,7 +370,7 @@ body {
 }
 
 .formats-title {
-  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: var(--white);
@@ -377,10 +378,35 @@ body {
 }
 
 .formats-container {
+  position: relative;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 24px;
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+/* Inner corner glows */
+.formats-container::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(0, 228, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.formats-container::after {
+  content: '';
+  position: absolute;
+  bottom: -50px;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(0, 228, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .formats-scroll {
@@ -412,7 +438,7 @@ body {
 }
 
 .format-name {
-  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.7);
 }
@@ -427,12 +453,14 @@ body {
   background: #01E0FD;
   color: #000;
   border: none;
-  border-radius: 24px;
-  font-family: 'Indivisible', 'Inter', sans-serif;
+  border-radius: 25px;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .view-all-btn:hover {
@@ -531,8 +559,9 @@ body {
   border: none;
   outline: none;
   color: var(--white);
-  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
   font-size: 16px;
+  caret-color: var(--cyan);
 }
 
 .search-input::placeholder {
@@ -557,7 +586,7 @@ body {
   border: none;
   border-radius: 20px;
   color: rgba(255, 255, 255, 0.7);
-  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -591,7 +620,7 @@ body {
 }
 
 .popup-format-name {
-  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   padding-left: 4px;
@@ -659,23 +688,6 @@ body {
   position: relative;
   z-index: 1;
   gap: 8px;
-}
-
-.heading-main {
-  font-family: 'Inter', sans-serif;
-  font-weight: 900;
-  font-size: 32px;
-  color: var(--white);
-  margin: 0;
-  letter-spacing: -0.5px;
-}
-
-.heading-sub {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
 }
 
 /* Input area */
