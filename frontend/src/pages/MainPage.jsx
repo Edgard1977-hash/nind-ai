@@ -25,12 +25,12 @@ const FORMAT_TABS = ["Все", "Новые", "Видео", "Фото", "Монт
 
 // Placeholder formats
 const FORMATS = [
-  { id: 1, name: "Формат", color: "#2a2a2e" },
-  { id: 2, name: "Формат", color: "#2a2a2e" },
-  { id: 3, name: "Формат", color: "#2a2a2e" },
-  { id: 4, name: "Формат", color: "#2a2a2e" },
-  { id: 5, name: "Формат", color: "#2a2a2e" },
-  { id: 6, name: "Формат", color: "#2a2a2e" },
+  { id: 1, name: "Формат", color: "#3A3A3A" },
+  { id: 2, name: "Формат", color: "#3A3A3A" },
+  { id: 3, name: "Формат", color: "#3A3A3A" },
+  { id: 4, name: "Формат", color: "#3A3A3A" },
+  { id: 5, name: "Формат", color: "#3A3A3A" },
+  { id: 6, name: "Формат", color: "#3A3A3A" },
 ];
 
 export const MainPage = () => {

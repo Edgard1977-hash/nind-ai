@@ -19,8 +19,9 @@
   --gray-light: rgba(255, 255, 255, 0.7);
   --gray-medium: rgba(255, 255, 255, 0.5);
   --gray-dark: rgba(255, 255, 255, 0.15);
-  --input-outer: #0D0B0D;
-  --input-inner: #181718;
+  --input-outer: #1D1E20;
+  --input-inner: #3D3F43;
+  --card-bg: #3A3A3A;
   --radius-lg: 35px;
   --radius-inner: 28px;
   --radius-md: 24px;
@@ -103,7 +104,7 @@ body {
 }
 
 .logo-image {
-  height: 56px;
+  height: 64px;
   width: auto;
   object-fit: contain;
 }
@@ -163,13 +164,12 @@ body {
   margin: 8px 0 0;
 }
 
-/* Input area - centered */
+/* Input area - full width */
 .input-area {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
+  padding: 0 8px;
 }
 
 /* Outer container */
@@ -181,7 +181,7 @@ body {
   padding: 12px;
   background: var(--input-outer);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: border-color 0.3s ease;
 }
 
@@ -377,9 +377,10 @@ body {
 }
 
 .formats-container {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 24px;
   padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .formats-scroll {
@@ -407,7 +408,7 @@ body {
   width: 100%;
   aspect-ratio: 1;
   border-radius: 24px;
-  background: #2a2a2e;
+  background: var(--card-bg);
 }
 
 .format-name {
@@ -446,11 +447,11 @@ body {
   z-index: 200;
   display: flex;
   align-items: flex-end;
-  animation: fadeIn 0.3s ease forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .formats-popup-overlay.closing {
-  animation: fadeOut 0.3s ease forwards;
+  animation: fadeOut 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeIn {
@@ -469,29 +470,33 @@ body {
   background: #1a1a1e;
   border-radius: 24px 24px 0 0;
   padding: 12px 16px 32px;
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   overflow-y: auto;
 }
 
 .formats-popup.closing {
-  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideDown 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
 }
 
 @keyframes slideUp {
-  from {
+  0% {
     transform: translateY(100%);
+    opacity: 0.5;
   }
-  to {
+  100% {
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
 @keyframes slideDown {
-  from {
+  0% {
     transform: translateY(0);
+    opacity: 1;
   }
-  to {
+  100% {
     transform: translateY(100%);
+    opacity: 0.5;
   }
 }
 
@@ -582,7 +587,7 @@ body {
   width: 100%;
   aspect-ratio: 1;
   border-radius: 24px;
-  background: #2a2a2e;
+  background: var(--card-bg);
 }
 
 .popup-format-name {
