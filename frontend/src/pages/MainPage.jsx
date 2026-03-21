@@ -9,12 +9,8 @@ import ProfilePage from "../components/custom/ProfilePage";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Slind Logo component
-const SlindLogo = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 2C12 2 14 7 14.5 9.5C17 10 22 12 22 12C22 12 17 14 14.5 14.5C14 17 12 22 12 22C12 22 10 17 9.5 14.5C7 14 2 12 2 12C2 12 7 10 9.5 9.5C10 7 12 2 12 2Z"/>
-  </svg>
-);
+// Logo image URL
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_ai-format-studio/artifacts/x0akmc4x_A7746620-B806-4A1B-B685-CC4290123288.png";
 
 // Microphone icon
 const MicIcon = ({ className }) => (
@@ -48,6 +44,7 @@ export const MainPage = () => {
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showFormatsPopup, setShowFormatsPopup] = useState(false);
+  const [isPopupClosing, setIsPopupClosing] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [uploadingFiles, setUploadingFiles] = useState({});
   const [isUploading, setIsUploading] = useState(false);
@@ -177,6 +174,14 @@ export const MainPage = () => {
     }
   };
 
+  const handleClosePopup = () => {
+    setIsPopupClosing(true);
+    setTimeout(() => {
+      setShowFormatsPopup(false);
+      setIsPopupClosing(false);
+    }, 300);
+  };
+
   if (showProfile && user) {
     return (
       <ProfilePage 
@@ -197,8 +202,7 @@ export const MainPage = () => {
         <div className="header-blur" />
         <div className="header-content">
           <div className="logo-container">
-            <SlindLogo className="logo-icon" />
-            <span className="logo-text">Slind</span>
+            <img src={LOGO_URL} alt="Slind" className="logo-image" />
           </div>
           
           <button 
@@ -338,8 +342,8 @@ export const MainPage = () => {
 
       {/* Formats Popup */}
       {showFormatsPopup && (
-        <div className="formats-popup-overlay" onClick={() => setShowFormatsPopup(false)}>
-          <div className="formats-popup" onClick={(e) => e.stopPropagation()}>
+        <div className={`formats-popup-overlay ${isPopupClosing ? "closing" : ""}`} onClick={handleClosePopup}>
+          <div className={`formats-popup ${isPopupClosing ? "closing" : ""}`} onClick={(e) => e.stopPropagation()}>
             <div className="popup-handle" />
             
             {/* Search */}
