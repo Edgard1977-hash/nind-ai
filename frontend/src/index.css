@@ -60,18 +60,18 @@ body {
   background: var(--bg-main);
 }
 
-/* Perspective Grid - FIXED position, stays near input field */
+/* Perspective Grid - scrolls with content, positioned near input */
 .perspective-grid {
-  position: fixed;
+  position: absolute;
   left: 0;
   right: 0;
-  top: 180px;
-  height: 350px;
-  z-index: 1;
+  top: 120px;
+  height: 400px;
+  z-index: 0;
   pointer-events: none;
   opacity: 1;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 60%, transparent 100%);
 }
 
 .grid-svg {
@@ -528,7 +528,7 @@ body {
 }
 
 .examples-header {
-  text-align: center;
+  text-align: left;
   margin-bottom: 24px;
 }
 
@@ -550,20 +550,28 @@ body {
 
 .examples-carousel-wrapper {
   position: relative;
+  margin: 0 -16px;
+  overflow: hidden;
 }
 
 .examples-scroll {
   display: flex;
   align-items: center;
   overflow-x: auto;
-  padding: 0 calc(50% - 100px);
+  padding: 0;
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
-  gap: 16px;
+  gap: 12px;
 }
 
 .examples-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.example-spacer {
+  flex-shrink: 0;
+  width: calc(50% - 126px);
+  min-width: 16px;
 }
 
 .example-card {
@@ -571,9 +579,13 @@ body {
   scroll-snap-align: center;
 }
 
+.example-card:first-child {
+  margin-left: 0;
+}
+
 .example-video-placeholder {
-  width: 200px;
-  height: 355px;
+  width: 220px;
+  height: 390px;
   border-radius: 20px;
   background: var(--card-bg);
 }

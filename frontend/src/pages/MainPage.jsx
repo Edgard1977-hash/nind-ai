@@ -62,6 +62,17 @@ export const MainPage = () => {
         localStorage.removeItem("slind_user");
       }
     }
+    
+    // Auto-scroll examples carousel to center first video with partial sides
+    setTimeout(() => {
+      const scroll = document.getElementById('examples-scroll');
+      if (scroll) {
+        // Scroll to show partial of first video on left side
+        const videoWidth = 220;
+        const gap = 12;
+        scroll.scrollLeft = (videoWidth + gap) * 0.6;
+      }
+    }, 200);
   }, []);
 
   const handleSubmit = async () => {
@@ -377,11 +388,13 @@ export const MainPage = () => {
           
           <div className="examples-carousel-wrapper">
             <div className="examples-scroll" id="examples-scroll">
+              <div className="example-spacer" />
               {[1, 2, 3, 4, 5].map((num) => (
                 <div key={num} className="example-card">
                   <div className="example-video-placeholder" />
                 </div>
               ))}
+              <div className="example-spacer" />
             </div>
             
             <div className="examples-nav-buttons">
