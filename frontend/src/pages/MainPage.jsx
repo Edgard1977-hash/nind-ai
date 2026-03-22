@@ -370,12 +370,12 @@ export const MainPage = () => {
 
         {/* Examples section */}
         <div className="examples-section">
-          <div className="examples-header">
-            <h2 className="examples-title">Examples of generation</h2>
-            <p className="examples-subtitle">with Slind AI</p>
-          </div>
-          
           <div className="examples-container">
+            <div className="examples-header">
+              <h2 className="examples-title">Examples of generation</h2>
+              <p className="examples-subtitle">with Slind AI</p>
+            </div>
+            
             <div className="examples-scroll">
               {[1, 2, 3, 4, 5].map((num) => (
                 <div key={num} className="example-card">
