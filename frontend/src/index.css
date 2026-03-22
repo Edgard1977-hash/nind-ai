@@ -404,7 +404,7 @@ body {
 
 .formats-container {
   position: relative;
-  background: rgba(255, 255, 255, 0.03);
+  background: #1a1a1e;
   border-radius: 24px;
   padding: 16px 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -527,57 +527,59 @@ body {
   padding: 0;
 }
 
-.examples-header {
-  margin-bottom: 16px;
-}
-
-.examples-title {
-  font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 22px;
-  font-weight: 600;
-  color: #00E4FF;
-  margin: 0;
-}
-
-.examples-subtitle {
-  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 4px 0 0;
-}
-
 .examples-container {
   position: relative;
-  background: rgba(255, 255, 255, 0.03);
+  background: #1a1a1e;
   border-radius: 24px;
   padding: 20px 0;
   border: 1px solid rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
 
-/* Top left glow */
+.examples-header {
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+
+.examples-title {
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #00E4FF;
+  margin: 0;
+}
+
+.examples-subtitle {
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 6px 0 0;
+}
+
+/* Top left glow - lower and different shades */
 .examples-container::before {
   content: '';
   position: absolute;
-  top: 0;
+  top: 40px;
   left: 0;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle at top left, rgba(0, 228, 255, 0.12) 0%, transparent 70%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle at top left, rgba(0, 200, 220, 0.15) 0%, rgba(0, 180, 200, 0.08) 40%, transparent 70%);
   pointer-events: none;
   z-index: 0;
-  border-radius: 24px 0 0 0;
 }
 
 .examples-scroll {
   display: flex;
-  gap: 12px;
+  align-items: center;
   overflow-x: auto;
-  padding: 0 calc(50% - 75px);
+  padding: 0 calc(50% - 100px);
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
   position: relative;
   z-index: 1;
+  gap: 16px;
 }
 
 .examples-scroll::-webkit-scrollbar {
@@ -590,9 +592,9 @@ body {
 }
 
 .example-video-placeholder {
-  width: 150px;
-  height: 267px;
-  border-radius: 16px;
+  width: 200px;
+  height: 356px;
+  border-radius: 20px;
   background: var(--card-bg);
 }
 
