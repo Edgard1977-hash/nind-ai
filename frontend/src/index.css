@@ -60,7 +60,7 @@ body {
   background: var(--bg-main);
 }
 
-/* Perspective Grid */
+/* Perspective Grid - fixed position */
 .perspective-grid {
   position: fixed;
   left: 0;
@@ -495,6 +495,105 @@ body {
 
 .view-all-btn:hover {
   opacity: 0.9;
+}
+
+/* Scroll button at end of formats */
+.formats-scroll-btn {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--white);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 12px;
+}
+
+.formats-scroll-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Examples Section */
+.examples-section {
+  margin-top: 40px;
+  padding: 0;
+}
+
+.examples-header {
+  margin-bottom: 16px;
+}
+
+.examples-title {
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #00E4FF;
+  margin: 0;
+}
+
+.examples-subtitle {
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 4px 0 0;
+}
+
+.examples-container {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 24px;
+  padding: 20px 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+/* Top left glow */
+.examples-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle at top left, rgba(0, 228, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 24px 0 0 0;
+}
+
+.examples-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 calc(50% - 75px);
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  position: relative;
+  z-index: 1;
+}
+
+.examples-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.example-card {
+  flex-shrink: 0;
+  scroll-snap-align: center;
+}
+
+.example-video-placeholder {
+  width: 150px;
+  height: 267px;
+  border-radius: 16px;
+  background: var(--card-bg);
 }
 
 /* Formats Popup */

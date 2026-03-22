@@ -346,6 +346,15 @@ export const MainPage = () => {
                   <span className="format-name">{format.name}</span>
                 </div>
               ))}
+              
+              {/* Circle button at the end */}
+              <button 
+                className="formats-scroll-btn"
+                onClick={() => setShowFormatsPopup(true)}
+                data-testid="formats-scroll-btn"
+              >
+                <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
             
             <button 
@@ -356,6 +365,24 @@ export const MainPage = () => {
               <span>Смотреть всё</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+
+        {/* Examples section */}
+        <div className="examples-section">
+          <div className="examples-header">
+            <h2 className="examples-title">Examples of generation</h2>
+            <p className="examples-subtitle">with Slind AI</p>
+          </div>
+          
+          <div className="examples-container">
+            <div className="examples-scroll">
+              {[1, 2, 3, 4, 5].map((num) => (
+                <div key={num} className="example-card">
+                  <div className="example-video-placeholder" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
