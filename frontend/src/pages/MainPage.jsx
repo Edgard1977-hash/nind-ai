@@ -370,18 +370,41 @@ export const MainPage = () => {
 
         {/* Examples section */}
         <div className="examples-section">
-          <div className="examples-container">
-            <div className="examples-header">
-              <h2 className="examples-title">Examples of generation</h2>
-              <p className="examples-subtitle">with Slind AI</p>
-            </div>
-            
-            <div className="examples-scroll">
+          <div className="examples-header">
+            <h2 className="examples-title">Examples of generation</h2>
+            <p className="examples-subtitle">with Slind AI</p>
+          </div>
+          
+          <div className="examples-carousel-wrapper">
+            <div className="examples-scroll" id="examples-scroll">
               {[1, 2, 3, 4, 5].map((num) => (
                 <div key={num} className="example-card">
                   <div className="example-video-placeholder" />
                 </div>
               ))}
+            </div>
+            
+            <div className="examples-nav-buttons">
+              <button 
+                className="examples-nav-btn"
+                onClick={() => {
+                  const el = document.getElementById('examples-scroll');
+                  el.scrollBy({ left: -220, behavior: 'smooth' });
+                }}
+                data-testid="examples-prev-btn"
+              >
+                <ChevronRight className="w-5 h-5 rotate-180" />
+              </button>
+              <button 
+                className="examples-nav-btn"
+                onClick={() => {
+                  const el = document.getElementById('examples-scroll');
+                  el.scrollBy({ left: 220, behavior: 'smooth' });
+                }}
+                data-testid="examples-next-btn"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>

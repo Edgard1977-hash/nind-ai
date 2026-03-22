@@ -60,13 +60,13 @@ body {
   background: var(--bg-main);
 }
 
-/* Perspective Grid - FIXED position (doesn't scroll with content) */
+/* Perspective Grid - FIXED position, stays near input field */
 .perspective-grid {
   position: fixed;
   left: 0;
   right: 0;
-  top: 25%;
-  height: 50%;
+  top: 180px;
+  height: 350px;
   z-index: 1;
   pointer-events: none;
   opacity: 1;
@@ -497,14 +497,14 @@ body {
   opacity: 0.9;
 }
 
-/* Scroll button at end of formats */
+/* Scroll button at end of formats - no border, centered with format cards */
 .formats-scroll-btn {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -513,41 +513,30 @@ body {
   transition: all 0.2s ease;
   flex-shrink: 0;
   align-self: center;
-  margin-top: 12px;
+  margin-top: 0;
+  margin-bottom: 28px;
 }
 
 .formats-scroll-btn:hover {
   background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* Examples Section */
+/* Examples Section - no background panel */
 .examples-section {
-  margin-top: 40px;
+  margin-top: 48px;
   padding: 0;
 }
 
-.examples-container {
-  position: relative;
-  background: #1a1a1e;
-  border-radius: 24px;
-  padding: 24px 0;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-
 .examples-header {
-  padding: 0 20px;
+  text-align: center;
   margin-bottom: 24px;
-  position: relative;
-  z-index: 2;
 }
 
 .examples-title {
   font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
-  color: #00E4FF;
+  color: var(--white);
   margin: 0;
 }
 
@@ -559,43 +548,18 @@ body {
   margin: 6px 0 0;
 }
 
-/* Corner glows for examples */
-.examples-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle at top left, rgba(0, 228, 255, 0.12) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 24px 0 0 0;
-}
-
-.examples-container::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle at bottom right, rgba(0, 228, 255, 0.12) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 0 0 24px 0;
+.examples-carousel-wrapper {
+  position: relative;
 }
 
 .examples-scroll {
   display: flex;
   align-items: center;
   overflow-x: auto;
-  padding: 0 20px;
+  padding: 0 calc(50% - 100px);
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
-  position: relative;
-  z-index: 1;
-  gap: 12px;
+  gap: 16px;
 }
 
 .examples-scroll::-webkit-scrollbar {
@@ -608,10 +572,40 @@ body {
 }
 
 .example-video-placeholder {
-  width: 140px;
-  height: 250px;
-  border-radius: 16px;
+  width: 200px;
+  height: 355px;
+  border-radius: 20px;
   background: var(--card-bg);
+}
+
+/* Navigation buttons for examples carousel */
+.examples-nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.examples-nav-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--white);
+  transition: all 0.2s ease;
+}
+
+.examples-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.examples-nav-btn:active {
+  transform: scale(0.95);
 }
 
 /* Formats Popup */
