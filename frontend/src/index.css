@@ -561,7 +561,7 @@ body {
   padding: 0;
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
-  gap: 12px;
+  gap: 20px;
 }
 
 .examples-scroll::-webkit-scrollbar {
@@ -570,7 +570,7 @@ body {
 
 .example-spacer {
   flex-shrink: 0;
-  width: calc(50% - 126px);
+  width: calc(50% - 135px);
   min-width: 16px;
 }
 
@@ -584,10 +584,20 @@ body {
 }
 
 .example-video-placeholder {
-  width: 220px;
-  height: 390px;
-  border-radius: 20px;
+  width: 240px;
+  height: 426px;
+  border-radius: 30px;
   background: var(--card-bg);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.example-video-placeholder:hover {
+  transform: scale(0.96);
+}
+
+.example-video-placeholder:active {
+  transform: scale(0.93);
 }
 
 /* Navigation buttons for examples carousel */
