@@ -60,6 +60,23 @@ body {
   background: var(--bg-main);
 }
 
+/* Perspective Grid */
+.perspective-grid {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 35%;
+  height: 45%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.grid-svg {
+  width: 100%;
+  height: 100%;
+}
+
 .gradient-blob {
   display: none;
 }
