@@ -430,11 +430,11 @@ body {
 }
 
 .formats-title {
-  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
-  font-size: 22px;
-  font-weight: 600;
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
   color: var(--white);
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   padding: 0 16px;
   position: relative;
   z-index: 2;
@@ -526,7 +526,7 @@ body {
   background: #01E0FD;
   color: #000;
   border: none;
-  border-radius: 24px;
+  border-radius: 21px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 16px;
   font-weight: 700;
@@ -575,18 +575,19 @@ body {
   position: relative;
   background: var(--panel-bg);
   border-radius: 26px;
-  padding: 16px 16px 20px;
+  padding: 16px 0 20px;
 }
 
 .examples-header {
   text-align: left;
   margin-bottom: 16px;
+  padding: 0 16px;
 }
 
 .examples-title {
   font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: var(--white);
   margin: 0;
 }
@@ -601,15 +602,13 @@ body {
 
 .examples-carousel-wrapper {
   position: relative;
-  overflow: hidden;
-  border-radius: 16px;
 }
 
 .examples-scroll {
   display: flex;
   align-items: center;
   overflow-x: auto;
-  padding: 8px 0;
+  padding: 8px 16px;
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
   gap: 20px;
@@ -629,20 +628,12 @@ body {
   transition: transform 0.3s ease;
 }
 
-.example-card:first-child {
-  margin-left: 8px;
-}
-
-.example-card:last-child {
-  margin-right: 8px;
-}
-
 .example-video-placeholder {
   width: 150px;
   height: 267px;
   border-radius: 20px;
   background: var(--card-bg);
-  transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+  transition: all 0.3s ease;
   cursor: pointer;
 }
 
@@ -745,7 +736,7 @@ body {
 
 /* Welcome Section */
 .welcome-section {
-  margin-top: 80px;
+  margin-top: 100px;
   padding: 0;
 }
 
@@ -801,32 +792,6 @@ body {
   }
 }
 
-/* Shimmer effect */
-.welcome-step-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    transparent 100%
-  );
-  animation: shimmer 2.5s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
 .step-circle-outer {
   width: 44px;
   height: 44px;
@@ -836,6 +801,34 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer effect on circles only */
+.step-circle-outer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  animation: shimmer-circle 2s ease-in-out infinite;
+}
+
+@keyframes shimmer-circle {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .step-circle-inner {
@@ -850,6 +843,8 @@ body {
   font-size: 16px;
   font-weight: 700;
   color: var(--white);
+  position: relative;
+  z-index: 1;
 }
 
 .step-text-wrapper {
