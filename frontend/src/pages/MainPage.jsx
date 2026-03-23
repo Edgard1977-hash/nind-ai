@@ -367,15 +367,15 @@ export const MainPage = () => {
               <div className="welcome-video-placeholder" />
             </div>
             
-            <button 
-              className="welcome-cta-btn"
-              onClick={() => {
-                textareaRef.current?.focus();
-              }}
-              data-testid="welcome-cta-btn"
-            >
-              Начать создавать!
-            </button>
+            <div className="welcome-step-card">
+              <div className="step-circle-outer">
+                <div className="step-circle-inner">1</div>
+              </div>
+              <div className="step-text-wrapper">
+                <p className="step-title">Describe the task</p>
+                <p className="step-subtitle">choose a format to find faster</p>
+              </div>
+            </div>
           </div>
         </div>
 

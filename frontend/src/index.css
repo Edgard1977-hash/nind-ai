@@ -411,7 +411,7 @@ body {
   position: relative;
   background: var(--panel-bg);
   border-radius: 26px;
-  padding: 20px 0 16px;
+  padding: 16px 0 12px;
   border: none;
 }
 
@@ -446,7 +446,7 @@ body {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding: 0 16px 16px;
+  padding: 0 16px 12px;
   scrollbar-width: none;
   position: relative;
   z-index: 1;
@@ -542,18 +542,18 @@ body {
   position: relative;
   background: var(--panel-bg);
   border-radius: 26px;
-  padding: 24px 0;
+  padding: 16px 0 20px;
 }
 
 .examples-header {
   text-align: left;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   padding: 0 20px;
 }
 
 .examples-title {
   font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--white);
   margin: 0;
@@ -626,7 +626,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 16px;
-  margin-top: 24px;
+  margin-top: 16px;
   padding: 0 20px;
 }
 
@@ -706,35 +706,104 @@ body {
   transform: scale(0.98);
 }
 
-/* Welcome Section - gradient */
+/* Welcome Section */
 .welcome-section {
   margin-top: 80px;
   padding: 0;
 }
 
 .welcome-container {
-  background: linear-gradient(to top, #0891A8, #01E0FD);
+  background: var(--panel-bg);
   border-radius: 26px;
-  padding: 24px 20px;
+  padding: 16px 20px 20px;
 }
 
 .welcome-title {
   font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
   color: var(--white);
-  margin: 0 0 20px;
+  margin: 0 0 16px;
 }
 
 .welcome-video-wrapper {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .welcome-video-placeholder {
   width: 100%;
   aspect-ratio: 16 / 9;
   border-radius: 20px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--card-bg);
+}
+
+/* Step indicator card */
+.welcome-step-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  background: #38393B;
+  border: 0.5px solid #38393B;
+  border-radius: 24px;
+}
+
+.step-circle-outer {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.step-circle-inner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #01E0FD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.step-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.step-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--white);
+  margin: 0;
+}
+
+.step-subtitle {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
 }
 
 .welcome-cta-btn {
