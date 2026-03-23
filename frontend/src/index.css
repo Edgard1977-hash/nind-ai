@@ -715,7 +715,7 @@ body {
 .welcome-container {
   background: var(--panel-bg);
   border-radius: 26px;
-  padding: 16px 20px 20px;
+  padding: 16px 16px 16px;
 }
 
 .welcome-title {
@@ -723,11 +723,11 @@ body {
   font-size: 26px;
   font-weight: 800;
   color: var(--white);
-  margin: 0 0 16px;
+  margin: 0 0 12px;
 }
 
 .welcome-video-wrapper {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .welcome-video-placeholder {
@@ -765,14 +765,14 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #01E0FD;
+  background: #38393B;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 16px;
   font-weight: 700;
-  color: #000;
+  color: var(--white);
 }
 
 @keyframes pulse-glow {
