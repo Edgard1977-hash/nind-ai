@@ -401,14 +401,29 @@ body {
   font-weight: 600;
   color: var(--white);
   margin: 0 0 16px;
+  padding: 0 16px;
+  position: relative;
+  z-index: 2;
 }
 
 .formats-container {
   position: relative;
   background: var(--panel-bg);
   border-radius: 27px;
-  padding: 16px 0;
+  padding: 20px 0 16px;
   border: none;
+}
+
+.formats-lightning-icon {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  opacity: 0.4;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Inner corner glows - behind content */
@@ -446,6 +461,8 @@ body {
   scrollbar-width: none;
   position: relative;
   z-index: 1;
+  mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
 }
 
 .formats-scroll::-webkit-scrollbar {

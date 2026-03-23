@@ -344,9 +344,15 @@ export const MainPage = () => {
 
         {/* Formats section */}
         <div className="formats-section">
-          <h2 className="formats-title">Форматы</h2>
-          
           <div className="formats-container">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_ai-format-studio/artifacts/gni2qrx6_exportedLayer.png" 
+              alt="" 
+              className="formats-lightning-icon"
+            />
+            
+            <h2 className="formats-title">Форматы</h2>
+            
             <div className="formats-scroll">
               {FORMATS.map((format) => (
                 <div key={format.id} className="format-card">
