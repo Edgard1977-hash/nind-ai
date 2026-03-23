@@ -123,17 +123,18 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
+  min-height: 64px;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .logo-container.hidden {
   opacity: 0;
-  transform: scale(0.8);
+  transform: scale(0.7);
   pointer-events: none;
 }
 
@@ -146,19 +147,20 @@ body {
 .header-overview-text {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%) scale(0.8);
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.7);
   font-family: 'Indivisible', 'Inter', sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: var(--white);
   opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
   pointer-events: none;
 }
 
 .header-overview-text.visible {
   opacity: 1;
-  transform: translateX(-50%) scale(1);
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .get-started-btn {
@@ -171,12 +173,12 @@ body {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .get-started-btn.hidden {
   opacity: 0;
-  transform: scale(0.8);
+  transform: scale(0.7);
   pointer-events: none;
 }
 
@@ -573,13 +575,12 @@ body {
   position: relative;
   background: var(--panel-bg);
   border-radius: 26px;
-  padding: 16px 0 20px;
+  padding: 16px 16px 20px;
 }
 
 .examples-header {
   text-align: left;
   margin-bottom: 16px;
-  padding: 0 20px;
 }
 
 .examples-title {
@@ -600,19 +601,18 @@ body {
 
 .examples-carousel-wrapper {
   position: relative;
-  margin: 0 -16px;
-  padding: 0;
   overflow: hidden;
+  border-radius: 16px;
 }
 
 .examples-scroll {
   display: flex;
   align-items: center;
   overflow-x: auto;
-  padding: 0 16px;
+  padding: 8px 0;
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
-  gap: 16px;
+  gap: 20px;
 }
 
 .examples-scroll::-webkit-scrollbar {
@@ -626,15 +626,29 @@ body {
 .example-card {
   flex-shrink: 0;
   scroll-snap-align: center;
+  transition: transform 0.3s ease;
+}
+
+.example-card:first-child {
+  margin-left: 8px;
+}
+
+.example-card:last-child {
+  margin-right: 8px;
 }
 
 .example-video-placeholder {
+  width: 150px;
+  height: 267px;
+  border-radius: 20px;
+  background: var(--card-bg);
+  transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+  cursor: pointer;
+}
+
+.example-card.center .example-video-placeholder {
   width: 180px;
   height: 320px;
-  border-radius: 24px;
-  background: var(--card-bg);
-  transition: transform 0.2s ease;
-  cursor: pointer;
 }
 
 .example-video-placeholder:hover {
@@ -651,7 +665,6 @@ body {
   justify-content: center;
   gap: 16px;
   margin-top: 16px;
-  padding: 0 20px;
 }
 
 .examples-nav-btn {
@@ -772,6 +785,46 @@ body {
   background: #38393B;
   border: 0.5px solid #38393B;
   border-radius: 35px;
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.6s ease-out 0.3s both;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Shimmer effect */
+.welcome-step-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .step-circle-outer {
@@ -783,7 +836,6 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .step-circle-inner {
@@ -798,15 +850,6 @@ body {
   font-size: 16px;
   font-weight: 700;
   color: var(--white);
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
 }
 
 .step-text-wrapper {

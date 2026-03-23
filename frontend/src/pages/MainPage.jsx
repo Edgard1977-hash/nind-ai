@@ -72,6 +72,36 @@ export const MainPage = () => {
     };
     
     window.addEventListener('scroll', handleScroll);
+    
+    // Setup examples carousel center detection
+    const setupExamplesCarousel = () => {
+      const scroll = document.getElementById('examples-scroll');
+      if (scroll) {
+        // Initial scroll to center second video
+        scroll.scrollLeft = 80;
+        
+        const updateCenterVideo = () => {
+          const cards = scroll.querySelectorAll('.example-card');
+          const scrollRect = scroll.getBoundingClientRect();
+          const scrollCenter = scrollRect.left + scrollRect.width / 2;
+          
+          cards.forEach((card) => {
+            const cardRect = card.getBoundingClientRect();
+            const cardCenter = cardRect.left + cardRect.width / 2;
+            const distance = Math.abs(scrollCenter - cardCenter);
+            const isCenter = distance < 70;
+            card.classList.toggle('center', isCenter);
+          });
+        };
+        
+        scroll.addEventListener('scroll', updateCenterVideo);
+        // Initial call
+        setTimeout(updateCenterVideo, 100);
+      }
+    };
+    
+    setTimeout(setupExamplesCarousel, 300);
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
