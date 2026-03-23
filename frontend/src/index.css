@@ -521,7 +521,7 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* Examples Section - no background panel */
+/* Examples Section */
 .examples-section {
   margin-top: 48px;
   padding: 0;
@@ -548,10 +548,31 @@ body {
   margin: 6px 0 0;
 }
 
+.examples-videos-area {
+  position: relative;
+}
+
+/* Panel behind videos */
+.examples-panel {
+  position: relative;
+  background: #1a1a1e;
+  border-radius: 27px;
+  padding: 180px 20px 24px;
+  margin-top: -160px;
+}
+
+.examples-panel-text {
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 20px;
+  text-align: center;
+}
+
 .examples-carousel-wrapper {
   position: relative;
   margin: 0 -16px;
-  overflow: hidden;
+  z-index: 2;
 }
 
 .examples-scroll {
@@ -561,7 +582,7 @@ body {
   padding: 0;
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
-  gap: 20px;
+  gap: 16px;
 }
 
 .examples-scroll::-webkit-scrollbar {
@@ -570,7 +591,7 @@ body {
 
 .example-spacer {
   flex-shrink: 0;
-  width: calc(50% - 135px);
+  width: calc(50% - 100px);
   min-width: 16px;
 }
 
@@ -579,14 +600,10 @@ body {
   scroll-snap-align: center;
 }
 
-.example-card:first-child {
-  margin-left: 0;
-}
-
 .example-video-placeholder {
-  width: 240px;
-  height: 426px;
-  border-radius: 30px;
+  width: 180px;
+  height: 320px;
+  border-radius: 24px;
   background: var(--card-bg);
   transition: transform 0.2s ease;
   cursor: pointer;
@@ -605,7 +622,6 @@ body {
   display: flex;
   justify-content: center;
   gap: 16px;
-  margin-top: 20px;
 }
 
 .examples-nav-btn {
@@ -628,6 +644,60 @@ body {
 
 .examples-nav-btn:active {
   transform: scale(0.95);
+}
+
+/* About Section */
+.about-section {
+  margin-top: 48px;
+  padding: 0;
+  padding-bottom: 40px;
+}
+
+.about-container {
+  background: #1a1a1e;
+  border-radius: 27px;
+  padding: 24px 20px;
+}
+
+.about-title {
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 20px;
+}
+
+.about-video-wrapper {
+  margin-bottom: 20px;
+}
+
+.about-video-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  background: var(--card-bg);
+}
+
+.about-cta-btn {
+  width: 100%;
+  padding: 16px;
+  background: #01E0FD;
+  color: #000;
+  border: none;
+  border-radius: 16px;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.about-cta-btn:hover {
+  opacity: 0.9;
+}
+
+.about-cta-btn:active {
+  transform: scale(0.98);
 }
 
 /* Formats Popup */

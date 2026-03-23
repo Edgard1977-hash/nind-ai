@@ -386,39 +386,67 @@ export const MainPage = () => {
             <p className="examples-subtitle">with Slind AI</p>
           </div>
           
-          <div className="examples-carousel-wrapper">
-            <div className="examples-scroll" id="examples-scroll">
-              <div className="example-spacer" />
-              {[1, 2, 3, 4, 5].map((num) => (
-                <div key={num} className="example-card">
-                  <div className="example-video-placeholder" />
-                </div>
-              ))}
-              <div className="example-spacer" />
+          <div className="examples-videos-area">
+            <div className="examples-carousel-wrapper">
+              <div className="examples-scroll" id="examples-scroll">
+                <div className="example-spacer" />
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <div key={num} className="example-card">
+                    <div className="example-video-placeholder" />
+                  </div>
+                ))}
+                <div className="example-spacer" />
+              </div>
             </div>
             
-            <div className="examples-nav-buttons">
-              <button 
-                className="examples-nav-btn"
-                onClick={() => {
-                  const el = document.getElementById('examples-scroll');
-                  el.scrollBy({ left: -220, behavior: 'smooth' });
-                }}
-                data-testid="examples-prev-btn"
-              >
-                <ChevronRight className="w-5 h-5 rotate-180" />
-              </button>
-              <button 
-                className="examples-nav-btn"
-                onClick={() => {
-                  const el = document.getElementById('examples-scroll');
-                  el.scrollBy({ left: 220, behavior: 'smooth' });
-                }}
-                data-testid="examples-next-btn"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+            <div className="examples-panel">
+              <p className="examples-panel-text">Смотрите, что создают другие пользователи</p>
+              
+              <div className="examples-nav-buttons">
+                <button 
+                  className="examples-nav-btn"
+                  onClick={() => {
+                    const el = document.getElementById('examples-scroll');
+                    el.scrollBy({ left: -200, behavior: 'smooth' });
+                  }}
+                  data-testid="examples-prev-btn"
+                >
+                  <ChevronRight className="w-5 h-5 rotate-180" />
+                </button>
+                <button 
+                  className="examples-nav-btn"
+                  onClick={() => {
+                    const el = document.getElementById('examples-scroll');
+                    el.scrollBy({ left: 200, behavior: 'smooth' });
+                  }}
+                  data-testid="examples-next-btn"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* About section */}
+        <div className="about-section">
+          <div className="about-container">
+            <h2 className="about-title">Что такое Slind AI?</h2>
+            
+            <div className="about-video-wrapper">
+              <div className="about-video-placeholder" />
+            </div>
+            
+            <button 
+              className="about-cta-btn"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                textareaRef.current?.focus();
+              }}
+              data-testid="about-cta-btn"
+            >
+              Начать создавать!
+            </button>
           </div>
         </div>
       </div>
