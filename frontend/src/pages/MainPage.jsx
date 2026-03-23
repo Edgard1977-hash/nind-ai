@@ -345,13 +345,7 @@ export const MainPage = () => {
         {/* Formats section */}
         <div className="formats-section">
           <div className="formats-container">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_ai-format-studio/artifacts/gni2qrx6_exportedLayer.png" 
-              alt="" 
-              className="formats-lightning-icon"
-            />
-            
-            <h2 className="formats-title">Форматы</h2>
+            <h2 className="formats-title">Formats</h2>
             
             <div className="formats-scroll">
               {FORMATS.map((format) => (
@@ -433,7 +427,7 @@ export const MainPage = () => {
         {/* About section */}
         <div className="about-section">
           <div className="about-container">
-            <h2 className="about-title">Что такое Slind AI?</h2>
+            <h2 className="about-title">Welcome to Slind AI</h2>
             
             <div className="about-video-wrapper">
               <div className="about-video-placeholder" />
