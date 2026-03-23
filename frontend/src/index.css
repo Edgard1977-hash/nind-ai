@@ -128,12 +128,37 @@ body {
 .logo-container {
   display: flex;
   align-items: center;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.logo-container.hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
 }
 
 .logo-image {
   height: 64px;
   width: auto;
   object-fit: contain;
+}
+
+.header-overview-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) scale(0.8);
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--white);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.header-overview-text.visible {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 .get-started-btn {
@@ -146,7 +171,13 @@ body {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.get-started-btn.hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
 }
 
 .get-started-btn:hover {
@@ -569,15 +600,16 @@ body {
 
 .examples-carousel-wrapper {
   position: relative;
-  margin: 0;
-  padding: 0 16px;
+  margin: 0 -16px;
+  padding: 0;
+  overflow: hidden;
 }
 
 .examples-scroll {
   display: flex;
   align-items: center;
   overflow-x: auto;
-  padding: 0;
+  padding: 0 16px;
   scrollbar-width: none;
   scroll-snap-type: x mandatory;
   gap: 16px;
@@ -588,28 +620,20 @@ body {
 }
 
 .example-spacer {
-  flex-shrink: 0;
-  width: calc(50% - 90px);
-  min-width: 0;
+  display: none;
 }
 
 .example-card {
   flex-shrink: 0;
   scroll-snap-align: center;
-  transition: transform 0.3s ease;
-}
-
-.example-card.center .example-video-placeholder {
-  width: 200px;
-  height: 355px;
 }
 
 .example-video-placeholder {
-  width: 160px;
-  height: 284px;
+  width: 180px;
+  height: 320px;
   border-radius: 24px;
   background: var(--card-bg);
-  transition: transform 0.2s ease, width 0.3s ease, height 0.3s ease;
+  transition: transform 0.2s ease;
   cursor: pointer;
 }
 
@@ -715,7 +739,7 @@ body {
 .welcome-container {
   background: var(--panel-bg);
   border-radius: 26px;
-  padding: 16px 16px 16px;
+  padding: 16px 12px 12px;
 }
 
 .welcome-title {
@@ -724,6 +748,7 @@ body {
   font-weight: 800;
   color: var(--white);
   margin: 0 0 12px;
+  padding: 0 4px;
 }
 
 .welcome-video-wrapper {
@@ -746,7 +771,7 @@ body {
   padding: 14px 16px;
   background: #38393B;
   border: 0.5px solid #38393B;
-  border-radius: 24px;
+  border-radius: 35px;
 }
 
 .step-circle-outer {

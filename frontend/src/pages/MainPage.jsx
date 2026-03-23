@@ -51,8 +51,9 @@ export const MainPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState("Все");
   const [searchQuery, setSearchQuery] = useState("");
+  const [headerScrolled, setHeaderScrolled] = useState(false);
 
-  // Check auth status
+  // Check auth status and setup scroll listener
   useEffect(() => {
     const savedUser = localStorage.getItem("slind_user");
     if (savedUser) {
@@ -63,32 +64,15 @@ export const MainPage = () => {
       }
     }
     
-    // Auto-scroll examples carousel to center first video with partial sides
-    setTimeout(() => {
-      const scroll = document.getElementById('examples-scroll');
-      if (scroll) {
-        // Scroll to show partial of first video on left side
-        const videoWidth = 180;
-        const gap = 16;
-        scroll.scrollLeft = (videoWidth + gap) * 0.5;
-        
-        // Update center video on scroll
-        const updateCenterVideo = () => {
-          const cards = scroll.querySelectorAll('.example-card');
-          const scrollCenter = scroll.scrollLeft + scroll.clientWidth / 2;
-          
-          cards.forEach((card) => {
-            const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-            const distance = Math.abs(scrollCenter - cardCenter);
-            const isCenter = distance < 100;
-            card.classList.toggle('center', isCenter);
-          });
-        };
-        
-        scroll.addEventListener('scroll', updateCenterVideo);
-        updateCenterVideo();
-      }
-    }, 200);
+    // Scroll listener for header animation
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const threshold = 350; // After input field
+      setHeaderScrolled(scrollY > threshold);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleSubmit = async () => {
@@ -245,15 +229,17 @@ export const MainPage = () => {
       </div>
       
       {/* Fixed Header with blur */}
-      <header className="fixed-header">
+      <header className={`fixed-header ${headerScrolled ? 'scrolled' : ''}`}>
         <div className="header-blur" />
         <div className="header-content">
-          <div className="logo-container">
+          <div className={`logo-container ${headerScrolled ? 'hidden' : ''}`}>
             <img src={LOGO_URL} alt="Slind" className="logo-image" />
           </div>
           
+          <span className={`header-overview-text ${headerScrolled ? 'visible' : ''}`}>Overview</span>
+          
           <button 
-            className="get-started-btn"
+            className={`get-started-btn ${headerScrolled ? 'hidden' : ''}`}
             onClick={handleGetStarted}
             data-testid="get-started-btn"
           >
@@ -373,7 +359,7 @@ export const MainPage = () => {
               </div>
               <div className="step-text-wrapper">
                 <p className="step-title">Describe the task</p>
-                <p className="step-subtitle">choose a format to find faster</p>
+                <p className="step-subtitle">choose a format for inspiration</p>
               </div>
             </div>
           </div>
