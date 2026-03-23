@@ -392,7 +392,7 @@ body {
 
 /* Formats Section */
 .formats-section {
-  margin-top: 80px;
+  margin-top: 48px;
   padding: 0;
 }
 
@@ -489,13 +489,13 @@ body {
   gap: 8px;
   width: calc(100% - 32px);
   margin: 0 16px;
-  padding: 18px;
+  padding: 14px;
   background: #01E0FD;
   color: #000;
   border: none;
-  border-radius: 40px;
+  border-radius: 24px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -543,7 +543,6 @@ body {
   background: var(--panel-bg);
   border-radius: 26px;
   padding: 24px 0;
-  overflow: hidden;
 }
 
 .examples-header {
@@ -590,21 +589,27 @@ body {
 
 .example-spacer {
   flex-shrink: 0;
-  width: calc(50% - 106px);
+  width: calc(50% - 90px);
   min-width: 0;
 }
 
 .example-card {
   flex-shrink: 0;
   scroll-snap-align: center;
+  transition: transform 0.3s ease;
+}
+
+.example-card.center .example-video-placeholder {
+  width: 200px;
+  height: 355px;
 }
 
 .example-video-placeholder {
-  width: 180px;
-  height: 320px;
+  width: 160px;
+  height: 284px;
   border-radius: 24px;
   background: var(--card-bg);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, width 0.3s ease, height 0.3s ease;
   cursor: pointer;
 }
 
@@ -681,11 +686,11 @@ body {
 
 .about-cta-btn {
   width: 100%;
-  padding: 18px;
+  padding: 14px;
   background: #01E0FD;
   color: #000;
   border: none;
-  border-radius: 40px;
+  border-radius: 24px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 16px;
   font-weight: 700;
@@ -698,6 +703,59 @@ body {
 }
 
 .about-cta-btn:active {
+  transform: scale(0.98);
+}
+
+/* Welcome Section - gradient */
+.welcome-section {
+  margin-top: 80px;
+  padding: 0;
+}
+
+.welcome-container {
+  background: linear-gradient(to top, #0891A8, #01E0FD);
+  border-radius: 26px;
+  padding: 24px 20px;
+}
+
+.welcome-title {
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 20px;
+}
+
+.welcome-video-wrapper {
+  margin-bottom: 20px;
+}
+
+.welcome-video-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.welcome-cta-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--white);
+  color: #000;
+  border: none;
+  border-radius: 24px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.welcome-cta-btn:hover {
+  opacity: 0.9;
+}
+
+.welcome-cta-btn:active {
   transform: scale(0.98);
 }
 

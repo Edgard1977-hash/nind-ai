@@ -68,9 +68,25 @@ export const MainPage = () => {
       const scroll = document.getElementById('examples-scroll');
       if (scroll) {
         // Scroll to show partial of first video on left side
-        const videoWidth = 220;
-        const gap = 12;
-        scroll.scrollLeft = (videoWidth + gap) * 0.6;
+        const videoWidth = 180;
+        const gap = 16;
+        scroll.scrollLeft = (videoWidth + gap) * 0.5;
+        
+        // Update center video on scroll
+        const updateCenterVideo = () => {
+          const cards = scroll.querySelectorAll('.example-card');
+          const scrollCenter = scroll.scrollLeft + scroll.clientWidth / 2;
+          
+          cards.forEach((card) => {
+            const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+            const distance = Math.abs(scrollCenter - cardCenter);
+            const isCenter = distance < 100;
+            card.classList.toggle('center', isCenter);
+          });
+        };
+        
+        scroll.addEventListener('scroll', updateCenterVideo);
+        updateCenterVideo();
       }
     }, 200);
   }, []);
@@ -342,6 +358,27 @@ export const MainPage = () => {
           </div>
         </div>
 
+        {/* Welcome section - first */}
+        <div className="welcome-section">
+          <div className="welcome-container">
+            <h2 className="welcome-title">Welcome to Slind AI</h2>
+            
+            <div className="welcome-video-wrapper">
+              <div className="welcome-video-placeholder" />
+            </div>
+            
+            <button 
+              className="welcome-cta-btn"
+              onClick={() => {
+                textareaRef.current?.focus();
+              }}
+              data-testid="welcome-cta-btn"
+            >
+              Начать создавать!
+            </button>
+          </div>
+        </div>
+
         {/* Formats section */}
         <div className="formats-section">
           <div className="formats-container">
@@ -390,8 +427,8 @@ export const MainPage = () => {
             <div className="examples-carousel-wrapper">
               <div className="examples-scroll" id="examples-scroll">
                 <div className="example-spacer" />
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <div key={num} className="example-card">
+                {[1, 2, 3, 4, 5].map((num, index) => (
+                  <div key={num} className={`example-card ${index === 2 ? 'center' : ''}`}>
                     <div className="example-video-placeholder" />
                   </div>
                 ))}
@@ -421,28 +458,6 @@ export const MainPage = () => {
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* About section */}
-        <div className="about-section">
-          <div className="about-container">
-            <h2 className="about-title">Welcome to Slind AI</h2>
-            
-            <div className="about-video-wrapper">
-              <div className="about-video-placeholder" />
-            </div>
-            
-            <button 
-              className="about-cta-btn"
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                textareaRef.current?.focus();
-              }}
-              data-testid="about-cta-btn"
-            >
-              Начать создавать!
-            </button>
           </div>
         </div>
       </div>
