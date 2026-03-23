@@ -12,7 +12,7 @@
 }
 
 :root {
-  --bg-main: #121215;
+  --bg-main: #141414;
   --cyan: #01E0FD;
   --cyan-glow: rgba(1, 224, 253, 0.4);
   --white: #FFFFFF;
@@ -22,6 +22,7 @@
   --input-outer: #1D1E20;
   --input-inner: #3D3F43;
   --card-bg: #3A3A3A;
+  --panel-bg: #1D1E20;
   --radius-lg: 35px;
   --radius-inner: 28px;
   --radius-md: 24px;
@@ -390,7 +391,7 @@ body {
 
 /* Formats Section */
 .formats-section {
-  margin-top: 60px;
+  margin-top: 80px;
   padding: 0;
 }
 
@@ -404,7 +405,7 @@ body {
 
 .formats-container {
   position: relative;
-  background: #1a1a1e;
+  background: var(--panel-bg);
   border-radius: 27px;
   padding: 16px 0;
   border: none;
@@ -527,9 +528,19 @@ body {
   padding: 0;
 }
 
+/* Panel containing everything */
+.examples-panel {
+  position: relative;
+  background: var(--panel-bg);
+  border-radius: 27px;
+  padding: 24px 0;
+  overflow: hidden;
+}
+
 .examples-header {
   text-align: left;
   margin-bottom: 24px;
+  padding: 0 20px;
 }
 
 .examples-title {
@@ -548,31 +559,9 @@ body {
   margin: 6px 0 0;
 }
 
-.examples-videos-area {
-  position: relative;
-}
-
-/* Panel behind videos */
-.examples-panel {
-  position: relative;
-  background: #1a1a1e;
-  border-radius: 27px;
-  padding: 180px 20px 24px;
-  margin-top: -160px;
-}
-
-.examples-panel-text {
-  font-family: -apple-system, 'SF Pro Text', 'Inter', sans-serif;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 20px;
-  text-align: center;
-}
-
 .examples-carousel-wrapper {
   position: relative;
   margin: 0 -16px;
-  z-index: 2;
 }
 
 .examples-scroll {
@@ -622,6 +611,8 @@ body {
   display: flex;
   justify-content: center;
   gap: 16px;
+  margin-top: 24px;
+  padding: 0 20px;
 }
 
 .examples-nav-btn {
@@ -654,7 +645,7 @@ body {
 }
 
 .about-container {
-  background: #1a1a1e;
+  background: var(--panel-bg);
   border-radius: 27px;
   padding: 24px 20px;
 }

@@ -381,12 +381,12 @@ export const MainPage = () => {
 
         {/* Examples section */}
         <div className="examples-section">
-          <div className="examples-header">
-            <h2 className="examples-title">Examples of generation</h2>
-            <p className="examples-subtitle">with Slind AI</p>
-          </div>
-          
-          <div className="examples-videos-area">
+          <div className="examples-panel">
+            <div className="examples-header">
+              <h2 className="examples-title">Examples of generation</h2>
+              <p className="examples-subtitle">with Slind AI</p>
+            </div>
+            
             <div className="examples-carousel-wrapper">
               <div className="examples-scroll" id="examples-scroll">
                 <div className="example-spacer" />
@@ -399,31 +399,27 @@ export const MainPage = () => {
               </div>
             </div>
             
-            <div className="examples-panel">
-              <p className="examples-panel-text">Смотрите, что создают другие пользователи</p>
-              
-              <div className="examples-nav-buttons">
-                <button 
-                  className="examples-nav-btn"
-                  onClick={() => {
-                    const el = document.getElementById('examples-scroll');
-                    el.scrollBy({ left: -200, behavior: 'smooth' });
-                  }}
-                  data-testid="examples-prev-btn"
-                >
-                  <ChevronRight className="w-5 h-5 rotate-180" />
-                </button>
-                <button 
-                  className="examples-nav-btn"
-                  onClick={() => {
-                    const el = document.getElementById('examples-scroll');
-                    el.scrollBy({ left: 200, behavior: 'smooth' });
-                  }}
-                  data-testid="examples-next-btn"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
+            <div className="examples-nav-buttons">
+              <button 
+                className="examples-nav-btn"
+                onClick={() => {
+                  const el = document.getElementById('examples-scroll');
+                  el.scrollBy({ left: -200, behavior: 'smooth' });
+                }}
+                data-testid="examples-prev-btn"
+              >
+                <ChevronRight className="w-5 h-5 rotate-180" />
+              </button>
+              <button 
+                className="examples-nav-btn"
+                onClick={() => {
+                  const el = document.getElementById('examples-scroll');
+                  el.scrollBy({ left: 200, behavior: 'smooth' });
+                }}
+                data-testid="examples-next-btn"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
