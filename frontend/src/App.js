@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import MainPage from "@/pages/MainPage";
 import CreatePage from "@/pages/CreatePage";
 import VideoPage from "@/pages/VideoPage";
+import FormatsPage from "@/pages/FormatsPage";
 import AuthCallback from "@/components/custom/AuthCallback";
 
 // Check for session_id in URL before rendering normal routes
@@ -22,6 +23,7 @@ function AppRouter() {
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/create" element={<CreatePage />} />
       <Route path="/video/:id" element={<VideoPage />} />
+      <Route path="/formats" element={<FormatsPage />} />
     </Routes>
   );
 }

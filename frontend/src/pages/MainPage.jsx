@@ -396,7 +396,7 @@ export const MainPage = () => {
           
           <button 
             className="see-all-btn"
-            onClick={() => setShowFormatsPopup(true)}
+            onClick={() => navigate('/formats')}
             data-testid="see-all-btn"
           >
             See all
