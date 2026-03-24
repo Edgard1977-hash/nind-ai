@@ -374,107 +374,84 @@ export const MainPage = () => {
           </div>
         </div>
 
-        {/* Welcome section - first */}
-        <div className="welcome-section">
-          <div className="welcome-container">
-            <h2 className="welcome-title">Welcome to Slind AI</h2>
-            
-            <div className="welcome-video-wrapper">
-              <div className="welcome-video-placeholder" />
-            </div>
-            
-            <div className="welcome-step-card">
-              <div className="step-circle-outer">
-                <div className="step-circle-inner">1</div>
-              </div>
-              <div className="step-text-wrapper">
-                <p className="step-title">Describe the task</p>
-                <p className="step-subtitle">choose a format for inspiration</p>
-              </div>
-            </div>
+        {/* How it works section */}
+        <div className="how-section">
+          <h2 className="section-title">How Slind AI works?</h2>
+          <div className="how-video-wrapper">
+            <div className="how-video-placeholder" />
           </div>
         </div>
 
-        {/* Formats section */}
-        <div className="formats-section">
-          <div className="formats-container">
-            <h2 className="formats-title">Formats</h2>
-            
-            <div className="formats-scroll">
-              {FORMATS.map((format) => (
-                <div key={format.id} className="format-card">
-                  <div 
-                    className="format-preview"
-                    style={{ backgroundColor: format.color }}
-                  />
-                  <span className="format-name">{format.name}</span>
-                </div>
-              ))}
-              
-              {/* Circle button at the end */}
-              <button 
-                className="formats-scroll-btn"
-                onClick={() => setShowFormatsPopup(true)}
-                data-testid="formats-scroll-btn"
-              >
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <button 
-              className="view-all-btn"
-              onClick={() => setShowFormatsPopup(true)}
-              data-testid="view-all-btn"
-            >
-              <span>Смотреть всё</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+        {/* Formats section - grid */}
+        <div className="formats-section-new">
+          <h2 className="section-title">Formats</h2>
+          <p className="section-subtitle">Find an idea faster</p>
+          
+          <div className="formats-grid">
+            {FORMATS.slice(0, 8).map((format) => (
+              <div key={format.id} className="format-card-new">
+                <div 
+                  className="format-preview-new"
+                  style={{ backgroundColor: format.color }}
+                />
+                <span className="format-name-new">{format.name}</span>
+              </div>
+            ))}
           </div>
+          
+          <button 
+            className="see-all-btn"
+            onClick={() => setShowFormatsPopup(true)}
+            data-testid="see-all-btn"
+          >
+            See all
+          </button>
         </div>
 
-        {/* Examples section */}
-        <div className="examples-section">
-          <div className="examples-panel">
-            <div className="examples-header">
-              <h2 className="examples-title">Examples of generation</h2>
-              <p className="examples-subtitle">with Slind AI</p>
+        {/* Examples section - grid */}
+        <div className="examples-section-new">
+          <h2 className="section-title">Examples of generation</h2>
+          <p className="section-subtitle">with Slind AI</p>
+          
+          <div className="examples-grid">
+            <div className="example-item portrait">
+              <div className="example-placeholder" />
             </div>
-            
-            <div className="examples-carousel-wrapper">
-              <div className="examples-scroll" id="examples-scroll">
-                <div className="example-spacer" />
-                {[1, 2, 3, 4, 5].map((num, index) => (
-                  <div key={num} className={`example-card ${index === 2 ? 'center' : ''}`}>
-                    <div className="example-video-placeholder" />
-                  </div>
-                ))}
-                <div className="example-spacer" />
-              </div>
+            <div className="example-item landscape">
+              <div className="example-placeholder" />
             </div>
-            
-            <div className="examples-nav-buttons">
-              <button 
-                className="examples-nav-btn"
-                onClick={() => {
-                  const el = document.getElementById('examples-scroll');
-                  el.scrollBy({ left: -200, behavior: 'smooth' });
-                }}
-                data-testid="examples-prev-btn"
-              >
-                <ChevronRight className="w-5 h-5 rotate-180" />
-              </button>
-              <button 
-                className="examples-nav-btn"
-                onClick={() => {
-                  const el = document.getElementById('examples-scroll');
-                  el.scrollBy({ left: 200, behavior: 'smooth' });
-                }}
-                data-testid="examples-next-btn"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+            <div className="example-item landscape">
+              <div className="example-placeholder" />
+            </div>
+            <div className="example-item portrait">
+              <div className="example-placeholder" />
+            </div>
+            <div className="example-item portrait">
+              <div className="example-placeholder" />
+            </div>
+            <div className="example-item landscape">
+              <div className="example-placeholder" />
+            </div>
+            <div className="example-item landscape">
+              <div className="example-placeholder" />
+            </div>
+            <div className="example-item portrait">
+              <div className="example-placeholder" />
             </div>
           </div>
+          
+          <div className="examples-fade" />
+          
+          <button 
+            className="start-create-btn"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              setTimeout(() => textareaRef.current?.focus(), 500);
+            }}
+            data-testid="start-create-btn"
+          >
+            Start create
+          </button>
         </div>
       </div>
 
