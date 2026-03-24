@@ -1136,7 +1136,7 @@ body {
   padding: 12px;
   background: var(--input-outer);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   transition: border-color 0.3s ease;
 }
 
