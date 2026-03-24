@@ -1062,10 +1062,9 @@ body {
   background: rgba(0, 0, 0, 0);
   z-index: 200;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 40px 20px;
-  animation: overlayFadeIn 0.4s ease forwards;
+  animation: overlayFadeIn 0.35s ease forwards;
 }
 
 .formats-popup-overlay.closing {
@@ -1074,48 +1073,44 @@ body {
 
 @keyframes overlayFadeIn {
   from { background: rgba(0, 0, 0, 0); }
-  to { background: rgba(0, 0, 0, 0.7); }
+  to { background: rgba(0, 0, 0, 0.6); }
 }
 
 @keyframes overlayFadeOut {
-  from { background: rgba(0, 0, 0, 0.7); }
+  from { background: rgba(0, 0, 0, 0.6); }
   to { background: rgba(0, 0, 0, 0); }
 }
 
 .formats-popup {
   width: 100%;
-  max-width: 360px;
-  max-height: calc(100vh - 100px);
+  max-height: 85vh;
   background: #1D1E20;
-  border-radius: 26px;
-  padding: 20px 16px 24px;
-  animation: popupScaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border-radius: 26px 26px 0 0;
+  padding: 12px 16px 32px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  animation: popupSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   overflow-y: auto;
 }
 
 .formats-popup.closing {
-  animation: popupScaleOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: popupSlideDown 0.35s cubic-bezier(0.4, 0, 0.6, 1) forwards;
 }
 
-@keyframes popupScaleIn {
+@keyframes popupSlideUp {
   0% {
-    transform: scale(0.9);
-    opacity: 0;
+    transform: translateY(100%);
   }
   100% {
-    transform: scale(1);
-    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes popupScaleOut {
+@keyframes popupSlideDown {
   0% {
-    transform: scale(1);
-    opacity: 1;
+    transform: translateY(0);
   }
   100% {
-    transform: scale(0.9);
-    opacity: 0;
+    transform: translateY(100%);
   }
 }
 
@@ -1493,10 +1488,9 @@ body {
   background: rgba(0, 0, 0, 0);
   z-index: 1000;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 20px;
-  animation: authOverlayIn 0.4s ease forwards;
+  animation: authOverlayIn 0.35s ease forwards;
 }
 
 .auth-popup-overlay.closing {
@@ -1505,47 +1499,36 @@ body {
 
 @keyframes authOverlayIn {
   from { background: rgba(0, 0, 0, 0); }
-  to { background: rgba(0, 0, 0, 0.7); }
+  to { background: rgba(0, 0, 0, 0.6); }
 }
 
 @keyframes authOverlayOut {
-  from { background: rgba(0, 0, 0, 0.7); }
+  from { background: rgba(0, 0, 0, 0.6); }
   to { background: rgba(0, 0, 0, 0); }
 }
 
 .auth-popup {
   background: #1D1E20;
-  border-radius: 26px;
-  padding: 24px;
+  border-radius: 26px 26px 0 0;
+  padding: 16px 24px 40px;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom));
   width: 100%;
-  max-width: 380px;
-  animation: authPopupIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-width: 500px;
+  animation: authSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .auth-popup.closing {
-  animation: authPopupOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: authSlideDown 0.35s cubic-bezier(0.4, 0, 0.6, 1) forwards;
 }
 
-@keyframes authPopupIn {
-  from { 
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to { 
-    transform: scale(1);
-    opacity: 1;
-  }
+@keyframes authSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
-@keyframes authPopupOut {
-  from { 
-    transform: scale(1);
-    opacity: 1;
-  }
-  to { 
-    transform: scale(0.9);
-    opacity: 0;
-  }
+@keyframes authSlideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
 }
 
 .drag-indicator {
