@@ -1062,57 +1062,60 @@ body {
   background: rgba(0, 0, 0, 0);
   z-index: 200;
   display: flex;
-  align-items: flex-end;
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  animation: overlayFadeIn 0.4s ease forwards;
 }
 
 .formats-popup-overlay.closing {
-  animation: fadeOut 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: overlayFadeOut 0.3s ease forwards;
 }
 
-@keyframes fadeIn {
+@keyframes overlayFadeIn {
   from { background: rgba(0, 0, 0, 0); }
-  to { background: rgba(0, 0, 0, 0.6); }
+  to { background: rgba(0, 0, 0, 0.7); }
 }
 
-@keyframes fadeOut {
-  from { background: rgba(0, 0, 0, 0.6); }
+@keyframes overlayFadeOut {
+  from { background: rgba(0, 0, 0, 0.7); }
   to { background: rgba(0, 0, 0, 0); }
 }
 
 .formats-popup {
   width: 100%;
-  max-height: 90vh;
-  background: #1a1a1e;
-  border-radius: 24px 24px 0 0;
-  padding: 12px 16px 32px;
-  animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  max-width: 360px;
+  max-height: calc(100vh - 100px);
+  background: #1D1E20;
+  border-radius: 26px;
+  padding: 20px 16px 24px;
+  animation: popupScaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   overflow-y: auto;
 }
 
 .formats-popup.closing {
-  animation: slideDown 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+  animation: popupScaleOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
-@keyframes slideUp {
+@keyframes popupScaleIn {
   0% {
-    transform: translateY(100%);
-    opacity: 0.5;
+    transform: scale(0.9);
+    opacity: 0;
   }
   100% {
-    transform: translateY(0);
+    transform: scale(1);
     opacity: 1;
   }
 }
 
-@keyframes slideDown {
+@keyframes popupScaleOut {
   0% {
-    transform: translateY(0);
+    transform: scale(1);
     opacity: 1;
   }
   100% {
-    transform: translateY(100%);
-    opacity: 0.5;
+    transform: scale(0.9);
+    opacity: 0;
   }
 }
 
@@ -1487,51 +1490,62 @@ body {
 .auth-popup-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0);
   z-index: 1000;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  animation: fadeIn 0.3s ease;
+  padding: 20px;
+  animation: authOverlayIn 0.4s ease forwards;
 }
 
 .auth-popup-overlay.closing {
-  animation: fadeOut 0.3s ease forwards;
+  animation: authOverlayOut 0.3s ease forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes authOverlayIn {
+  from { background: rgba(0, 0, 0, 0); }
+  to { background: rgba(0, 0, 0, 0.7); }
 }
 
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+@keyframes authOverlayOut {
+  from { background: rgba(0, 0, 0, 0.7); }
+  to { background: rgba(0, 0, 0, 0); }
 }
 
 .auth-popup {
-  background: #1C1C1E;
-  border-radius: 24px 24px 0 0;
-  padding: 16px 24px 40px;
+  background: #1D1E20;
+  border-radius: 26px;
+  padding: 24px;
   width: 100%;
-  max-width: 500px;
-  margin: 0 12px;
-  margin-bottom: 0;
-  animation: slideUp 0.3s ease;
+  max-width: 380px;
+  animation: authPopupIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .auth-popup.closing {
-  animation: slideDown 0.3s ease forwards;
+  animation: authPopupOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+@keyframes authPopupIn {
+  from { 
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to { 
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-@keyframes slideDown {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
+@keyframes authPopupOut {
+  from { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  to { 
+    transform: scale(0.9);
+    opacity: 0;
+  }
 }
 
 .drag-indicator {
