@@ -71,9 +71,21 @@ body {
   height: 400px;
   z-index: 0;
   pointer-events: none;
-  opacity: 1;
+  opacity: 0;
   mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 60%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 60%, transparent 100%);
+  animation: fadeInGrid 1.2s ease-out 0.3s forwards;
+}
+
+@keyframes fadeInGrid {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .grid-svg {
@@ -108,12 +120,12 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 80px;
+  height: 70px;
   background: transparent;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
   pointer-events: none;
 }
 
@@ -166,10 +178,10 @@ body {
 
 .get-started-btn {
   padding: 10px 20px;
-  background: var(--white);
+  background: #01E0FD;
   color: #000;
   border: none;
-  border-radius: 24px;
+  border-radius: 19px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -198,7 +210,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 80px 16px 32px;
+  padding: 100px 16px 32px;
   overflow-y: auto;
 }
 
@@ -216,7 +228,7 @@ body {
   font-family: 'Indivisible', 'Inter', sans-serif;
   font-weight: 700;
   font-size: 32px;
-  color: #00E4FF;
+  color: var(--white);
   margin: 0;
   letter-spacing: -0.5px;
 }
@@ -735,7 +747,7 @@ body {
 
 /* How it works section */
 .how-section {
-  margin-top: 120px;
+  margin-top: 140px;
   padding: 0;
 }
 
