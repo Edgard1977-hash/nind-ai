@@ -1595,7 +1595,7 @@ body {
   margin-bottom: 32px;
 }
 
-.section-title {
+.section-title-old {
   font-size: 14px;
   font-weight: 500;
   color: var(--gray-light);
