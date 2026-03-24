@@ -1486,16 +1486,17 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Auth Popup - with shadow, no overlay darkening */
+/* Auth Popup - slides from top with shadow */
 .auth-popup-overlay {
   position: fixed;
   inset: 0;
   background: transparent;
   z-index: 1000;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
   padding: 16px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
 }
 
 .auth-popup-overlay.closing {
@@ -1508,17 +1509,17 @@ body {
   padding: 20px 24px 28px;
   width: 100%;
   max-width: 400px;
-  animation: authSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  box-shadow: 0 -10px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(0, 0, 0, 0.3);
+  animation: authSlideFromTop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 10px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(0, 0, 0, 0.3);
 }
 
 .auth-popup.closing {
-  animation: authSlideDown 0.35s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  animation: authSlideToTop 0.35s cubic-bezier(0.4, 0, 0.6, 1) forwards;
 }
 
-@keyframes authSlideUp {
+@keyframes authSlideFromTop {
   from { 
-    transform: translateY(100vh);
+    transform: translateY(-100%);
     opacity: 0;
   }
   to { 
@@ -1527,13 +1528,13 @@ body {
   }
 }
 
-@keyframes authSlideDown {
+@keyframes authSlideToTop {
   from { 
     transform: translateY(0);
     opacity: 1;
   }
   to { 
-    transform: translateY(100vh);
+    transform: translateY(-100%);
     opacity: 0;
   }
 }
