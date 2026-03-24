@@ -210,7 +210,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 100px 16px 32px;
+  padding: 120px 16px 32px;
   overflow-y: auto;
 }
 
@@ -747,7 +747,7 @@ body {
 
 /* How it works section */
 .how-section {
-  margin-top: 140px;
+  margin-top: 180px;
   padding: 0;
 }
 
