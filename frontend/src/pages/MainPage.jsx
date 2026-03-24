@@ -73,36 +73,31 @@ export const MainPage = () => {
     
     window.addEventListener('scroll', handleScroll);
     
-    // Setup examples carousel center detection
-    const setupExamplesCarousel = () => {
-      const scroll = document.getElementById('examples-scroll');
-      if (scroll) {
-        // Initial scroll to center second video
-        scroll.scrollLeft = 80;
-        
-        const updateCenterVideo = () => {
-          const cards = scroll.querySelectorAll('.example-card');
-          const scrollRect = scroll.getBoundingClientRect();
-          const scrollCenter = scrollRect.left + scrollRect.width / 2;
-          
-          cards.forEach((card) => {
-            const cardRect = card.getBoundingClientRect();
-            const cardCenter = cardRect.left + cardRect.width / 2;
-            const distance = Math.abs(scrollCenter - cardCenter);
-            const isCenter = distance < 70;
-            card.classList.toggle('center', isCenter);
-          });
-        };
-        
-        scroll.addEventListener('scroll', updateCenterVideo);
-        // Initial call
-        setTimeout(updateCenterVideo, 100);
-      }
+    // Intersection Observer for blur-bounce animation on titles
+    const observerOptions = {
+      threshold: 0.2,
+      rootMargin: '0px 0px -50px 0px'
     };
     
-    setTimeout(setupExamplesCarousel, 300);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Observe all section titles and subtitles
+    setTimeout(() => {
+      document.querySelectorAll('.section-title, .section-subtitle').forEach(el => {
+        observer.observe(el);
+      });
+    }, 100);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
   }, []);
 
   const handleSubmit = async () => {
@@ -408,35 +403,39 @@ export const MainPage = () => {
           </button>
         </div>
 
-        {/* Examples section - grid */}
+        {/* Examples section - masonry grid */}
         <div className="examples-section-new">
           <h2 className="section-title">Examples of generation</h2>
           <p className="section-subtitle">with Slind AI</p>
           
           <div className="examples-grid">
-            <div className="example-item portrait">
-              <div className="example-placeholder" />
+            <div className="examples-column">
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
             </div>
-            <div className="example-item landscape">
-              <div className="example-placeholder" />
-            </div>
-            <div className="example-item landscape">
-              <div className="example-placeholder" />
-            </div>
-            <div className="example-item portrait">
-              <div className="example-placeholder" />
-            </div>
-            <div className="example-item portrait">
-              <div className="example-placeholder" />
-            </div>
-            <div className="example-item landscape">
-              <div className="example-placeholder" />
-            </div>
-            <div className="example-item landscape">
-              <div className="example-placeholder" />
-            </div>
-            <div className="example-item portrait">
-              <div className="example-placeholder" />
+            <div className="examples-column">
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
             </div>
           </div>
           
