@@ -122,14 +122,15 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  min-height: 64px;
+  padding: 8px 0;
+  min-height: 60px;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
   transition: opacity 0.4s ease, transform 0.4s ease;
+  height: 60px;
 }
 
 .logo-container.hidden {
@@ -139,7 +140,7 @@ body {
 }
 
 .logo-image {
-  height: 64px;
+  height: 60px;
   width: auto;
   object-fit: contain;
 }
@@ -174,6 +175,10 @@ body {
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.4s ease, transform 0.4s ease;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .get-started-btn.hidden {
@@ -241,7 +246,7 @@ body {
   padding: 12px;
   background: var(--input-outer);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   transition: border-color 0.3s ease;
 }
 
