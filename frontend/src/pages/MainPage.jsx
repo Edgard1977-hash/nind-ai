@@ -283,7 +283,7 @@ export const MainPage = () => {
         {/* Heading section */}
         <div className="heading-section">
           <h1 className="heading-main">Create more better</h1>
-          <p className="heading-sub">Make content entirely with AI</p>
+          <p className="heading-sub">Make video editing entirely with AI</p>
         </div>
 
         {/* Input area - centered */}

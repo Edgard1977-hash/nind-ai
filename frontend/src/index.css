@@ -244,9 +244,9 @@ body {
   flex-direction: column;
   gap: 12px;
   padding: 12px;
-  background: var(--input-outer);
+  background: #1D1E20;
   border-radius: var(--radius-lg);
-  border: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   transition: border-color 0.3s ease;
 }
 
@@ -1134,9 +1134,9 @@ body {
   flex-direction: column;
   gap: 12px;
   padding: 12px;
-  background: var(--input-outer);
+  background: #1D1E20;
   border-radius: var(--radius-lg);
-  border: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   transition: border-color 0.3s ease;
 }
 
