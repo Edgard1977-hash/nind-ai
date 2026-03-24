@@ -1083,13 +1083,23 @@ body {
 
 .formats-popup {
   width: 100%;
-  max-height: 85vh;
+  max-height: 90vh;
   background: #1D1E20;
   border-radius: 26px 26px 0 0;
   padding: 12px 16px 32px;
-  padding-bottom: calc(32px + env(safe-area-inset-bottom));
   animation: popupSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   overflow-y: auto;
+}
+
+.formats-popup::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: #1D1E20;
+  z-index: -1;
 }
 
 .formats-popup.closing {
@@ -1511,10 +1521,21 @@ body {
   background: #1D1E20;
   border-radius: 26px 26px 0 0;
   padding: 16px 24px 40px;
-  padding-bottom: calc(40px + env(safe-area-inset-bottom));
   width: 100%;
   max-width: 500px;
   animation: authSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+}
+
+.auth-popup::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: #1D1E20;
+  z-index: -1;
 }
 
 .auth-popup.closing {
