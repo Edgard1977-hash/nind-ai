@@ -2220,6 +2220,127 @@ async def logout(request: Request, response: Response):
     return {"message": "Logged out"}
 
 
+# ==================== EMAIL AUTH ROUTES ====================
+
+class EmailAuthRequest(BaseModel):
+    email: str
+    password: str
+
+
+@api_router.post("/auth/register")
+async def register_with_email(request: EmailAuthRequest):
+    """Register new user with email and password"""
+    import hashlib
+    
+    email = request.email.strip().lower()
+    password = request.password
+    
+    # Validate email format
+    if "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": email}, {"_id": 0})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+    
+    # Hash password
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    # Create user
+    user_id = f"user_{uuid.uuid4().hex[:12]}"
+    name = email.split("@")[0]
+    username = f"@{name}{uuid.uuid4().hex[:4]}"
+    
+    new_user = {
+        "user_id": user_id,
+        "email": email,
+        "name": name,
+        "password_hash": password_hash,
+        "picture": None,
+        "username": username,
+        "plan": "free",
+        "credits": 100,
+        "auth_type": "email",
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.users.insert_one(new_user)
+    
+    # Create session
+    session_token = str(uuid.uuid4())
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    session_doc = {
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": expires_at,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.user_sessions.insert_one(session_doc)
+    
+    # Return user data (without password_hash)
+    return {
+        "user_id": user_id,
+        "email": email,
+        "name": name,
+        "username": username,
+        "picture": None,
+        "plan": "free",
+        "credits": 100,
+        "session_token": session_token
+    }
+
+
+@api_router.post("/auth/login")
+async def login_with_email(request: EmailAuthRequest):
+    """Login user with email and password"""
+    import hashlib
+    
+    email = request.email.strip().lower()
+    password = request.password
+    
+    # Find user
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check if user has password (email auth)
+    if "password_hash" not in user:
+        raise HTTPException(status_code=401, detail="This account uses Google login")
+    
+    # Verify password
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    if user["password_hash"] != password_hash:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Create new session
+    session_token = str(uuid.uuid4())
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    # Delete old sessions
+    await db.user_sessions.delete_many({"user_id": user["user_id"]})
+    
+    session_doc = {
+        "user_id": user["user_id"],
+        "session_token": session_token,
+        "expires_at": expires_at,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await db.user_sessions.insert_one(session_doc)
+    
+    # Return user data (without password_hash)
+    return {
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "name": user["name"],
+        "username": user.get("username"),
+        "picture": user.get("picture"),
+        "plan": user.get("plan", "free"),
+        "credits": user.get("credits", 100),
+        "session_token": session_token
+    }
+
+
 # ==================== FORMAT ROUTES ====================
 async def get_formats():
     """Get all video formats"""

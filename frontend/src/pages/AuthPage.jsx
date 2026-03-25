@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const FRONTEND_URL = window.location.origin;
 const API = `${BACKEND_URL}/api`;
-
-// Logo URL
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_ai-format-studio/artifacts/x0akmc4x_A7746620-B806-4A1B-B685-CC4290123288.png";
 
 // Google icon
 const GoogleIcon = ({ className }) => (
@@ -21,10 +18,10 @@ const GoogleIcon = ({ className }) => (
   </svg>
 );
 
-// Email icon (white version of uploaded icon)
-const EmailIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/>
+// Email envelope icon (from user's uploaded image, white version)
+const EnvelopeIcon = ({ className }) => (
+  <svg viewBox="0 0 512 512" fill="currentColor" className={className}>
+    <path d="M64 112c-8.8 0-16 7.2-16 16v22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1V128c0-8.8-7.2-16-16-16H64zM48 212.2V384c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V212.2L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/>
   </svg>
 );
 
@@ -114,21 +111,30 @@ const AuthPage = () => {
     setView('signup');
   };
 
+  const goBack = () => {
+    setView('initial');
+    resetForm();
+  };
+
   return (
     <div className="auth-page" data-testid="auth-page">
-      {/* Logo - only on initial view */}
-      {view === 'initial' && (
-        <div className="auth-logo-container">
-          <img src={LOGO_URL} alt="Slind" className="auth-logo" />
-        </div>
+      {/* Back button for login/signup forms */}
+      {view !== 'initial' && (
+        <button 
+          className="auth-back-btn"
+          onClick={goBack}
+          data-testid="auth-back-btn"
+        >
+          <ChevronLeft className="w-7 h-7" />
+        </button>
       )}
 
       {/* Content */}
-      <div className={`auth-page-content ${view !== 'initial' ? 'no-logo' : ''}`}>
+      <div className={`auth-page-content ${view !== 'initial' ? 'form-view' : ''}`}>
         {/* Title for initial view */}
         {view === 'initial' && (
           <div className="auth-header-text">
-            <h1 className="auth-page-title">Get started</h1>
+            <h1 className="auth-page-title-large">Get started</h1>
             <p className="auth-page-subtitle">Log in or Sign up</p>
           </div>
         )}
@@ -157,7 +163,7 @@ const AuthPage = () => {
               onClick={() => setView('login')}
               data-testid="email-login-btn"
             >
-              <EmailIcon className="w-5 h-5" />
+              <EnvelopeIcon className="w-5 h-5" />
               <span>Continue with Email</span>
             </button>
           </div>
@@ -222,6 +228,25 @@ const AuthPage = () => {
           </form>
         )}
       </div>
+
+      {/* Grid background for initial view */}
+      {view === 'initial' && (
+        <div className="auth-grid">
+          <svg viewBox="0 0 400 200" preserveAspectRatio="none" className="auth-grid-svg">
+            <line x1="0" y1="0" x2="0" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+            <line x1="80" y1="0" x2="80" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+            <line x1="160" y1="0" x2="160" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+            <line x1="240" y1="0" x2="240" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+            <line x1="320" y1="0" x2="320" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+            <line x1="400" y1="0" x2="400" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+            <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none"/>
+            <path d="M0,50 Q200,40 400,50" stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none"/>
+            <path d="M0,100 Q200,80 400,100" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
+            <path d="M0,150 Q200,120 400,150" stroke="rgba(255,255,255,0.09)" strokeWidth="1" fill="none"/>
+            <path d="M0,200 Q200,160 400,200" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+          </svg>
+        </div>
+      )}
 
       {/* Footer */}
       {(view === 'login' || view === 'signup') && (
