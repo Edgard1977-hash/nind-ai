@@ -2072,3 +2072,211 @@ body {
   color: var(--white);
   padding: 10px 12px;
 }
+
+/* ===== AUTH PAGE ===== */
+.auth-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+.auth-page-header {
+  margin-bottom: 32px;
+}
+
+.auth-back-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--panel-bg);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--white);
+  transition: opacity 0.2s ease;
+}
+
+.auth-back-btn:hover {
+  opacity: 0.8;
+}
+
+.auth-page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-page-title {
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 32px;
+  text-align: left;
+}
+
+/* Social buttons */
+.auth-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-radius: 25px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  border: none;
+}
+
+.auth-social-btn:active {
+  transform: scale(0.98);
+}
+
+.auth-social-btn.google {
+  background: var(--white);
+  color: #000;
+}
+
+.auth-social-btn.email {
+  background: #38393B;
+  color: var(--white);
+}
+
+.auth-social-btn.email svg {
+  color: var(--white);
+}
+
+/* Form */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-input-group {
+  position: relative;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--panel-bg);
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.auth-input:focus {
+  border-color: var(--cyan);
+}
+
+.auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: var(--white);
+}
+
+.auth-forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  color: var(--cyan);
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s ease;
+}
+
+.auth-link:hover {
+  opacity: 0.8;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 50px;
+  border: none;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  margin-top: 8px;
+  background: #38393B;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.auth-submit-btn.active {
+  background: var(--cyan);
+  color: #000;
+}
+
+.auth-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.auth-submit-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* Footer */
+.auth-page-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  text-align: center;
+}
+
+.auth-switch-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.auth-switch-text .auth-link {
+  font-size: 15px;
+}

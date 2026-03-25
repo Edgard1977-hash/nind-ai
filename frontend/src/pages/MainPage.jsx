@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
-import AuthPopup from "../components/custom/AuthPopup";
 import ProfilePage from "../components/custom/ProfilePage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -41,7 +40,6 @@ export const MainPage = () => {
   // State
   const [prompt, setPrompt] = useState("");
   const [user, setUser] = useState(null);
-  const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showFormatsPopup, setShowFormatsPopup] = useState(false);
   const [isPopupClosing, setIsPopupClosing] = useState(false);
@@ -102,7 +100,7 @@ export const MainPage = () => {
 
   const handleSubmit = async () => {
     if (!user) {
-      setShowAuthPopup(true);
+      navigate('/auth');
       return;
     }
     
@@ -206,7 +204,7 @@ export const MainPage = () => {
     if (user) {
       setShowProfile(true);
     } else {
-      setShowAuthPopup(true);
+      navigate('/auth');
     }
   };
 
@@ -500,13 +498,6 @@ export const MainPage = () => {
           </div>
         </div>
       )}
-
-      {/* Auth Popup */}
-      <AuthPopup 
-        isOpen={showAuthPopup}
-        onClose={() => setShowAuthPopup(false)}
-        onSuccess={handleAuthSuccess}
-      />
     </div>
   );
 };
