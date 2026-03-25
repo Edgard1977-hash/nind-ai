@@ -2110,44 +2110,16 @@ body {
   margin-top: -80px;
 }
 
-/* Tabs header */
-.auth-tabs-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 40px;
+.auth-page-content.no-logo {
+  margin-top: 0;
+  justify-content: flex-start;
+  padding-top: 60px;
 }
 
-.auth-tab {
-  background: none;
-  border: none;
-  font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s ease;
-}
-
-.auth-tab.active {
-  color: var(--white);
-}
-
-.auth-tab:hover {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.auth-tab.active:hover {
-  color: var(--white);
-}
-
-.auth-tab-divider {
-  width: 2px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 1px;
+/* Header text */
+.auth-header-text {
+  text-align: center;
+  margin-bottom: 32px;
 }
 
 .auth-page-title {
@@ -2155,8 +2127,20 @@ body {
   font-size: 28px;
   font-weight: 700;
   color: var(--white);
-  margin: 0 0 40px;
+  margin: 0;
   text-align: center;
+}
+
+.auth-page-subtitle {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 8px 0 0;
+}
+
+.auth-page-content.no-logo .auth-page-title {
+  margin-bottom: 40px;
 }
 
 /* Social buttons */
@@ -2187,12 +2171,12 @@ body {
 }
 
 .auth-social-btn.google {
-  background: #1D1E20;
-  color: var(--white);
+  background: var(--white);
+  color: #000;
 }
 
 .auth-social-btn.email {
-  background: #38393B;
+  background: #1D1E20;
   color: var(--white);
 }
 

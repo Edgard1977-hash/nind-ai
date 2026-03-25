@@ -116,33 +116,25 @@ const AuthPage = () => {
 
   return (
     <div className="auth-page" data-testid="auth-page">
-      {/* Logo */}
-      <div className="auth-logo-container">
-        <img src={LOGO_URL} alt="Slind" className="auth-logo" />
-      </div>
+      {/* Logo - only on initial view */}
+      {view === 'initial' && (
+        <div className="auth-logo-container">
+          <img src={LOGO_URL} alt="Slind" className="auth-logo" />
+        </div>
+      )}
 
       {/* Content */}
-      <div className="auth-page-content">
-        {/* Title with tabs for initial view */}
-        {view === 'initial' ? (
-          <div className="auth-tabs-header">
-            <button 
-              className="auth-tab active"
-              onClick={switchToLogin}
-              data-testid="tab-login"
-            >
-              Log in
-            </button>
-            <div className="auth-tab-divider" />
-            <button 
-              className="auth-tab"
-              onClick={switchToSignup}
-              data-testid="tab-signup"
-            >
-              Sign up
-            </button>
+      <div className={`auth-page-content ${view !== 'initial' ? 'no-logo' : ''}`}>
+        {/* Title for initial view */}
+        {view === 'initial' && (
+          <div className="auth-header-text">
+            <h1 className="auth-page-title">Get started</h1>
+            <p className="auth-page-subtitle">Log in or Sign up</p>
           </div>
-        ) : (
+        )}
+        
+        {/* Title for login/signup */}
+        {view !== 'initial' && (
           <h1 className="auth-page-title" data-testid="auth-title">
             {view === 'login' ? 'Log in' : 'Sign up'}
           </h1>
