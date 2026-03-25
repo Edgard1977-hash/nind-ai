@@ -21,7 +21,7 @@ const GoogleIcon = ({ className }) => (
 // Email envelope icon (from user's uploaded image, white version)
 const EnvelopeIcon = ({ className }) => (
   <svg viewBox="0 0 512 512" fill="currentColor" className={className}>
-    <path d="M64 112c-8.8 0-16 7.2-16 16v22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1V128c0-8.8-7.2-16-16-16H64zM48 212.2V384c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V212.2L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/>
+    <path d="M48 128C48 100.5 70.5 78 98 78H414C441.5 78 464 100.5 464 128V130.2L256 263.5L48 130.2V128ZM48 178.3V384C48 411.5 70.5 434 98 434H414C441.5 434 464 411.5 464 384V178.3L275.6 299.8C264.5 307.1 249.5 307.1 238.4 299.8L48 178.3Z"/>
   </svg>
 );
 
@@ -233,17 +233,17 @@ const AuthPage = () => {
       {view === 'initial' && (
         <div className="auth-grid">
           <svg viewBox="0 0 400 200" preserveAspectRatio="none" className="auth-grid-svg">
-            <line x1="0" y1="0" x2="0" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-            <line x1="80" y1="0" x2="80" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-            <line x1="160" y1="0" x2="160" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-            <line x1="240" y1="0" x2="240" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-            <line x1="320" y1="0" x2="320" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-            <line x1="400" y1="0" x2="400" y2="200" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-            <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none"/>
-            <path d="M0,50 Q200,40 400,50" stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none"/>
-            <path d="M0,100 Q200,80 400,100" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
-            <path d="M0,150 Q200,120 400,150" stroke="rgba(255,255,255,0.09)" strokeWidth="1" fill="none"/>
-            <path d="M0,200 Q200,160 400,200" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+            <line x1="0" y1="0" x2="0" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <line x1="80" y1="0" x2="80" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <line x1="160" y1="0" x2="160" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <line x1="240" y1="0" x2="240" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <line x1="320" y1="0" x2="320" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <line x1="400" y1="0" x2="400" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.03)" strokeWidth="1" fill="none"/>
+            <path d="M0,50 Q200,40 400,50" stroke="rgba(255,255,255,0.04)" strokeWidth="1" fill="none"/>
+            <path d="M0,100 Q200,80 400,100" stroke="rgba(255,255,255,0.04)" strokeWidth="1" fill="none"/>
+            <path d="M0,150 Q200,120 400,150" stroke="rgba(255,255,255,0.05)" strokeWidth="1" fill="none"/>
+            <path d="M0,200 Q200,160 400,200" stroke="rgba(255,255,255,0.05)" strokeWidth="1" fill="none"/>
           </svg>
         </div>
       )}
