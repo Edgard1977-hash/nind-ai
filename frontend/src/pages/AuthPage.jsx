@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const FRONTEND_URL = window.location.origin;
 const API = `${BACKEND_URL}/api`;
+
+// Logo URL
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_ai-format-studio/artifacts/x0akmc4x_A7746620-B806-4A1B-B685-CC4290123288.png";
 
 // Google icon
 const GoogleIcon = ({ className }) => (
@@ -111,36 +114,39 @@ const AuthPage = () => {
     setView('signup');
   };
 
-  const goBack = () => {
-    if (view === 'initial') {
-      navigate(-1);
-    } else {
-      setView('initial');
-      resetForm();
-    }
-  };
-
   return (
     <div className="auth-page" data-testid="auth-page">
-      {/* Header */}
-      <header className="auth-page-header">
-        <button 
-          className="auth-back-btn"
-          onClick={goBack}
-          data-testid="auth-back-btn"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-      </header>
+      {/* Logo */}
+      <div className="auth-logo-container">
+        <img src={LOGO_URL} alt="Slind" className="auth-logo" />
+      </div>
 
       {/* Content */}
       <div className="auth-page-content">
-        {/* Title */}
-        <h1 className="auth-page-title" data-testid="auth-title">
-          {view === 'initial' && 'Log in or Sign up'}
-          {view === 'login' && 'Log in'}
-          {view === 'signup' && 'Sign up'}
-        </h1>
+        {/* Title with tabs for initial view */}
+        {view === 'initial' ? (
+          <div className="auth-tabs-header">
+            <button 
+              className="auth-tab active"
+              onClick={switchToLogin}
+              data-testid="tab-login"
+            >
+              Log in
+            </button>
+            <div className="auth-tab-divider" />
+            <button 
+              className="auth-tab"
+              onClick={switchToSignup}
+              data-testid="tab-signup"
+            >
+              Sign up
+            </button>
+          </div>
+        ) : (
+          <h1 className="auth-page-title" data-testid="auth-title">
+            {view === 'login' ? 'Log in' : 'Sign up'}
+          </h1>
+        )}
 
         {/* Initial view - social buttons */}
         {view === 'initial' && (
