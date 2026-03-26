@@ -2403,7 +2403,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  position: relative;
 }
 
 .profile-v2-close-btn {
@@ -2448,6 +2449,9 @@ body {
   font-weight: 700;
   color: var(--white);
   margin: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .profile-v2-credits {
@@ -2483,7 +2487,7 @@ body {
   padding: 16px;
   background: var(--panel-bg);
   border: none;
-  border-radius: 20px;
+  border-radius: 24px;
   cursor: pointer;
   text-align: left;
   transition: opacity 0.2s ease;
@@ -2502,7 +2506,7 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00D4FF 0%, #0066FF 100%);
+  background: #38393B;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2581,7 +2585,7 @@ body {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00D4FF 0%, #0066FF 100%);
+  background: #38393B;
   display: flex;
   align-items: center;
   justify-content: center;
