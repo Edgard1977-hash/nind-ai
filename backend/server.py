@@ -2542,6 +2542,49 @@ async def get_all_videos():
     projects = await db.video_projects.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
     return {"projects": projects}
 
+
+@api_router.get("/videos/user/{user_id}")
+async def get_user_videos(user_id: str):
+    """Get video projects for a specific user"""
+    projects = await db.video_projects.find(
+        {"user_id": user_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return {"projects": projects}
+
+
+class UpdateUserRequest(BaseModel):
+    name: Optional[str] = None
+    picture: Optional[str] = None
+
+
+@api_router.put("/users/{user_id}")
+async def update_user(user_id: str, request: UpdateUserRequest):
+    """Update user profile"""
+    update_data = {}
+    
+    if request.name is not None:
+        update_data["name"] = request.name.strip()
+    
+    if request.picture is not None:
+        update_data["picture"] = request.picture
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    result = await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return updated user data
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+    return user
+
+
 @api_router.get("/uploads/{filename}")
 async def get_upload(filename: str):
     """Serve uploaded files"""

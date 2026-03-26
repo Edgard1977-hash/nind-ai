@@ -191,7 +191,10 @@ export const MainPage = () => {
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     localStorage.setItem("slind_user", JSON.stringify(userData));
-    setShowAuthPopup(false);
+  };
+
+  const handleUpdateUser = (updatedUser) => {
+    setUser(updatedUser);
   };
 
   const handleLogout = () => {
@@ -222,6 +225,7 @@ export const MainPage = () => {
         user={user} 
         onBack={() => setShowProfile(false)}
         onLogout={handleLogout}
+        onUpdateUser={handleUpdateUser}
       />
     );
   }
@@ -261,13 +265,30 @@ export const MainPage = () => {
           
           <span className={`header-overview-text ${headerScrolled ? 'visible' : ''}`}>Overview</span>
           
-          <button 
-            className={`get-started-btn ${headerScrolled ? 'hidden' : ''}`}
-            onClick={handleGetStarted}
-            data-testid="get-started-btn"
-          >
-            Get started
-          </button>
+          {user ? (
+            <button 
+              className={`profile-header-btn ${headerScrolled ? 'hidden' : ''}`}
+              onClick={handleGetStarted}
+              data-testid="profile-header-btn"
+            >
+              <span>Profile</span>
+              <div className="profile-header-avatar">
+                {user.picture ? (
+                  <img src={user.picture} alt={user.name} />
+                ) : (
+                  <span>{(user.name || user.email)?.[0]?.toUpperCase()}</span>
+                )}
+              </div>
+            </button>
+          ) : (
+            <button 
+              className={`get-started-btn ${headerScrolled ? 'hidden' : ''}`}
+              onClick={handleGetStarted}
+              data-testid="get-started-btn"
+            >
+              Get started
+            </button>
+          )}
         </div>
       </header>
 
@@ -275,7 +296,9 @@ export const MainPage = () => {
       <div className="main-content">
         {/* Heading section */}
         <div className="heading-section">
-          <h1 className="heading-main">Create more better</h1>
+          <h1 className="heading-main">
+            {user ? `Ready to create, ${user.name || user.email?.split('@')[0]}?` : 'Create more better'}
+          </h1>
           <p className="heading-sub">Make video editing entirely with AI</p>
         </div>
 
