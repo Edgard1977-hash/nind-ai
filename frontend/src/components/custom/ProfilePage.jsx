@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, X, Sparkles, User, Pencil, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// User's custom icons
+const CREDITS_ICON = "/assets/credits-icon.png";
+const EDIT_ICON = "/assets/edit-icon.png";
+const PROFILE_ICON = "/assets/profile-icon.png";
+const CHECK_ICON = "/assets/check-icon.png";
 
 // Plan labels
 const PLAN_LABELS = {
@@ -60,7 +66,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
       // Show success toast
       toast.custom(() => (
         <div className="custom-toast-success">
-          <CheckCircle className="w-5 h-5" />
+          <img src={CHECK_ICON} alt="" className="toast-icon" />
           <span>Saved changes!</span>
         </div>
       ), { duration: 2000 });
@@ -78,8 +84,38 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // TODO: Implement avatar upload
-    toast.info("Avatar upload coming soon!");
+    try {
+      // Upload the file
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const uploadRes = await axios.post(`${API}/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      
+      const avatarUrl = `${BACKEND_URL}${uploadRes.data.url}`;
+      
+      // Update user profile with new avatar
+      await axios.put(`${API}/users/${user.user_id}`, {
+        picture: avatarUrl
+      });
+      
+      // Update local user
+      const updatedUser = { ...user, picture: avatarUrl };
+      localStorage.setItem("slind_user", JSON.stringify(updatedUser));
+      if (onUpdateUser) onUpdateUser(updatedUser);
+      
+      toast.custom(() => (
+        <div className="custom-toast-success">
+          <img src={CHECK_ICON} alt="" className="toast-icon" />
+          <span>Avatar updated!</span>
+        </div>
+      ), { duration: 2000 });
+      
+    } catch (error) {
+      console.error("Failed to upload avatar:", error);
+      toast.error("Failed to upload avatar");
+    }
   };
 
   const completedVideos = userVideos.filter(v => v.status === 'completed');
@@ -106,7 +142,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             </button>
             
             <div className="profile-credits-badge">
-              <Sparkles className="w-4 h-4" />
+              <img src={CREDITS_ICON} alt="" className="icon-img" />
               <span>{userCredits}</span>
             </div>
           </div>
@@ -134,7 +170,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             onClick={() => setActiveView('settings')}
             data-testid="edit-profile-btn"
           >
-            <Pencil className="w-4 h-4" />
+            <img src={EDIT_ICON} alt="" className="icon-img" />
             <span>Edit</span>
           </button>
         </div>
@@ -214,7 +250,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             }}
             data-testid="settings-profile-btn"
           >
-            <User className="w-5 h-5" />
+            <img src={PROFILE_ICON} alt="" className="icon-img" />
             <span>Profile</span>
             <ChevronRight className="w-5 h-5 settings-arrow" />
           </button>
@@ -223,7 +259,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
 
           {/* Subscription option */}
           <div className="settings-menu-item subscription">
-            <Sparkles className="w-5 h-5" />
+            <img src={CREDITS_ICON} alt="" className="icon-img" />
             <span>My subscription</span>
             <button className="settings-upgrade-btn">Upgrade</button>
           </div>
@@ -274,7 +310,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
               onClick={() => fileInputRef.current?.click()}
               data-testid="avatar-edit-btn"
             >
-              <Pencil className="w-4 h-4" />
+              <img src={EDIT_ICON} alt="" className="icon-img-small" />
             </button>
             <input
               ref={fileInputRef}

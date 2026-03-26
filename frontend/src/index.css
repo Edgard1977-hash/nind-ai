@@ -2478,6 +2478,37 @@ body {
   height: 16px;
 }
 
+/* Icon images */
+.icon-img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.icon-img-small {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.profile-credits-badge .icon-img {
+  width: 16px;
+  height: 16px;
+}
+
+.profile-edit-btn .icon-img {
+  width: 14px;
+  height: 14px;
+}
+
+.toast-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 /* User section */
 .profile-user-section {
   display: flex;
