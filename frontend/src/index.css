@@ -2583,6 +2583,217 @@ body {
   margin: 0 0 16px;
 }
 
+/* Profile Sections */
+.profile-section {
+  margin-bottom: 24px;
+}
+
+.profile-section-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--white);
+  margin: 0 0 12px;
+}
+
+/* Subscription Card */
+.subscription-card {
+  background: #1D1E20;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.subscription-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.subscription-plan {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.subscription-credits-info {
+  text-align: right;
+}
+
+.subscription-starter-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.subscription-remaining {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.subscription-progress {
+  height: 6px;
+  background: #38393B;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.subscription-progress-fill {
+  height: 100%;
+  background: var(--cyan);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.subscription-description {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+  margin: 0 0 14px;
+}
+
+.subscription-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: var(--cyan);
+  border: none;
+  border-radius: 14px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #000;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.subscription-action-btn:hover {
+  opacity: 0.9;
+}
+
+.subscription-action-btn .btn-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* My Creations */
+.creations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.creation-item {
+  aspect-ratio: 2 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #1D1E20;
+}
+
+.creation-item:nth-child(1) {
+  border-top-left-radius: 20px;
+}
+
+.creation-item:nth-child(2) {
+  border-top-right-radius: 20px;
+}
+
+.creation-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.creation-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #1D1E20;
+}
+
+/* Empty Creations State */
+.creations-empty {
+  position: relative;
+}
+
+.creations-empty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.creation-item-empty {
+  aspect-ratio: 2 / 3;
+  background: linear-gradient(135deg, #1D1E20 0%, #252628 100%);
+  animation: shimmer 2s infinite;
+}
+
+.creation-item-empty.top-left {
+  border-top-left-radius: 20px;
+}
+
+.creation-item-empty.top-right {
+  border-top-right-radius: 20px;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.creations-empty-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 20, 0.7);
+}
+
+.creations-empty-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 12px;
+}
+
+.creations-start-btn {
+  padding: 10px 24px;
+  background: var(--cyan);
+  color: #000;
+  border: none;
+  border-radius: 20px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.creations-start-btn:hover {
+  opacity: 0.9;
+}
+
+.creations-start-btn:active {
+  transform: scale(0.98);
+}
+
 /* Profile Edit */
 .profile-edit-avatar-section {
   display: flex;
