@@ -2411,7 +2411,7 @@ body {
 .profile-v2-close-btn {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 17px;
   background: var(--panel-bg);
   border: none;
   display: flex;
@@ -2463,7 +2463,7 @@ body {
   height: 44px;
   box-sizing: border-box;
   background: var(--panel-bg);
-  border-radius: 22px;
+  border-radius: 23px;
   color: var(--white);
 }
 
