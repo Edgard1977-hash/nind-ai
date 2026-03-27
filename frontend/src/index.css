@@ -2408,8 +2408,8 @@ body {
 }
 
 .profile-v2-close-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--panel-bg);
   border: none;
@@ -2426,8 +2426,8 @@ body {
 }
 
 .profile-v2-back-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--panel-bg);
   border: none;
@@ -2457,19 +2457,25 @@ body {
 .profile-v2-credits {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 8px;
+  padding: 10px 16px;
   background: var(--panel-bg);
-  border-radius: 20px;
+  border-radius: 22px;
   color: var(--white);
   font-family: -apple-system, 'SF Pro Text', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
+.credits-icon-svg {
+  width: 18px;
+  height: 18px;
+  color: var(--white);
+}
+
 .credits-icon-img {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   filter: brightness(0) invert(1);
 }
@@ -2482,12 +2488,12 @@ body {
 .profile-v2-user-card {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   width: 100%;
-  padding: 16px;
-  background: var(--panel-bg);
+  padding: 18px;
+  background: #3D3F43;
   border: none;
-  border-radius: 24px;
+  border-radius: 27px;
   cursor: pointer;
   text-align: left;
   transition: opacity 0.2s ease;
@@ -2503,10 +2509,10 @@ body {
 }
 
 .profile-v2-avatar {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: #38393B;
+  background: #1D1E20;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2521,8 +2527,8 @@ body {
 }
 
 .default-avatar-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   color: var(--white);
 }
 
@@ -2533,7 +2539,7 @@ body {
 
 .profile-v2-username {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--white);
   margin: 0 0 4px;
@@ -2544,7 +2550,7 @@ body {
 
 .profile-v2-plan {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
   margin: 0;
@@ -2585,7 +2591,7 @@ body {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background: #38393B;
+  background: #1D1E20;
   display: flex;
   align-items: center;
   justify-content: center;
