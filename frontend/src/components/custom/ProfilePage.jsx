@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Bell } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -13,13 +13,6 @@ const CHECK_ICON = "/assets/check-icon.png";
 const CreditsIcon = ({ className }) => (
   <svg viewBox="0 0 1024 1024" fill="currentColor" className={className}>
     <path d="M 498.04 902.32 C487.03,900.01 475.94,891.85 469.24,881.12 C466.30,876.39 464.43,871.45 454.27,841.50 C449.60,827.75 442.50,806.83 438.48,795.00 C434.46,783.17 424.65,754.60 416.68,731.50 C408.71,708.40 399.39,681.40 395.98,671.50 C388.62,650.16 385.22,643.34 378.45,636.41 C370.67,628.43 369.90,628.12 300.00,604.00 C285.98,599.16 263.25,591.29 249.50,586.52 C235.75,581.74 212.35,573.65 197.50,568.54 C161.94,556.30 145.49,550.28 139.99,547.49 C127.63,541.24 116.17,529.21 111.93,518.06 C104.36,498.12 110.23,477.38 127.50,463.09 C139.35,453.28 138.70,453.53 288.34,404.03 C330.05,390.24 366.01,378.02 368.23,376.88 C374.55,373.66 381.40,366.60 384.85,359.76 C386.58,356.32 398.77,321.33 411.93,282.00 C448.35,173.17 459.60,140.54 463.46,132.51 C472.77,113.15 492.48,102.78 514.11,105.84 C532.90,108.49 546.88,120.13 553.76,138.82 C555.11,142.49 572.11,192.83 591.54,250.67 C610.97,308.52 627.63,357.34 628.57,359.17 C631.46,364.83 636.05,369.98 641.39,373.58 C646.67,377.15 663.73,382.97 789.00,424.00 C873.18,451.56 877.75,453.41 890.17,464.84 C907.43,480.74 911.43,504.29 900.21,524.00 C891.35,539.58 880.18,546.86 848.50,557.74 C841.35,560.19 819.30,567.74 799.50,574.52 C691.95,611.32 651.67,625.51 645.98,628.61 C639.57,632.10 632.84,638.77 629.14,645.31 C626.23,650.46 617.93,673.51 600.98,723.50 C589.01,758.79 554.96,857.43 551.01,868.23 C545.18,884.21 537.37,893.59 525.12,899.32 C519.44,901.99 517.22,902.46 509.50,902.63 C504.55,902.74 499.39,902.60 498.04,902.32 Z"/>
-  </svg>
-);
-
-// Upgrade icon SVG
-const UpgradeIcon = ({ className }) => (
-  <svg viewBox="0 0 1024 1024" fill="currentColor" className={className}>
-    <path d="M 496.85 903.15 C485.11,900.08 474.65,891.18 468.55,879.06 C465.80,873.61 460.73,859.10 435.96,786.00 C420.57,740.54 405.05,695.54 393.03,661.45 C388.49,648.58 380.60,638.85 370.64,633.82 C367.42,632.19 353.02,626.81 338.64,621.84 C324.26,616.88 304.17,609.89 294.00,606.31 C283.83,602.73 249.18,590.67 217.00,579.51 C149.35,556.06 148.20,555.62 139.03,549.52 C123.22,539.01 114.51,523.49 114.76,506.26 C115.03,487.74 127.39,471.15 148.50,461.01 C159.48,455.74 172.55,451.27 287.50,413.43 C330.40,399.32 367.68,386.66 370.34,385.32 C376.91,382.00 383.07,376.12 386.41,369.98 C387.94,367.18 392.02,356.48 395.49,346.20 C398.97,335.91 413.29,293.30 427.33,251.50 C460.55,152.60 462.91,146.09 468.60,137.76 C479.33,122.03 497.20,114.64 516.60,117.90 C530.92,120.32 543.90,129.74 550.79,142.73 C552.60,146.14 570.26,197.17 590.03,256.12 C609.80,315.07 626.90,365.22 628.03,367.57 C631.18,374.06 637.23,380.31 643.68,383.72 C646.88,385.41 673.12,394.52 702.00,403.96 C730.88,413.40 755.62,421.52 757.00,422.00 C758.38,422.49 780.29,429.67 805.69,437.97 C831.10,446.27 855.85,454.65 860.69,456.60 C871.54,460.97 884.54,469.49 889.97,475.78 C895.49,482.17 900.46,492.32 901.96,500.29 C904.61,514.31 898.97,530.11 887.08,541.98 C877.50,551.54 868.21,555.91 828.44,569.50 C790.93,582.32 740.22,599.82 712.50,609.51 C702.60,612.97 683.94,619.48 671.03,623.99 C658.13,628.49 645.69,633.27 643.39,634.62 C638.23,637.64 630.85,645.41 628.20,650.61 C626.03,654.87 612.30,693.42 598.16,735.00 C547.98,882.50 548.57,880.94 539.96,890.35 C528.07,903.36 513.84,907.58 496.85,903.15 ZM 782.38 386.09 C780.12,385.06 777.11,382.70 775.70,380.85 C772.72,376.95 772.49,376.33 754.47,323.50 C746.97,301.50 739.92,282.15 738.81,280.50 C737.70,278.85 735.72,276.69 734.40,275.71 C733.09,274.73 711.88,266.92 687.26,258.37 C634.77,240.13 637.38,241.15 632.62,236.97 C625.60,230.81 623.09,221.50 626.35,213.72 C628.09,209.55 634.98,203.37 640.53,200.99 C642.93,199.96 664.16,192.79 687.70,185.05 C711.24,177.32 731.94,170.11 733.70,169.04 C735.46,167.97 737.63,165.69 738.52,163.97 C739.40,162.26 746.88,140.75 755.14,116.18 C763.40,91.60 771.26,69.60 772.61,67.28 C774.07,64.74 776.85,62.00 779.55,60.42 C783.49,58.11 784.91,57.83 790.89,58.16 C796.50,58.48 798.38,59.06 801.45,61.39 C803.49,62.95 806.00,65.59 807.01,67.26 C808.02,68.92 815.90,91.36 824.52,117.12 C838.98,160.34 840.45,164.19 843.57,166.93 C846.29,169.31 855.86,172.84 892.47,184.93 C917.51,193.19 939.68,200.83 941.75,201.89 C959.07,210.82 959.21,231.71 942.00,240.48 C938.23,242.40 906.25,253.69 859.50,269.61 C854.00,271.48 848.03,273.91 846.24,275.00 C840.46,278.52 841.83,275.15 818.51,342.95 C812.18,361.34 805.91,378.05 804.57,380.07 C801.75,384.33 794.94,388.01 789.93,387.98 C788.05,387.97 784.65,387.11 782.38,386.09 Z"/>
   </svg>
 );
 
@@ -37,6 +30,14 @@ const PencilIcon = ({ className }) => (
   </svg>
 );
 
+// Plus icon SVG
+const PlusIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="12" y1="5" x2="12" y2="19"></line>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+);
+
 // Plan labels and credits
 const PLAN_CONFIG = {
   free: { label: "Free Plan", maxCredits: 30 },
@@ -49,12 +50,32 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
   const [activeView, setActiveView] = useState('main');
   const [userVideos, setUserVideos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editName, setEditName] = useState(user?.name || '');
+  const [editUsername, setEditUsername] = useState(user?.username || user?.name || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [usernameError, setUsernameError] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const fileInputRef = useRef(null);
+  
+  // Team state
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [showInvitePopup, setShowInvitePopup] = useState(false);
+  const [inviteUsername, setInviteUsername] = useState('');
+  const [inviteError, setInviteError] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  
+  // Notifications state
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Swipe popup state
+  const [popupDragY, setPopupDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const popupStartY = useRef(0);
 
   useEffect(() => {
     fetchUserVideos();
+    fetchTeam();
+    fetchNotifications();
   }, [user]);
 
   const fetchUserVideos = async () => {
@@ -74,16 +95,66 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
     }
   };
 
+  const fetchTeam = async () => {
+    if (!user?.user_id) return;
+    
+    try {
+      const response = await axios.get(`${API}/users/${user.user_id}/team`);
+      setTeamMembers(response.data.team || []);
+    } catch (error) {
+      console.error("Failed to fetch team:", error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    if (!user?.user_id) return;
+    
+    try {
+      const response = await axios.get(`${API}/users/${user.user_id}/notifications`);
+      setNotifications(response.data.notifications || []);
+      setUnreadCount(response.data.unread_count || 0);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
+
+  const checkUsernameAvailability = async (username) => {
+    if (username.length < 3) {
+      setUsernameError('At least 3 characters');
+      return false;
+    }
+    
+    setIsCheckingUsername(true);
+    try {
+      const response = await axios.get(`${API}/users/check-username/${username}?exclude_user_id=${user.user_id}`);
+      if (!response.data.available) {
+        setUsernameError('Username taken');
+        return false;
+      }
+      setUsernameError('');
+      return true;
+    } catch (error) {
+      console.error("Failed to check username:", error);
+      return true;
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
-    if (!editName.trim()) return;
+    if (!editUsername.trim()) return;
+    
+    const isAvailable = await checkUsernameAvailability(editUsername.trim());
+    if (!isAvailable) return;
     
     setIsSaving(true);
     try {
       await axios.put(`${API}/users/${user.user_id}`, {
-        name: editName.trim()
+        username: editUsername.trim(),
+        name: editUsername.trim()
       });
       
-      const updatedUser = { ...user, name: editName.trim() };
+      const updatedUser = { ...user, username: editUsername.trim(), name: editUsername.trim() };
       localStorage.setItem("slind_user", JSON.stringify(updatedUser));
       if (onUpdateUser) onUpdateUser(updatedUser);
       
@@ -97,7 +168,11 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
       setActiveView('main');
     } catch (error) {
       console.error("Failed to save profile:", error);
-      toast.error("Failed to save changes");
+      if (error.response?.data?.detail) {
+        setUsernameError(error.response.data.detail);
+      } else {
+        toast.error("Failed to save changes");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -138,15 +213,149 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
     }
   };
 
+  const handleSendInvite = async () => {
+    if (inviteUsername.length < 3) return;
+    
+    setIsSendingInvite(true);
+    setInviteError('');
+    
+    try {
+      await axios.post(`${API}/users/${user.user_id}/team/invite`, {
+        username: inviteUsername.trim()
+      });
+      
+      toast.custom(() => (
+        <div className="custom-toast-success">
+          <img src={CHECK_ICON} alt="" className="toast-icon" />
+          <span>Invite sent!</span>
+        </div>
+      ), { duration: 2000 });
+      
+      setShowInvitePopup(false);
+      setInviteUsername('');
+    } catch (error) {
+      console.error("Failed to send invite:", error);
+      setInviteError(error.response?.data?.detail || 'Failed to send invite');
+    } finally {
+      setIsSendingInvite(false);
+    }
+  };
+
+  const handleAcceptInvite = async (inviteId) => {
+    try {
+      await axios.post(`${API}/team/invites/${inviteId}/accept`);
+      fetchNotifications();
+      fetchTeam();
+      toast.custom(() => (
+        <div className="custom-toast-success">
+          <img src={CHECK_ICON} alt="" className="toast-icon" />
+          <span>Joined team!</span>
+        </div>
+      ), { duration: 2000 });
+    } catch (error) {
+      console.error("Failed to accept invite:", error);
+      toast.error("Failed to accept invite");
+    }
+  };
+
+  const handleDeclineInvite = async (inviteId) => {
+    try {
+      await axios.post(`${API}/team/invites/${inviteId}/decline`);
+      fetchNotifications();
+    } catch (error) {
+      console.error("Failed to decline invite:", error);
+    }
+  };
+
+  // Swipe handlers for popup
+  const handlePopupTouchStart = (e) => {
+    popupStartY.current = e.touches[0].clientY;
+    setIsDragging(true);
+  };
+
+  const handlePopupTouchMove = (e) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - popupStartY.current;
+    if (diff > 0) {
+      setPopupDragY(diff);
+    }
+  };
+
+  const handlePopupTouchEnd = () => {
+    setIsDragging(false);
+    if (popupDragY > 100) {
+      setShowInvitePopup(false);
+    }
+    setPopupDragY(0);
+  };
+
   const completedVideos = userVideos.filter(v => v.status === 'completed');
-  const userName = user?.name || user?.email?.split('@')[0] || 'User';
+  const userName = user?.username || user?.name || user?.email?.split('@')[0] || 'User';
   const userPlan = user?.plan || 'free';
   const userCredits = user?.credits || 0;
   const planConfig = PLAN_CONFIG[userPlan];
-  const creditsProgress = (userCredits / planConfig.maxCredits) * 100;
-  const isFree = userPlan === 'free';
 
-  // Main Profile View
+  // ============ NOTIFICATIONS VIEW ============
+  if (activeView === 'notifications') {
+    return (
+      <div className="profile-page-v2" data-testid="notifications-page">
+        <div className="profile-v2-header">
+          <button 
+            className="profile-v2-back-btn"
+            onClick={() => setActiveView('main')}
+            data-testid="notifications-back-btn"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          
+          <h1 className="profile-v2-title">Notifications</h1>
+          
+          <div className="header-spacer" />
+        </div>
+
+        <div className="notifications-list">
+          {notifications.length === 0 ? (
+            <div className="notifications-empty">
+              <p>No notifications yet</p>
+            </div>
+          ) : (
+            notifications.map((notif) => (
+              <div 
+                key={notif.id} 
+                className={`notification-item ${!notif.read ? 'unread' : ''}`}
+                data-testid={`notification-${notif.id}`}
+              >
+                <div className="notification-content">
+                  <p className="notification-title">{notif.title}</p>
+                  <p className="notification-message">{notif.message}</p>
+                </div>
+                
+                {notif.type === 'team_invite' && notif.data?.invite_id && (
+                  <div className="notification-actions">
+                    <button 
+                      className="notif-accept-btn"
+                      onClick={() => handleAcceptInvite(notif.data.invite_id)}
+                    >
+                      Accept
+                    </button>
+                    <button 
+                      className="notif-decline-btn"
+                      onClick={() => handleDeclineInvite(notif.data.invite_id)}
+                    >
+                      Decline
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ============ MAIN PROFILE VIEW ============
   if (activeView === 'main') {
     return (
       <div className="profile-page-v2" data-testid="profile-page">
@@ -162,9 +371,22 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           
           <h1 className="profile-v2-title">Профиль</h1>
           
-          <div className="profile-v2-credits">
-            <CreditsIcon className="credits-icon-svg" />
-            <span>{userCredits}</span>
+          <div className="profile-v2-header-right">
+            <button 
+              className="profile-v2-notif-btn"
+              onClick={() => setActiveView('notifications')}
+              data-testid="notifications-btn"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="notif-badge">{unreadCount}</span>
+              )}
+            </button>
+            
+            <div className="profile-v2-credits">
+              <CreditsIcon className="credits-icon-svg" />
+              <span>{userCredits}</span>
+            </div>
           </div>
         </div>
 
@@ -172,7 +394,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
         <button 
           className="profile-v2-user-card"
           onClick={() => {
-            setEditName(userName);
+            setEditUsername(userName);
             setActiveView('profile-edit');
           }}
           data-testid="profile-card"
@@ -193,48 +415,43 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           <ChevronRight className="profile-v2-arrow" />
         </button>
 
-        {/* Subscription Section */}
+        {/* Team Section */}
         <div className="profile-section">
-          <h3 className="profile-section-title">Subscription</h3>
+          <h3 className="profile-section-title">Team</h3>
+          <p className="profile-section-subtitle">Create together</p>
           
-          <div className="subscription-card">
-            <div className="subscription-header">
-              <span className="subscription-plan">{planConfig.label}</span>
-              <div className="subscription-credits-info">
-                {isFree ? (
-                  <span className="subscription-starter-text">30 starter credits</span>
-                ) : (
-                  <span className="subscription-remaining">{userCredits} credits remaining</span>
-                )}
+          <div className="team-cards-row">
+            {/* Invite Member Card */}
+            <button 
+              className="team-invite-card"
+              onClick={() => setShowInvitePopup(true)}
+              data-testid="invite-member-btn"
+            >
+              <div className="team-invite-circle">
+                <PlusIcon className="team-plus-icon" />
               </div>
-            </div>
-            
-            <div className="subscription-progress">
-              <div 
-                className="subscription-progress-fill" 
-                style={{ width: `${Math.min(creditsProgress, 100)}%` }}
-              />
-            </div>
-            
-            {isFree && (
-              <p className="subscription-description">
-                Upgrade plan – get more videos, no watermarks, better quality and faster results
-              </p>
-            )}
-            
-            <button className="subscription-action-btn">
-              {isFree ? (
-                <>
-                  <UpgradeIcon className="btn-icon" />
-                  <span>Upgrade</span>
-                </>
-              ) : (
-                <>
-                  <CreditsIcon className="btn-icon" />
-                  <span>Top up credits</span>
-                </>
-              )}
+              <span className="team-invite-text">Invite member</span>
             </button>
+            
+            {/* Team Members */}
+            {teamMembers.map((member) => (
+              <div 
+                key={member.id} 
+                className="team-member-card"
+                data-testid={`team-member-${member.member_id}`}
+              >
+                <div className="team-member-avatar">
+                  {member.member_info?.picture ? (
+                    <img src={member.member_info.picture} alt="" />
+                  ) : (
+                    <PersonIcon className="team-member-icon" />
+                  )}
+                </div>
+                <span className="team-member-name">
+                  {member.member_info?.username || member.member_info?.name || 'User'}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -292,11 +509,60 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             </div>
           )}
         </div>
+
+        {/* Invite Popup */}
+        {showInvitePopup && (
+          <div 
+            className="invite-popup-overlay"
+            onClick={(e) => e.target === e.currentTarget && setShowInvitePopup(false)}
+          >
+            <div 
+              className="invite-popup"
+              style={{ transform: `translateY(${popupDragY}px)` }}
+              onTouchStart={handlePopupTouchStart}
+              onTouchMove={handlePopupTouchMove}
+              onTouchEnd={handlePopupTouchEnd}
+            >
+              <div className="popup-drag-handle" />
+              
+              <h2 className="invite-popup-title">Invite member</h2>
+              
+              <input
+                type="text"
+                value={inviteUsername}
+                onChange={(e) => {
+                  setInviteUsername(e.target.value);
+                  setInviteError('');
+                }}
+                placeholder="username"
+                className="invite-input"
+                data-testid="invite-username-input"
+              />
+              
+              {inviteError && (
+                <p className="invite-error">{inviteError}</p>
+              )}
+              
+              <button 
+                className={`invite-send-btn ${inviteUsername.length >= 3 ? 'active' : ''}`}
+                onClick={handleSendInvite}
+                disabled={inviteUsername.length < 3 || isSendingInvite}
+                data-testid="send-invite-btn"
+              >
+                {isSendingInvite ? 'Sending...' : 'Send invite'}
+              </button>
+              
+              <p className="invite-hint">
+                Invitations will be sent to users via notifications.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Profile Edit View
+  // ============ PROFILE EDIT VIEW ============
   if (activeView === 'profile-edit') {
     return (
       <div className="profile-page-v2 edit-view" data-testid="profile-edit-page">
@@ -342,27 +608,34 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           </div>
         </div>
 
-        {/* Name input */}
+        {/* Username input */}
         <div className="profile-edit-form">
           <div className="profile-edit-field">
-            <label className="profile-edit-label">Name</label>
+            <label className="profile-edit-label">Username</label>
             <input
               type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="profile-edit-input"
-              placeholder="Your name"
-              data-testid="profile-name-input"
+              value={editUsername}
+              onChange={(e) => {
+                setEditUsername(e.target.value);
+                setUsernameError('');
+              }}
+              onBlur={() => editUsername.length >= 3 && checkUsernameAvailability(editUsername)}
+              className={`profile-edit-input ${usernameError ? 'error' : ''}`}
+              placeholder="Your username"
+              data-testid="profile-username-input"
             />
+            {usernameError && (
+              <p className="username-error">{usernameError}</p>
+            )}
           </div>
 
           <button 
-            className={`profile-save-btn ${editName.trim() !== userName ? 'active' : ''}`}
+            className={`profile-save-btn ${editUsername.trim() !== userName && !usernameError ? 'active' : ''}`}
             onClick={handleSaveProfile}
-            disabled={isSaving || editName.trim() === userName}
+            disabled={isSaving || editUsername.trim() === userName || !!usernameError || isCheckingUsername}
             data-testid="profile-save-btn"
           >
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? 'Saving...' : isCheckingUsername ? 'Checking...' : 'Save'}
           </button>
         </div>
 

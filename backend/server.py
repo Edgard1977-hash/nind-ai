@@ -2555,6 +2555,7 @@ async def get_user_videos(user_id: str):
 
 class UpdateUserRequest(BaseModel):
     name: Optional[str] = None
+    username: Optional[str] = None
     picture: Optional[str] = None
 
 
@@ -2565,6 +2566,16 @@ async def update_user(user_id: str, request: UpdateUserRequest):
     
     if request.name is not None:
         update_data["name"] = request.name.strip()
+    
+    if request.username is not None:
+        new_username = request.username.strip().lower()
+        if len(new_username) < 3:
+            raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+        # Check if username is taken by another user
+        existing = await db.users.find_one({"username": new_username, "user_id": {"$ne": user_id}})
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        update_data["username"] = new_username
     
     if request.picture is not None:
         update_data["picture"] = request.picture
@@ -2583,6 +2594,220 @@ async def update_user(user_id: str, request: UpdateUserRequest):
     # Return updated user data
     user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
     return user
+
+
+# ==================== USERNAME CHECK ====================
+
+@api_router.get("/users/check-username/{username}")
+async def check_username(username: str, exclude_user_id: Optional[str] = None):
+    """Check if a username is available"""
+    username = username.strip().lower()
+    if len(username) < 3:
+        return {"available": False, "reason": "Username must be at least 3 characters"}
+    
+    query = {"username": username}
+    if exclude_user_id:
+        query["user_id"] = {"$ne": exclude_user_id}
+    
+    existing = await db.users.find_one(query)
+    return {"available": existing is None}
+
+
+# ==================== TEAM & INVITATIONS ====================
+
+class TeamInviteRequest(BaseModel):
+    username: str
+
+
+@api_router.get("/users/{user_id}/team")
+async def get_user_team(user_id: str):
+    """Get user's team members"""
+    team_members = await db.team_members.find(
+        {"owner_id": user_id},
+        {"_id": 0}
+    ).to_list(50)
+    
+    # Get member details
+    members_with_info = []
+    for member in team_members:
+        user_info = await db.users.find_one(
+            {"user_id": member["member_id"]},
+            {"_id": 0, "password_hash": 0, "user_id": 1, "name": 1, "username": 1, "picture": 1}
+        )
+        if user_info:
+            members_with_info.append({
+                **member,
+                "member_info": user_info
+            })
+    
+    return {"team": members_with_info}
+
+
+@api_router.post("/users/{user_id}/team/invite")
+async def invite_to_team(user_id: str, request: TeamInviteRequest):
+    """Send team invitation to a user by username"""
+    target_username = request.username.strip().lower()
+    
+    if len(target_username) < 3:
+        raise HTTPException(status_code=400, detail="Invalid username")
+    
+    # Find target user
+    target_user = await db.users.find_one({"username": target_username}, {"_id": 0})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    target_user_id = target_user["user_id"]
+    
+    # Can't invite yourself
+    if target_user_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot invite yourself")
+    
+    # Check if already in team
+    existing_member = await db.team_members.find_one({
+        "owner_id": user_id,
+        "member_id": target_user_id
+    })
+    if existing_member:
+        raise HTTPException(status_code=400, detail="User is already in your team")
+    
+    # Check if invitation already sent
+    existing_invite = await db.team_invites.find_one({
+        "from_user_id": user_id,
+        "to_user_id": target_user_id,
+        "status": "pending"
+    })
+    if existing_invite:
+        raise HTTPException(status_code=400, detail="Invitation already sent")
+    
+    # Get sender info
+    sender = await db.users.find_one({"user_id": user_id}, {"_id": 0, "name": 1, "username": 1})
+    
+    # Create invitation
+    invite_id = f"invite_{uuid.uuid4().hex[:12]}"
+    invite = {
+        "id": invite_id,
+        "from_user_id": user_id,
+        "from_username": sender.get("username", sender.get("name", "User")),
+        "to_user_id": target_user_id,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.team_invites.insert_one(invite)
+    
+    # Create notification for target user
+    notification_id = f"notif_{uuid.uuid4().hex[:12]}"
+    notification = {
+        "id": notification_id,
+        "user_id": target_user_id,
+        "type": "team_invite",
+        "title": "Team Invitation",
+        "message": f"@{sender.get('username', sender.get('name', 'Someone'))} invited you to their team",
+        "data": {"invite_id": invite_id, "from_user_id": user_id},
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    
+    return {"success": True, "invite_id": invite_id}
+
+
+@api_router.post("/team/invites/{invite_id}/accept")
+async def accept_team_invite(invite_id: str):
+    """Accept a team invitation"""
+    invite = await db.team_invites.find_one({"id": invite_id}, {"_id": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    
+    if invite["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Invitation is no longer pending")
+    
+    # Add to team
+    team_member = {
+        "id": f"member_{uuid.uuid4().hex[:12]}",
+        "owner_id": invite["from_user_id"],
+        "member_id": invite["to_user_id"],
+        "joined_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.team_members.insert_one(team_member)
+    
+    # Update invite status
+    await db.team_invites.update_one(
+        {"id": invite_id},
+        {"$set": {"status": "accepted"}}
+    )
+    
+    return {"success": True}
+
+
+@api_router.post("/team/invites/{invite_id}/decline")
+async def decline_team_invite(invite_id: str):
+    """Decline a team invitation"""
+    result = await db.team_invites.update_one(
+        {"id": invite_id, "status": "pending"},
+        {"$set": {"status": "declined"}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Invitation not found or already processed")
+    
+    return {"success": True}
+
+
+@api_router.delete("/users/{user_id}/team/{member_id}")
+async def remove_team_member(user_id: str, member_id: str):
+    """Remove a member from team"""
+    result = await db.team_members.delete_one({
+        "owner_id": user_id,
+        "member_id": member_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Team member not found")
+    
+    return {"success": True}
+
+
+# ==================== NOTIFICATIONS ====================
+
+@api_router.get("/users/{user_id}/notifications")
+async def get_user_notifications(user_id: str, limit: int = 50):
+    """Get user's notifications"""
+    notifications = await db.notifications.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(limit)
+    
+    unread_count = await db.notifications.count_documents({
+        "user_id": user_id,
+        "read": False
+    })
+    
+    return {"notifications": notifications, "unread_count": unread_count}
+
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str):
+    """Mark a notification as read"""
+    result = await db.notifications.update_one(
+        {"id": notification_id},
+        {"$set": {"read": True}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    
+    return {"success": True}
+
+
+@api_router.put("/users/{user_id}/notifications/read-all")
+async def mark_all_notifications_read(user_id: str):
+    """Mark all user's notifications as read"""
+    await db.notifications.update_many(
+        {"user_id": user_id, "read": False},
+        {"$set": {"read": True}}
+    )
+    
+    return {"success": True}
 
 
 @api_router.get("/uploads/{filename}")

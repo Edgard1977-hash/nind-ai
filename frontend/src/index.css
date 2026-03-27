@@ -2546,7 +2546,7 @@ body {
 
 .profile-v2-username {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--white);
   margin: 0 0 4px;
@@ -2590,7 +2590,7 @@ body {
 
 .profile-section-title {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--white);
   margin: 0 0 12px;
@@ -2857,6 +2857,9 @@ body {
 
 .profile-edit-form {
   padding: 0 16px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .profile-logout-section {
@@ -3218,4 +3221,373 @@ body {
 .custom-toast-success svg {
   width: 20px;
   height: 20px;
+}
+
+
+/* ===== TEAM SECTION ===== */
+.profile-section-subtitle {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  margin: -8px 0 16px;
+}
+
+.team-cards-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 0;
+  scrollbar-width: none;
+}
+
+.team-cards-row::-webkit-scrollbar {
+  display: none;
+}
+
+.team-invite-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 100px;
+  width: 100px;
+  height: 130px;
+  background: #1D1E20;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.team-invite-card:hover {
+  opacity: 0.9;
+}
+
+.team-invite-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #3D3F43;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-plus-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--white);
+}
+
+.team-invite-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  text-align: center;
+  padding: 0 8px;
+}
+
+.team-member-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 100px;
+  width: 100px;
+  height: 130px;
+  background: #1D1E20;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.team-member-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #3D3F43;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.team-member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-member-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--white);
+}
+
+.team-member-name {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  text-align: center;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+/* ===== INVITE POPUP ===== */
+.invite-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s ease;
+}
+
+.invite-popup {
+  width: 100%;
+  max-width: 500px;
+  background: #1D1E20;
+  border-radius: 26px 26px 0 0;
+  padding: 12px 24px 40px;
+  animation: popupSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.1s ease;
+  touch-action: none;
+}
+
+.popup-drag-handle {
+  width: 40px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.invite-popup-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+.invite-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--panel-bg);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.invite-input:focus {
+  border-color: var(--white);
+}
+
+.invite-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.invite-error {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  color: #FF453A;
+  margin: 0 0 8px;
+  padding-left: 4px;
+}
+
+.invite-send-btn {
+  width: 100%;
+  padding: 18px;
+  background: #38393B;
+  color: rgba(255, 255, 255, 0.5);
+  border: none;
+  border-radius: 50px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  margin-top: 16px;
+}
+
+.invite-send-btn.active {
+  background: var(--cyan);
+  color: #000;
+}
+
+.invite-send-btn:active {
+  transform: scale(0.98);
+}
+
+.invite-send-btn:disabled {
+  cursor: not-allowed;
+}
+
+.invite-hint {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin: 16px 0 0;
+}
+
+/* ===== NOTIFICATIONS ===== */
+.profile-v2-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-v2-notif-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 17px;
+  background: var(--panel-bg);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--white);
+  transition: opacity 0.2s ease;
+}
+
+.profile-v2-notif-btn:hover {
+  opacity: 0.8;
+}
+
+.notif-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #FF453A;
+  border-radius: 9px;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notifications-list {
+  padding: 0 16px;
+}
+
+.notifications-empty {
+  text-align: center;
+  padding: 48px 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: #1D1E20;
+  border-radius: 16px;
+  margin-bottom: 8px;
+}
+
+.notification-item.unread {
+  border-left: 3px solid var(--cyan);
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--white);
+  margin: 0 0 4px;
+}
+
+.notification-message {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.notif-accept-btn {
+  padding: 8px 16px;
+  background: var(--cyan);
+  color: #000;
+  border: none;
+  border-radius: 20px;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.notif-accept-btn:hover {
+  opacity: 0.9;
+}
+
+.notif-decline-btn {
+  padding: 8px 16px;
+  background: #38393B;
+  color: var(--white);
+  border: none;
+  border-radius: 20px;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.notif-decline-btn:hover {
+  opacity: 0.9;
+}
+
+/* Username error in profile edit */
+.profile-edit-input.error {
+  border-color: #FF453A;
+}
+
+.username-error {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  color: #FF453A;
+  margin: 8px 0 0;
+  padding-left: 4px;
 }
