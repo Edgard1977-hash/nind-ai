@@ -2475,6 +2475,7 @@ body {
   width: 20px;
   height: 20px;
   color: var(--white);
+  margin-top: -2px;
 }
 
 .credits-icon-img {
