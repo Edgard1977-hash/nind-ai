@@ -2458,7 +2458,7 @@ body {
 .profile-v2-credits {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   padding: 6px 14px;
   background: var(--panel-bg);
   border-radius: 22px;
@@ -2472,8 +2472,8 @@ body {
 }
 
 .credits-icon-svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   color: var(--white);
 }
 
