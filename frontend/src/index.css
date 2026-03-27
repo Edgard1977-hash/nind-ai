@@ -2463,7 +2463,7 @@ body {
   height: 44px;
   box-sizing: border-box;
   background: var(--panel-bg);
-  border-radius: 23px;
+  border-radius: 19px;
   color: var(--white);
 }
 
