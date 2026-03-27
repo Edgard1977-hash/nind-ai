@@ -218,7 +218,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             
             {isFree && (
               <p className="subscription-description">
-                Unlock full AI video editing power — more videos, longer duration, higher quality, no watermarks, and faster results.
+                Upgrade plan – get more videos, no watermarks, better quality and faster results
               </p>
             )}
             

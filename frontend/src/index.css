@@ -2600,21 +2600,21 @@ body {
 .subscription-card {
   background: #1D1E20;
   border: 0.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 16px;
+  border-radius: 45px;
+  padding: 20px 24px;
 }
 
 .subscription-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .subscription-plan {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--white);
 }
 
@@ -2624,30 +2624,30 @@ body {
 
 .subscription-starter-text {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white);
 }
 
 .subscription-remaining {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--white);
 }
 
 .subscription-progress {
-  height: 6px;
+  height: 10px;
   background: #38393B;
-  border-radius: 3px;
+  border-radius: 5px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .subscription-progress-fill {
   height: 100%;
   background: var(--cyan);
-  border-radius: 3px;
+  border-radius: 5px;
   transition: width 0.3s ease;
 }
 
@@ -2657,7 +2657,7 @@ body {
   font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.4;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
 }
 
 .subscription-action-btn {
@@ -2666,14 +2666,14 @@ body {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 12px;
-  background: var(--cyan);
+  padding: 14px;
+  background: linear-gradient(135deg, #0066FF 0%, #0044CC 100%);
   border: none;
-  border-radius: 14px;
+  border-radius: 50px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 15px;
   font-weight: 700;
-  color: #000;
+  color: var(--white);
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
