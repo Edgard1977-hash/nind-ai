@@ -235,7 +235,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00D4FF 0%, #0066FF 100%);
+  background: #3D3F43;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2467,8 +2467,8 @@ body {
 
 .profile-v2-credits span {
   font-family: 'Baloo 2', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
 }
 
 .credits-icon-svg {
