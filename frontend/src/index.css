@@ -2734,8 +2734,7 @@ body {
 
 .creation-item-empty {
   aspect-ratio: 2 / 3;
-  background: linear-gradient(135deg, #1D1E20 0%, #252628 100%);
-  animation: shimmer 2s infinite;
+  background: #252629;
 }
 
 .creation-item-empty.top-left {
@@ -2746,32 +2745,7 @@ body {
   border-top-right-radius: 20px;
 }
 
-@keyframes shimmer {
-  0%, 100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-.creations-empty-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(20, 20, 20, 0.7);
-}
-
-.creations-empty-text {
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0 0 12px;
-}
+/* Old creations overlay - removed background */
 
 .creations-start-btn {
   padding: 10px 24px;
