@@ -347,17 +347,17 @@ export const MainPage = () => {
 
             {/* Format pills row */}
             <div className="format-pills-row">
-              {/* Search button */}
-              <button 
-                className="format-search-btn"
-                onClick={() => setShowFormatsListPopup(true)}
-                data-testid="format-search-btn"
-              >
-                <SearchIconCustom className="format-search-icon" />
-              </button>
-              
-              {/* Format pills - horizontal scroll */}
+              {/* Format pills - horizontal scroll including search */}
               <div className="format-pills-scroll">
+                {/* Search button inside scroll */}
+                <button 
+                  className="format-search-btn"
+                  onClick={() => setShowFormatsListPopup(true)}
+                  data-testid="format-search-btn"
+                >
+                  <SearchIconCustom className="format-search-icon" />
+                </button>
+                
                 {selectedFormat && (
                   <button 
                     className="format-pill selected"

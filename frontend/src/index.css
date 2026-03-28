@@ -3625,6 +3625,7 @@ body {
   display: flex;
   gap: 4px;
   background: transparent;
+  position: relative;
 }
 
 .header-tab {
@@ -3635,14 +3636,33 @@ body {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
   color: rgba(255, 255, 255, 0.5);
   background: transparent;
+}
+
+.header-tab:active {
+  transform: scale(0.95);
 }
 
 .header-tab.active {
   background: #2A2B2D;
   color: var(--white);
+  animation: tabActivate 0.3s ease;
+}
+
+@keyframes tabActivate {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .header-right {
@@ -3684,12 +3704,12 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 20px;
-  padding-bottom: 40px;
+  justify-content: flex-end;
+  padding: 0 0 40px;
 }
 
 .create-heading {
-  padding: 40px 0 32px;
+  padding: 20px 20px 16px;
   text-align: center;
 }
 
@@ -3703,10 +3723,7 @@ body {
 
 /* ===== FORMAT PILLS ROW ===== */
 .format-pills-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .format-search-btn {
@@ -3721,6 +3738,7 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  flex-shrink: 0;
 }
 
 .format-search-btn:hover {
@@ -3737,9 +3755,9 @@ body {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  flex: 1;
   scrollbar-width: none;
-  padding: 2px 0;
+  padding: 4px 20px;
+  margin: 0 -20px;
 }
 
 .format-pills-scroll::-webkit-scrollbar {
@@ -3784,7 +3802,7 @@ body {
 
 /* ===== CREATE INPUT AREA ===== */
 .create-input-area {
-  margin-top: auto;
+  padding: 0 20px;
 }
 
 /* ===== LIBRARY CONTENT ===== */
