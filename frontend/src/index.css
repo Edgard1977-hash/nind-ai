@@ -3636,20 +3636,12 @@ body {
 .header-left-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
 .header-logo-large {
-  width: 40px;
-  height: 40px;
+  width: 100px;
+  height: auto;
   object-fit: contain;
-}
-
-.header-logo-text {
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--white);
 }
 
 .header-right-actions {
@@ -3660,7 +3652,7 @@ body {
 
 .header-upgrade-btn {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #0066FF 0%, #0044CC 100%);
+  background: #2A2B2D;
   color: var(--white);
   border: none;
   border-radius: 50px;
@@ -3672,7 +3664,7 @@ body {
 }
 
 .header-upgrade-btn:hover {
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .header-upgrade-btn:active {

@@ -321,7 +321,6 @@ export const MainPage = () => {
         <header className="main-fixed-header">
           <div className="header-left-logo">
             <img src={LOGO_URL} alt="Slind" className="header-logo-large" />
-            <span className="header-logo-text">Slind</span>
           </div>
           
           <div className="header-right-actions">
