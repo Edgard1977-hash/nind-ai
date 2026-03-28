@@ -3785,31 +3785,177 @@ body {
   width: 100%;
 }
 
-/* ===== CREATE FORMATS SECTION ===== */
-.bottom-tabs-section {
-  padding: 0 0 40px;
+/* ===== BOTTOM PANEL ===== */
+.bottom-panel {
+  background: #1A1B1D;
+  border-radius: 28px 28px 0 0;
+  margin: 0 -20px;
+  padding: 20px 20px 40px;
 }
 
-.bottom-tabs {
+.bottom-tabs-container {
   display: flex;
-  gap: 24px;
-  margin-bottom: 20px;
+  position: relative;
+  background: #0F0F10;
+  border-radius: 28px;
+  padding: 4px;
+  margin: 0 0 20px;
+}
+
+.bottom-tabs-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: #2A2B2D;
+  border-radius: 24px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
 }
 
 .bottom-tab {
-  padding: 0;
+  flex: 1;
+  padding: 12px 20px;
   background: transparent;
   border: none;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   transition: color 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .bottom-tab.active {
   color: var(--white);
+}
+
+.bottom-panel-content {
+  min-height: 200px;
+}
+
+/* ===== CREATIONS EMPTY PATTERN ===== */
+.creations-empty-pattern {
+  position: relative;
+  overflow: hidden;
+}
+
+.creations-pattern-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 100%;
+}
+
+.pattern-item {
+  background: #2A2B2D;
+  border-radius: 16px;
+  animation: shimmer 2s infinite;
+  width: 100%;
+}
+
+.pattern-item.ratio-9-16 {
+  aspect-ratio: 9/16;
+  max-height: 280px;
+}
+
+.pattern-item.ratio-16-9 {
+  aspect-ratio: 16/9;
+  max-height: 120px;
+}
+
+.pattern-item.ratio-1-1 {
+  aspect-ratio: 1/1;
+  max-height: 180px;
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
+}
+
+.creations-empty-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(to top, #1A1B1D 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.creations-empty-overlay {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.creations-empty-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--white);
+  margin: 0;
+}
+
+.creations-start-btn {
+  padding: 14px 32px;
+  background: var(--cyan);
+  color: #000;
+  border: none;
+  border-radius: 50px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.creations-start-btn:hover {
+  opacity: 0.9;
+}
+
+.creations-start-btn:active {
+  transform: scale(0.95);
+}
+
+/* ===== CREATIONS REAL GRID ===== */
+.creations-grid-real {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.creation-card {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #2A2B2D;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.creation-card:hover {
+  transform: scale(0.98);
+}
+
+.creation-card img,
+.creation-card video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.creation-placeholder {
+  width: 100%;
+  aspect-ratio: 9/16;
+  background: #2A2B2D;
 }
 
 .library-empty-inline {

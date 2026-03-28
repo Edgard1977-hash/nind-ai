@@ -434,9 +434,17 @@ export const MainPage = () => {
             </div>
             </div>
 
-            {/* Bottom Tabs Section */}
-            <div className="bottom-tabs-section">
-              <div className="bottom-tabs">
+            {/* Bottom Panel with Tabs */}
+            <div className="bottom-panel">
+              {/* Tabs */}
+              <div className="bottom-tabs-container">
+                <div 
+                  className="bottom-tabs-indicator"
+                  style={{
+                    left: activeMainTab === 'Creations' ? '4px' : '50%',
+                    width: 'calc(50% - 4px)'
+                  }}
+                />
                 <button 
                   className={`bottom-tab ${activeMainTab === 'Creations' ? 'active' : ''}`}
                   onClick={() => setActiveMainTab('Creations')}
@@ -453,74 +461,100 @@ export const MainPage = () => {
                 </button>
               </div>
 
-              {activeMainTab === 'Formats' ? (
-                <>
-                  <div className="create-formats-grid">
-                    {FORMATS.slice(0, 8).map((format) => (
-                      <button 
-                        key={format.id}
-                        className={`create-format-card ${selectedFormat?.id === format.id ? 'selected' : ''}`}
-                        onClick={() => handleSelectFormat(format)}
-                        data-testid={`create-format-${format.id}`}
-                      >
-                        <div 
-                          className="create-format-video"
-                          style={{ backgroundColor: format.color }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <button 
-                    className="create-see-all-btn"
-                    onClick={() => navigate('/formats')}
-                    data-testid="create-see-all-btn"
-                  >
-                    See all
-                  </button>
-                </>
-              ) : (
-                /* My Creations */
-                <>
-                  {isLoadingVideos ? (
-                    <div className="library-loading">Loading...</div>
-                  ) : completedVideos.length > 0 ? (
+              {/* Content */}
+              <div className="bottom-panel-content">
+                {activeMainTab === 'Formats' ? (
+                  <>
                     <div className="create-formats-grid">
-                      {completedVideos.map((video) => (
-                        <div 
-                          key={video.id} 
-                          className="create-format-card"
-                          onClick={() => navigate(`/video/${video.id}`)}
-                          data-testid={`library-video-${video.id}`}
+                      {FORMATS.slice(0, 8).map((format) => (
+                        <button 
+                          key={format.id}
+                          className={`create-format-card ${selectedFormat?.id === format.id ? 'selected' : ''}`}
+                          onClick={() => handleSelectFormat(format)}
+                          data-testid={`create-format-${format.id}`}
                         >
-                          {video.poster_url ? (
-                            <img 
-                              src={`${BACKEND_URL}${video.poster_url}`} 
-                              alt={video.title || 'Video'}
-                              className="create-format-video"
-                              style={{ objectFit: 'cover' }}
-                            />
-                          ) : video.video_url ? (
-                            <video 
-                              src={`${BACKEND_URL}${video.video_url}`}
-                              className="create-format-video"
-                              style={{ objectFit: 'cover' }}
-                              muted
-                              playsInline
-                            />
-                          ) : (
-                            <div className="create-format-video" style={{ backgroundColor: '#2A2B2D' }} />
-                          )}
-                        </div>
+                          <div 
+                            className="create-format-video"
+                            style={{ backgroundColor: format.color }}
+                          />
+                        </button>
                       ))}
                     </div>
-                  ) : (
-                    <div className="library-empty-inline">
-                      <p>No videos yet</p>
-                    </div>
-                  )}
-                </>
-              )}
+                    
+                    <button 
+                      className="create-see-all-btn"
+                      onClick={() => navigate('/formats')}
+                      data-testid="create-see-all-btn"
+                    >
+                      See all
+                    </button>
+                  </>
+                ) : (
+                  /* My Creations */
+                  <>
+                    {isLoadingVideos ? (
+                      <div className="library-loading">Loading...</div>
+                    ) : completedVideos.length > 0 ? (
+                      <div className="creations-grid-real">
+                        {completedVideos.map((video) => (
+                          <div 
+                            key={video.id} 
+                            className="creation-card"
+                            onClick={() => navigate(`/video/${video.id}`)}
+                            data-testid={`library-video-${video.id}`}
+                          >
+                            {video.poster_url ? (
+                              <img 
+                                src={`${BACKEND_URL}${video.poster_url}`} 
+                                alt={video.title || 'Video'}
+                              />
+                            ) : video.video_url ? (
+                              <video 
+                                src={`${BACKEND_URL}${video.video_url}`}
+                                muted
+                                playsInline
+                              />
+                            ) : (
+                              <div className="creation-placeholder" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="creations-empty-pattern">
+                        <div className="creations-pattern-grid">
+                          {/* Row 1: 9:16, 16:9 */}
+                          <div className="pattern-item ratio-9-16" />
+                          <div className="pattern-item ratio-16-9" />
+                          {/* Row 2: 1:1, 9:16 */}
+                          <div className="pattern-item ratio-1-1" />
+                          <div className="pattern-item ratio-9-16" />
+                          {/* Row 3: 16:9, 1:1 */}
+                          <div className="pattern-item ratio-16-9" />
+                          <div className="pattern-item ratio-1-1" />
+                          {/* Row 4: 9:16, 16:9 */}
+                          <div className="pattern-item ratio-9-16" />
+                          <div className="pattern-item ratio-16-9" />
+                        </div>
+                        <div className="creations-empty-fade" />
+                        <div className="creations-empty-overlay">
+                          <p className="creations-empty-text">No videos yet</p>
+                          <button 
+                            className="creations-start-btn"
+                            onClick={() => {
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              setTimeout(() => textareaRef.current?.focus(), 500);
+                            }}
+                            data-testid="start-create-btn"
+                          >
+                            Start create
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
