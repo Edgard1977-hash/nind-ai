@@ -3601,6 +3601,14 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+}
+
+.main-page-fixed .perspective-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .main-fixed-header {
@@ -3609,6 +3617,8 @@ body {
   justify-content: space-between;
   padding: 16px 20px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .header-left {
@@ -3712,13 +3722,16 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 0 0 40px;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .create-heading {
-  padding: 20px 20px 16px;
   text-align: center;
+  margin-bottom: 24px;
 }
 
 .create-title {
@@ -3731,6 +3744,7 @@ body {
 
 /* ===== FORMAT PILLS ROW ===== */
 .format-pills-row {
+  width: 100%;
   margin-bottom: 12px;
 }
 
@@ -3761,6 +3775,7 @@ body {
 
 .format-pills-scroll {
   display: flex;
+  align-items: center;
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -3810,7 +3825,7 @@ body {
 
 /* ===== CREATE INPUT AREA ===== */
 .create-input-area {
-  padding: 0 20px;
+  width: 100%;
 }
 
 /* ===== LIBRARY CONTENT ===== */
