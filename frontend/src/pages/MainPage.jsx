@@ -173,6 +173,27 @@ export const MainPage = () => {
     return () => clearTimeout(timeout);
   }, [placeholderText, phraseIndex, isTyping]);
 
+  // Intersection Observer for section animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const titles = document.querySelectorAll('.section-title, .section-subtitle');
+    titles.forEach((el) => observer.observe(el));
+
+    return () => {
+      titles.forEach((el) => observer.unobserve(el));
+    };
+  }, [user]);
+
   const fetchUserVideos = async () => {
     if (!user?.user_id) return;
     setIsLoadingVideos(true);
