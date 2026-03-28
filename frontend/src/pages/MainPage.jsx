@@ -341,7 +341,7 @@ export const MainPage = () => {
             {/* Heading */}
             <div className="create-heading">
               <h1 className="create-title">
-                Ready to create, {user.name || user.email?.split('@')[0]}?
+                Ready to create{user.name || user.username || user.email ? `, ${user.name || user.username || user.email?.split('@')[0]}` : ''}?
               </h1>
             </div>
 
