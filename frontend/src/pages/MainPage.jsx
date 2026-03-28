@@ -43,6 +43,22 @@ const PersonIcon = ({ className }) => (
 // Format categories
 const FORMAT_TABS = ["Все", "Новые", "Видео", "Фото", "Монтаж", "Анимации"];
 
+// Animated placeholder phrases
+const PLACEHOLDER_PHRASES = [
+  "Cut my video and…",
+  "create logo animation for…",
+  "make video story about…",
+  "create motion design for…",
+  "make promo video for…",
+  "create short-form video for…",
+  "make highlights from…",
+  "create fan edit about…",
+  "add visual effects in…",
+  "make colour grading for…",
+  "create sound effects for…",
+  "Make motion graphics for…"
+];
+
 // Placeholder formats with videos
 const FORMATS = [
   { id: 1, name: "Reels Story", color: "#3A3A3A", videos: [] },
@@ -87,6 +103,11 @@ export const MainPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const popupStartY = useRef(0);
 
+  // Animated placeholder state
+  const [placeholderText, setPlaceholderText] = useState("");
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(true);
+
   // Check auth status and setup scroll listener
   useEffect(() => {
     const savedUser = localStorage.getItem("slind_user");
@@ -118,6 +139,39 @@ export const MainPage = () => {
       fetchUserVideos();
     }
   }, [activeMainTab, user]);
+
+  // Animated placeholder typing effect
+  useEffect(() => {
+    const currentPhrase = PLACEHOLDER_PHRASES[phraseIndex];
+    let timeout;
+
+    if (isTyping) {
+      // Typing animation
+      if (placeholderText.length < currentPhrase.length) {
+        timeout = setTimeout(() => {
+          setPlaceholderText(currentPhrase.slice(0, placeholderText.length + 1));
+        }, 50);
+      } else {
+        // Finished typing, wait then start erasing
+        timeout = setTimeout(() => {
+          setIsTyping(false);
+        }, 2000);
+      }
+    } else {
+      // Erasing animation
+      if (placeholderText.length > 0) {
+        timeout = setTimeout(() => {
+          setPlaceholderText(placeholderText.slice(0, -1));
+        }, 30);
+      } else {
+        // Finished erasing, move to next phrase
+        setPhraseIndex((prev) => (prev + 1) % PLACEHOLDER_PHRASES.length);
+        setIsTyping(true);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [placeholderText, phraseIndex, isTyping]);
 
   const fetchUserVideos = async () => {
     if (!user?.user_id) return;
@@ -385,7 +439,7 @@ export const MainPage = () => {
                       ref={textareaRef}
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Создать контент…"
+                      placeholder={`Slind AI, ${placeholderText}`}
                       className="prompt-textarea"
                       rows={2}
                       disabled={isGenerating}
@@ -746,7 +800,7 @@ export const MainPage = () => {
                 ref={textareaRef}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Создать контент…"
+                placeholder={`Slind AI, ${placeholderText}`}
                 className="prompt-textarea"
                 rows={2}
                 disabled={isGenerating}
