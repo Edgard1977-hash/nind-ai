@@ -3606,7 +3606,11 @@ body {
 
 .main-page-fixed .perspective-grid {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 70%;
+  transform: translateY(-40%);
   z-index: 0;
   pointer-events: none;
 }
@@ -3725,6 +3729,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 0 20px;
+  padding-bottom: 180px;
   position: relative;
   z-index: 1;
 }
@@ -3749,10 +3754,10 @@ body {
 }
 
 .format-search-btn {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  border-radius: 14px;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  border-radius: 24px;
   background: #1D1E20;
   border: none;
   display: flex;
@@ -3768,18 +3773,18 @@ body {
 }
 
 .format-search-icon {
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
   fill: var(--white);
 }
 
 .format-pills-scroll {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: 4px 20px;
+  padding: 4px 20px 4px 20px;
   margin: 0 -20px;
 }
 
@@ -3790,14 +3795,15 @@ body {
 .format-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px 8px 8px;
+  gap: 14px;
+  padding: 14px 24px 14px 14px;
   background: #1D1E20;
   border: 3px solid transparent;
-  border-radius: 24px;
+  border-radius: 36px;
   cursor: pointer;
   transition: border-color 0.2s ease, opacity 0.2s ease;
   flex-shrink: 0;
+  min-width: 200px;
 }
 
 .format-pill:hover {
@@ -3809,16 +3815,16 @@ body {
 }
 
 .format-pill-thumb {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   flex-shrink: 0;
 }
 
 .format-pill-name {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--white);
   white-space: nowrap;
 }
