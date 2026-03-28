@@ -3872,7 +3872,6 @@ body {
 .pattern-item {
   background: #252629;
   border-radius: 16px;
-  animation: shimmer 2s infinite;
   width: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
@@ -3897,13 +3896,7 @@ body {
 }
 
 .creations-empty-fade {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 150px;
-  background: linear-gradient(to top, #1D1E20 20%, transparent 100%);
-  pointer-events: none;
+  display: none;
 }
 
 .creations-empty-overlay {
