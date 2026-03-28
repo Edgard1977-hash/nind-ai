@@ -3606,45 +3606,21 @@ body {
 
 .main-page-fixed .perspective-grid {
   position: absolute;
-  top: 0;
   left: 0;
   right: 0;
-  height: calc(100vh - 80px);
+  top: 120px;
+  height: 500px;
   z-index: 0;
   pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.main-page-fixed .perspective-grid::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 150px;
-  background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.main-page-fixed .perspective-grid::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 200px;
-  background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
-  z-index: 1;
-  pointer-events: none;
+  opacity: 0;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 70%, transparent 100%);
+  animation: fadeInGrid 1.2s ease-out 0.3s forwards;
 }
 
 .main-page-fixed .perspective-grid .grid-svg {
   width: 100%;
-  height: 90%;
-  max-height: 600px;
+  height: 100%;
 }
 
 .main-fixed-header {
