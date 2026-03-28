@@ -3840,6 +3840,7 @@ body {
 .bottom-panel-content {
   min-height: 200px;
   overflow: visible;
+  background: transparent;
 }
 
 /* ===== CREATIONS EMPTY PATTERN ===== */
@@ -3848,6 +3849,7 @@ body {
   overflow: visible;
   min-height: 400px;
   width: 100%;
+  background: transparent;
 }
 
 .creations-pattern-grid {
@@ -3855,6 +3857,7 @@ body {
   gap: 12px;
   width: 100%;
   box-sizing: border-box;
+  background: transparent;
 }
 
 .pattern-column {
@@ -3863,10 +3866,11 @@ body {
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  background: transparent;
 }
 
 .pattern-item {
-  background: #3A3B3F;
+  background: #252629;
   border-radius: 16px;
   animation: shimmer 2s infinite;
   width: 100%;
