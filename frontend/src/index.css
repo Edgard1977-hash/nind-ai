@@ -3591,3 +3591,473 @@ body {
   margin: 8px 0 0;
   padding-left: 4px;
 }
+
+
+/* ===== MAIN PAGE FIXED LAYOUT ===== */
+.main-page-fixed {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-fixed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  flex-shrink: 0;
+}
+
+.header-left {
+  width: 48px;
+}
+
+.header-logo-small {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.header-tabs {
+  display: flex;
+  gap: 4px;
+  background: transparent;
+}
+
+.header-tab {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 24px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+}
+
+.header-tab.active {
+  background: #2A2B2D;
+  color: var(--white);
+}
+
+.header-right {
+  width: 48px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.header-avatar-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #2A2B2D;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.header-avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.default-avatar-small {
+  width: 24px;
+  height: 24px;
+}
+
+/* ===== CREATE CONTENT ===== */
+.create-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  padding-bottom: 40px;
+}
+
+.create-heading {
+  padding: 40px 0 32px;
+  text-align: center;
+}
+
+.create-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0;
+}
+
+/* ===== FORMAT PILLS ROW ===== */
+.format-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.format-search-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 14px;
+  background: #1D1E20;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.format-search-btn:hover {
+  opacity: 0.8;
+}
+
+.format-search-icon {
+  width: 20px;
+  height: 20px;
+  fill: var(--white);
+}
+
+.format-pills-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+
+.format-pills-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.format-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 8px;
+  background: #1D1E20;
+  border: 3px solid transparent;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.format-pill:hover {
+  opacity: 0.9;
+}
+
+.format-pill.selected {
+  border-color: var(--cyan);
+}
+
+.format-pill-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.format-pill-name {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+/* ===== CREATE INPUT AREA ===== */
+.create-input-area {
+  margin-top: auto;
+}
+
+/* ===== LIBRARY CONTENT ===== */
+.library-content {
+  flex: 1;
+  padding: 0 20px;
+  overflow-y: auto;
+}
+
+.library-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 24px 0 20px;
+}
+
+.library-loading {
+  text-align: center;
+  padding: 48px 0;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.library-item {
+  aspect-ratio: 9/16;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #1D1E20;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.library-item:hover {
+  opacity: 0.9;
+}
+
+.library-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.library-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #2A2B2D;
+}
+
+.library-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 0;
+}
+
+.library-empty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 24px;
+}
+
+.library-empty-item {
+  aspect-ratio: 9/16;
+  border-radius: 16px;
+  background: #1D1E20;
+}
+
+.library-empty-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 16px;
+}
+
+.library-create-btn {
+  padding: 14px 32px;
+  background: var(--cyan);
+  color: #000;
+  border: none;
+  border-radius: 50px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.library-create-btn:hover {
+  opacity: 0.9;
+}
+
+/* ===== FORMAT DETAIL POPUP ===== */
+.format-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s ease;
+}
+
+.format-detail-popup {
+  width: 100%;
+  max-width: 500px;
+  background: #1D1E20;
+  border-radius: 26px 26px 0 0;
+  padding: 12px 24px 40px;
+  animation: popupSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.1s ease;
+  touch-action: none;
+}
+
+.format-videos-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px 0 16px;
+  scrollbar-width: none;
+}
+
+.format-videos-row::-webkit-scrollbar {
+  display: none;
+}
+
+.format-video-item {
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.format-video-placeholder {
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: 12px;
+}
+
+.format-detail-name {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.generate-prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+
+.custom-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 2px solid var(--cyan);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.custom-checkbox.checked {
+  background: var(--cyan);
+}
+
+.check-icon {
+  width: 16px;
+  height: 16px;
+  color: #000;
+}
+
+.generate-prompt-row span {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  color: var(--white);
+}
+
+.format-use-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--cyan);
+  color: #000;
+  border: none;
+  border-radius: 50px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.format-use-btn:hover {
+  opacity: 0.9;
+}
+
+.sparkles-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===== FORMATS LIST POPUP ===== */
+.formats-list-popup {
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  background: #1D1E20;
+  border-radius: 26px 26px 0 0;
+  padding: 12px 24px 40px;
+  animation: popupSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.1s ease;
+  touch-action: none;
+  overflow-y: auto;
+}
+
+.formats-list-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  margin: 8px 0 24px;
+}
+
+.formats-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.formats-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #2A2B2D;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.formats-list-item:hover {
+  opacity: 0.9;
+}
+
+.formats-list-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+}
+
+.formats-list-name {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  text-align: left;
+}
