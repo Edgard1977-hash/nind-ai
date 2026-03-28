@@ -3839,35 +3839,39 @@ body {
 .creations-empty-pattern {
   position: relative;
   overflow: hidden;
+  min-height: 400px;
 }
 
 .creations-pattern-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
   gap: 12px;
-  max-width: 100%;
+}
+
+.pattern-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .pattern-item {
   background: #2A2B2D;
-  border-radius: 16px;
+  border-radius: 12px;
   animation: shimmer 2s infinite;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .pattern-item.ratio-9-16 {
-  aspect-ratio: 9/16;
-  max-height: 280px;
+  height: 200px;
 }
 
 .pattern-item.ratio-16-9 {
-  aspect-ratio: 16/9;
-  max-height: 120px;
+  height: 100px;
 }
 
 .pattern-item.ratio-1-1 {
-  aspect-ratio: 1/1;
-  max-height: 180px;
+  height: 150px;
 }
 
 @keyframes shimmer {

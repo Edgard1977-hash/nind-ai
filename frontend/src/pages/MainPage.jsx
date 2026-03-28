@@ -523,18 +523,20 @@ export const MainPage = () => {
                     ) : (
                       <div className="creations-empty-pattern">
                         <div className="creations-pattern-grid">
-                          {/* Row 1: 9:16, 16:9 */}
-                          <div className="pattern-item ratio-9-16" />
-                          <div className="pattern-item ratio-16-9" />
-                          {/* Row 2: 1:1, 9:16 */}
-                          <div className="pattern-item ratio-1-1" />
-                          <div className="pattern-item ratio-9-16" />
-                          {/* Row 3: 16:9, 1:1 */}
-                          <div className="pattern-item ratio-16-9" />
-                          <div className="pattern-item ratio-1-1" />
-                          {/* Row 4: 9:16, 16:9 */}
-                          <div className="pattern-item ratio-9-16" />
-                          <div className="pattern-item ratio-16-9" />
+                          {/* Left column */}
+                          <div className="pattern-column">
+                            <div className="pattern-item ratio-9-16" />
+                            <div className="pattern-item ratio-1-1" />
+                            <div className="pattern-item ratio-16-9" />
+                            <div className="pattern-item ratio-9-16" />
+                          </div>
+                          {/* Right column */}
+                          <div className="pattern-column">
+                            <div className="pattern-item ratio-16-9" />
+                            <div className="pattern-item ratio-9-16" />
+                            <div className="pattern-item ratio-1-1" />
+                            <div className="pattern-item ratio-16-9" />
+                          </div>
                         </div>
                         <div className="creations-empty-fade" />
                         <div className="creations-empty-overlay">
