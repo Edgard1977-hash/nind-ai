@@ -304,6 +304,13 @@ export const MainPage = () => {
           </div>
           
           <div className="header-tabs">
+            <div 
+              className="header-tabs-indicator"
+              style={{
+                left: activeMainTab === 'Create' ? '4px' : '50%',
+                width: activeMainTab === 'Create' ? 'calc(50% - 4px)' : 'calc(50% - 4px)'
+              }}
+            />
             <button 
               className={`header-tab ${activeMainTab === 'Create' ? 'active' : ''}`}
               onClick={() => setActiveMainTab('Create')}

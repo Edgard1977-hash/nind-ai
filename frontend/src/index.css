@@ -3624,7 +3624,9 @@ body {
 .header-tabs {
   display: flex;
   gap: 4px;
-  background: transparent;
+  background: #1A1B1D;
+  border-radius: 28px;
+  padding: 4px;
   position: relative;
 }
 
@@ -3636,19 +3638,25 @@ body {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  transition: color 0.3s ease;
   color: rgba(255, 255, 255, 0.5);
   background: transparent;
-}
-
-.header-tab:active {
-  transform: scale(0.95);
+  position: relative;
+  z-index: 1;
 }
 
 .header-tab.active {
-  background: #2A2B2D;
   color: var(--white);
-  animation: tabActivate 0.3s ease;
+}
+
+.header-tabs-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: #2A2B2D;
+  border-radius: 24px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
 }
 
 @keyframes tabActivate {
