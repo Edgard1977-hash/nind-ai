@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowUp, X, Loader2, ChevronRight, Check } from "lucide-react";
+import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import ProfilePage from "../components/custom/ProfilePage";
@@ -40,14 +40,17 @@ const PersonIcon = ({ className }) => (
   </svg>
 );
 
+// Format categories
+const FORMAT_TABS = ["Все", "Новые", "Видео", "Фото", "Монтаж", "Анимации"];
+
 // Placeholder formats with videos
 const FORMATS = [
-  { id: 1, name: "Reels Story", color: "#3A3A3A", videos: ["/assets/placeholder1.mp4", "/assets/placeholder2.mp4"] },
-  { id: 2, name: "TikTok Trend", color: "#4A3A5A", videos: ["/assets/placeholder1.mp4", "/assets/placeholder2.mp4"] },
-  { id: 3, name: "Product Showcase", color: "#3A4A5A", videos: ["/assets/placeholder1.mp4", "/assets/placeholder2.mp4"] },
-  { id: 4, name: "Meme Format", color: "#5A4A3A", videos: ["/assets/placeholder1.mp4", "/assets/placeholder2.mp4"] },
-  { id: 5, name: "Before/After", color: "#3A5A4A", videos: ["/assets/placeholder1.mp4", "/assets/placeholder2.mp4"] },
-  { id: 6, name: "Tutorial", color: "#4A4A4A", videos: ["/assets/placeholder1.mp4", "/assets/placeholder2.mp4"] },
+  { id: 1, name: "Reels Story", color: "#3A3A3A", videos: [] },
+  { id: 2, name: "TikTok Trend", color: "#4A3A5A", videos: [] },
+  { id: 3, name: "Product Showcase", color: "#3A4A5A", videos: [] },
+  { id: 4, name: "Meme Format", color: "#5A4A3A", videos: [] },
+  { id: 5, name: "Before/After", color: "#3A5A4A", videos: [] },
+  { id: 6, name: "Tutorial", color: "#4A4A4A", videos: [] },
 ];
 
 export const MainPage = () => {
@@ -59,12 +62,17 @@ export const MainPage = () => {
   const [prompt, setPrompt] = useState("");
   const [user, setUser] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showFormatsPopup, setShowFormatsPopup] = useState(false);
+  const [isPopupClosing, setIsPopupClosing] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState("Все");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [headerScrolled, setHeaderScrolled] = useState(false);
   
-  // New states
-  const [activeMainTab, setActiveMainTab] = useState("Create"); // "Create" or "Library"
+  // New states for logged-in view
+  const [activeMainTab, setActiveMainTab] = useState("Create");
   const [selectedFormat, setSelectedFormat] = useState(null);
   const [showFormatPopup, setShowFormatPopup] = useState(false);
   const [showFormatsListPopup, setShowFormatsListPopup] = useState(false);
@@ -77,7 +85,7 @@ export const MainPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const popupStartY = useRef(0);
 
-  // Check auth status
+  // Check auth status and setup scroll listener
   useEffect(() => {
     const savedUser = localStorage.getItem("slind_user");
     if (savedUser) {
@@ -87,6 +95,19 @@ export const MainPage = () => {
         localStorage.removeItem("slind_user");
       }
     }
+    
+    // Scroll listener for header animation (only for non-logged in)
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const threshold = 350;
+      setHeaderScrolled(scrollY > threshold);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Fetch user videos when switching to Library tab
@@ -209,12 +230,24 @@ export const MainPage = () => {
     setShowProfile(false);
   };
 
+  const handleGetStarted = () => {
+    navigate('/auth');
+  };
+
   const handleAvatarClick = () => {
     if (user) {
       setShowProfile(true);
     } else {
       navigate('/auth');
     }
+  };
+
+  const handleClosePopup = () => {
+    setIsPopupClosing(true);
+    setTimeout(() => {
+      setShowFormatsPopup(false);
+      setIsPopupClosing(false);
+    }, 300);
   };
 
   const handleSelectFormat = (format) => {
@@ -224,11 +257,6 @@ export const MainPage = () => {
 
   const handleUseFormat = () => {
     setShowFormatPopup(false);
-    // selectedFormat is already set
-  };
-
-  const handleClearFormat = () => {
-    setSelectedFormat(null);
   };
 
   // Swipe handlers for popups
@@ -251,6 +279,7 @@ export const MainPage = () => {
     setPopupDragY(0);
   };
 
+  // Show profile page
   if (showProfile && user) {
     return (
       <ProfilePage 
@@ -264,323 +293,596 @@ export const MainPage = () => {
 
   const completedVideos = userVideos.filter(v => v.status === 'completed');
 
-  return (
-    <div className="main-page-fixed" data-testid="main-page">
-      {/* Fixed Header */}
-      <header className="main-fixed-header">
-        <div className="header-left">
-          <img src={LOGO_URL} alt="Slind" className="header-logo-small" />
-        </div>
-        
-        <div className="header-tabs">
-          <button 
-            className={`header-tab ${activeMainTab === 'Create' ? 'active' : ''}`}
-            onClick={() => setActiveMainTab('Create')}
-            data-testid="create-tab"
-          >
-            Create
-          </button>
-          <button 
-            className={`header-tab ${activeMainTab === 'Library' ? 'active' : ''}`}
-            onClick={() => setActiveMainTab('Library')}
-            data-testid="library-tab"
-          >
-            Library
-          </button>
-        </div>
-        
-        <div className="header-right">
-          <button 
-            className="header-avatar-btn"
-            onClick={handleAvatarClick}
-            data-testid="header-avatar-btn"
-          >
-            {user ? (
-              user.picture ? (
+  // ============ LOGGED IN VIEW ============
+  if (user) {
+    return (
+      <div className="main-page-fixed" data-testid="main-page-logged">
+        {/* Fixed Header */}
+        <header className="main-fixed-header">
+          <div className="header-left">
+            <img src={LOGO_URL} alt="Slind" className="header-logo-small" />
+          </div>
+          
+          <div className="header-tabs">
+            <button 
+              className={`header-tab ${activeMainTab === 'Create' ? 'active' : ''}`}
+              onClick={() => setActiveMainTab('Create')}
+              data-testid="create-tab"
+            >
+              Create
+            </button>
+            <button 
+              className={`header-tab ${activeMainTab === 'Library' ? 'active' : ''}`}
+              onClick={() => setActiveMainTab('Library')}
+              data-testid="library-tab"
+            >
+              Library
+            </button>
+          </div>
+          
+          <div className="header-right">
+            <button 
+              className="header-avatar-btn"
+              onClick={handleAvatarClick}
+              data-testid="header-avatar-btn"
+            >
+              {user.picture ? (
                 <img src={user.picture} alt={user.name} />
               ) : (
                 <span>{(user.name || user.email)?.[0]?.toUpperCase()}</span>
-              )
+              )}
+            </button>
+          </div>
+        </header>
+
+        {/* Content based on active tab */}
+        {activeMainTab === 'Create' ? (
+          <div className="create-content">
+            {/* Heading */}
+            <div className="create-heading">
+              <h1 className="create-title">
+                Ready to create, {user.name || user.email?.split('@')[0]}?
+              </h1>
+            </div>
+
+            {/* Format pills row */}
+            <div className="format-pills-row">
+              {/* Search button */}
+              <button 
+                className="format-search-btn"
+                onClick={() => setShowFormatsListPopup(true)}
+                data-testid="format-search-btn"
+              >
+                <SearchIconCustom className="format-search-icon" />
+              </button>
+              
+              {/* Format pills - horizontal scroll */}
+              <div className="format-pills-scroll">
+                {selectedFormat && (
+                  <button 
+                    className="format-pill selected"
+                    onClick={() => setShowFormatPopup(true)}
+                    data-testid="selected-format-pill"
+                  >
+                    <div 
+                      className="format-pill-thumb"
+                      style={{ backgroundColor: selectedFormat.color }}
+                    />
+                    <span className="format-pill-name">{selectedFormat.name}</span>
+                  </button>
+                )}
+                
+                {FORMATS.filter(f => f.id !== selectedFormat?.id).map((format) => (
+                  <button 
+                    key={format.id}
+                    className="format-pill"
+                    onClick={() => handleSelectFormat(format)}
+                    data-testid={`format-pill-${format.id}`}
+                  >
+                    <div 
+                      className="format-pill-thumb"
+                      style={{ backgroundColor: format.color }}
+                    />
+                    <span className="format-pill-name">{format.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input area */}
+            <div className="create-input-area">
+              <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
+                {attachments.length > 0 && (
+                  <div className="attachments-row">
+                    {attachments.map((attachment) => (
+                      <div key={attachment.id} className="attachment-item">
+                        <img 
+                          src={attachment.preview} 
+                          alt="Attachment" 
+                          className="attachment-preview"
+                        />
+                        <button 
+                          className="attachment-remove"
+                          onClick={() => removeAttachment(attachment.id)}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="input-inner">
+                  <textarea
+                    ref={textareaRef}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Создать контент…"
+                    className="prompt-textarea"
+                    rows={2}
+                    disabled={isGenerating}
+                    data-testid="prompt-input"
+                  />
+                </div>
+
+                <div className="input-bottom-row">
+                  <button 
+                    className="input-icon-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    data-testid="attach-button"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+
+                  <div className="input-bottom-right">
+                    <button className="input-icon-btn" data-testid="mic-button">
+                      <MicIcon className="w-5 h-5" />
+                    </button>
+                    
+                    <button 
+                      className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
+                      onClick={handleSubmit}
+                      disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
+                      data-testid="send-button"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <ArrowUp className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Library Tab */
+          <div className="library-content">
+            <h2 className="library-title">My creations</h2>
+            
+            {isLoadingVideos ? (
+              <div className="library-loading">Loading...</div>
+            ) : completedVideos.length > 0 ? (
+              <div className="library-grid">
+                {completedVideos.map((video) => (
+                  <div 
+                    key={video.id} 
+                    className="library-item"
+                    onClick={() => navigate(`/video/${video.id}`)}
+                    data-testid={`library-video-${video.id}`}
+                  >
+                    {video.poster_url ? (
+                      <img 
+                        src={`${BACKEND_URL}${video.poster_url}`} 
+                        alt={video.title || 'Video'}
+                        className="library-thumb"
+                      />
+                    ) : video.video_url ? (
+                      <video 
+                        src={`${BACKEND_URL}${video.video_url}`}
+                        className="library-thumb"
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <div className="library-placeholder" />
+                    )}
+                  </div>
+                ))}
+              </div>
             ) : (
-              <PersonIcon className="default-avatar-small" />
+              <div className="library-empty">
+                <div className="library-empty-grid">
+                  <div className="library-empty-item" />
+                  <div className="library-empty-item" />
+                  <div className="library-empty-item" />
+                  <div className="library-empty-item" />
+                </div>
+                <p className="library-empty-text">No videos yet</p>
+                <button 
+                  className="library-create-btn"
+                  onClick={() => setActiveMainTab('Create')}
+                  data-testid="library-create-btn"
+                >
+                  Start create!
+                </button>
+              </div>
             )}
+          </div>
+        )}
+
+        {/* Format Detail Popup */}
+        {showFormatPopup && selectedFormat && (
+          <div 
+            className="format-popup-overlay"
+            onClick={() => setShowFormatPopup(false)}
+          >
+            <div 
+              className="format-detail-popup"
+              style={{ transform: `translateY(${popupDragY}px)` }}
+              onClick={(e) => e.stopPropagation()}
+              onTouchStart={handlePopupTouchStart}
+              onTouchMove={handlePopupTouchMove}
+              onTouchEnd={() => handlePopupTouchEnd(() => setShowFormatPopup(false))}
+            >
+              <div className="popup-drag-handle" />
+              
+              {/* Videos carousel */}
+              <div className="format-videos-row">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="format-video-item">
+                    <div 
+                      className="format-video-placeholder"
+                      style={{ backgroundColor: selectedFormat.color }}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Format name */}
+              <h3 className="format-detail-name">{selectedFormat.name}</h3>
+              
+              {/* Generate prompt checkbox */}
+              <label className="generate-prompt-row" onClick={() => setGeneratePrompt(!generatePrompt)}>
+                <div className={`custom-checkbox ${generatePrompt ? 'checked' : ''}`}>
+                  {generatePrompt && <Check className="check-icon" />}
+                </div>
+                <span>Generate prompt</span>
+              </label>
+              
+              {/* Use button */}
+              <button 
+                className="format-use-btn"
+                onClick={handleUseFormat}
+                data-testid="format-use-btn"
+              >
+                <SparklesIcon className="sparkles-icon" />
+                <span>Use</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Formats List Popup (search) */}
+        {showFormatsListPopup && (
+          <div 
+            className="format-popup-overlay"
+            onClick={() => setShowFormatsListPopup(false)}
+          >
+            <div 
+              className="formats-list-popup"
+              style={{ transform: `translateY(${popupDragY}px)` }}
+              onClick={(e) => e.stopPropagation()}
+              onTouchStart={handlePopupTouchStart}
+              onTouchMove={handlePopupTouchMove}
+              onTouchEnd={() => handlePopupTouchEnd(() => setShowFormatsListPopup(false))}
+            >
+              <div className="popup-drag-handle" />
+              
+              <h2 className="formats-list-title">Formats</h2>
+              
+              <div className="formats-list-grid">
+                {FORMATS.map((format) => (
+                  <button 
+                    key={format.id}
+                    className="formats-list-item"
+                    onClick={() => {
+                      handleSelectFormat(format);
+                      setShowFormatsListPopup(false);
+                    }}
+                    data-testid={`formats-list-${format.id}`}
+                  >
+                    <div 
+                      className="formats-list-thumb"
+                      style={{ backgroundColor: format.color }}
+                    />
+                    <span className="formats-list-name">{format.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ============ NOT LOGGED IN VIEW (ORIGINAL) ============
+  return (
+    <div className="main-page" data-testid="main-page">
+      {/* Background */}
+      <div className="liquid-gradient-bg" />
+      
+      {/* Perspective Grid */}
+      <div className="perspective-grid">
+        <svg viewBox="0 0 400 300" preserveAspectRatio="none" className="grid-svg">
+          <line x1="0" y1="0" x2="0" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="80" y1="0" x2="80" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="160" y1="0" x2="160" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="240" y1="0" x2="240" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="320" y1="0" x2="320" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="400" y1="0" x2="400" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          
+          <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none"/>
+          <path d="M0,75 Q200,65 400,75" stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none"/>
+          <path d="M0,150 Q200,130 400,150" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
+          <path d="M0,225 Q200,195 400,225" stroke="rgba(255,255,255,0.09)" strokeWidth="1" fill="none"/>
+          <path d="M0,300 Q200,260 400,300" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+        </svg>
+      </div>
+      
+      {/* Fixed Header with blur */}
+      <header className={`fixed-header ${headerScrolled ? 'scrolled' : ''}`}>
+        <div className="header-blur" />
+        <div className="header-content">
+          <div className={`logo-container ${headerScrolled ? 'hidden' : ''}`}>
+            <img src={LOGO_URL} alt="Slind" className="logo-image" />
+          </div>
+          
+          <span className={`header-overview-text ${headerScrolled ? 'visible' : ''}`}>Overview</span>
+          
+          <button 
+            className={`get-started-btn ${headerScrolled ? 'hidden' : ''}`}
+            onClick={handleGetStarted}
+            data-testid="get-started-btn"
+          >
+            Get started
           </button>
         </div>
       </header>
 
-      {/* Content based on active tab */}
-      {activeMainTab === 'Create' ? (
-        <div className="create-content">
-          {/* Heading */}
-          <div className="create-heading">
-            <h1 className="create-title">
-              {user ? `Ready to create, ${user.name || user.email?.split('@')[0]}?` : 'Create more better'}
-            </h1>
-          </div>
+      {/* Main content - scrollable */}
+      <div className="main-content">
+        {/* Heading section */}
+        <div className="heading-section">
+          <h1 className="heading-main">Create more better</h1>
+          <p className="heading-sub">Make video editing entirely with AI</p>
+        </div>
 
-          {/* Format pills row */}
-          <div className="format-pills-row">
-            {/* Search button */}
-            <button 
-              className="format-search-btn"
-              onClick={() => setShowFormatsListPopup(true)}
-              data-testid="format-search-btn"
-            >
-              <SearchIconCustom className="format-search-icon" />
-            </button>
-            
-            {/* Format pills - horizontal scroll */}
-            <div className="format-pills-scroll">
-              {selectedFormat && (
-                <button 
-                  className="format-pill selected"
-                  onClick={() => setShowFormatPopup(true)}
-                  data-testid="selected-format-pill"
-                >
-                  <div 
-                    className="format-pill-thumb"
-                    style={{ backgroundColor: selectedFormat.color }}
-                  />
-                  <span className="format-pill-name">{selectedFormat.name}</span>
-                </button>
-              )}
-              
-              {FORMATS.filter(f => f.id !== selectedFormat?.id).map((format) => (
-                <button 
-                  key={format.id}
-                  className="format-pill"
-                  onClick={() => handleSelectFormat(format)}
-                  data-testid={`format-pill-${format.id}`}
-                >
-                  <div 
-                    className="format-pill-thumb"
-                    style={{ backgroundColor: format.color }}
-                  />
-                  <span className="format-pill-name">{format.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Input area */}
-          <div className="create-input-area">
-            <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
-              {attachments.length > 0 && (
-                <div className="attachments-row">
-                  {attachments.map((attachment) => (
-                    <div key={attachment.id} className="attachment-item">
+        {/* Input area - centered */}
+        <div className="input-area">
+          <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
+            {attachments.length > 0 && (
+              <div className="attachments-row">
+                {attachments.map((attachment) => (
+                  <div key={attachment.id} className="attachment-item">
+                    {attachment.type === "video" && attachment.uploading ? (
+                      <div className="attachment-uploading">
+                        <div 
+                          className="attachment-preview-blur"
+                          style={{ backgroundImage: `url(${attachment.preview})` }}
+                        />
+                        <span className="upload-progress">{Math.round(attachment.progress)}%</span>
+                      </div>
+                    ) : (
                       <img 
                         src={attachment.preview} 
                         alt="Attachment" 
                         className="attachment-preview"
                       />
-                      <button 
-                        className="attachment-remove"
-                        onClick={() => removeAttachment(attachment.id)}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="input-inner">
-                <textarea
-                  ref={textareaRef}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Создать контент…"
-                  className="prompt-textarea"
-                  rows={2}
-                  disabled={isGenerating}
-                  data-testid="prompt-input"
-                />
-              </div>
-
-              <div className="input-bottom-row">
-                <button 
-                  className="input-icon-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                  data-testid="attach-button"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-
-                <div className="input-bottom-right">
-                  <button className="input-icon-btn" data-testid="mic-button">
-                    <MicIcon className="w-5 h-5" />
-                  </button>
-                  
-                  <button 
-                    className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
-                    onClick={handleSubmit}
-                    disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
-                    data-testid="send-button"
-                  >
-                    {isGenerating ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <ArrowUp className="w-5 h-5" />
                     )}
-                  </button>
-                </div>
+                    <button 
+                      className="attachment-remove"
+                      onClick={() => removeAttachment(attachment.id)}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
               </div>
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
+            )}
+
+            <div className="input-inner">
+              <textarea
+                ref={textareaRef}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Создать контент…"
+                className="prompt-textarea"
+                rows={2}
+                disabled={isGenerating}
+                data-testid="prompt-input"
               />
             </div>
-          </div>
-        </div>
-      ) : (
-        /* Library Tab */
-        <div className="library-content">
-          <h2 className="library-title">My creations</h2>
-          
-          {isLoadingVideos ? (
-            <div className="library-loading">Loading...</div>
-          ) : completedVideos.length > 0 ? (
-            <div className="library-grid">
-              {completedVideos.map((video) => (
-                <div 
-                  key={video.id} 
-                  className="library-item"
-                  onClick={() => navigate(`/video/${video.id}`)}
-                  data-testid={`library-video-${video.id}`}
-                >
-                  {video.poster_url ? (
-                    <img 
-                      src={`${BACKEND_URL}${video.poster_url}`} 
-                      alt={video.title || 'Video'}
-                      className="library-thumb"
-                    />
-                  ) : video.video_url ? (
-                    <video 
-                      src={`${BACKEND_URL}${video.video_url}`}
-                      className="library-thumb"
-                      muted
-                      playsInline
-                    />
-                  ) : (
-                    <div className="library-placeholder" />
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="library-empty">
-              <div className="library-empty-grid">
-                <div className="library-empty-item" />
-                <div className="library-empty-item" />
-                <div className="library-empty-item" />
-                <div className="library-empty-item" />
-              </div>
-              <p className="library-empty-text">No videos yet</p>
+
+            <div className="input-bottom-row">
               <button 
-                className="library-create-btn"
-                onClick={() => setActiveMainTab('Create')}
-                data-testid="library-create-btn"
+                className="input-icon-btn"
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="attach-button"
               >
-                Start create!
+                <Plus className="w-5 h-5" />
               </button>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Format Detail Popup */}
-      {showFormatPopup && selectedFormat && (
-        <div 
-          className="format-popup-overlay"
-          onClick={() => setShowFormatPopup(false)}
-        >
-          <div 
-            className="format-detail-popup"
-            style={{ transform: `translateY(${popupDragY}px)` }}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={handlePopupTouchStart}
-            onTouchMove={handlePopupTouchMove}
-            onTouchEnd={() => handlePopupTouchEnd(() => setShowFormatPopup(false))}
-          >
-            <div className="popup-drag-handle" />
+              <div className="input-bottom-right">
+                <button className="input-icon-btn" data-testid="mic-button">
+                  <MicIcon className="w-5 h-5" />
+                </button>
+                
+                <button 
+                  className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
+                  onClick={handleSubmit}
+                  disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
+                  data-testid="send-button"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <ArrowUp className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
             
-            {/* Videos carousel */}
-            <div className="format-videos-row">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="format-video-item">
-                  <div 
-                    className="format-video-placeholder"
-                    style={{ backgroundColor: selectedFormat.color }}
-                  />
-                </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            
+            {isUploading && <div className="uploading-border" />}
+          </div>
+        </div>
+
+        {/* How it works section */}
+        <div className="how-section">
+          <h2 className="section-title">How Slind AI works?</h2>
+          <div className="how-video-wrapper">
+            <div className="how-video-placeholder" />
+          </div>
+        </div>
+
+        {/* Formats section - grid */}
+        <div className="formats-section-new">
+          <h2 className="section-title">Formats</h2>
+          <p className="section-subtitle">Find an idea faster</p>
+          
+          <div className="formats-grid">
+            {FORMATS.slice(0, 8).map((format) => (
+              <div key={format.id} className="format-card-new">
+                <div 
+                  className="format-preview-new"
+                  style={{ backgroundColor: format.color }}
+                />
+                <span className="format-name-new">{format.name}</span>
+              </div>
+            ))}
+          </div>
+          
+          <button 
+            className="see-all-btn"
+            onClick={() => navigate('/formats')}
+            data-testid="see-all-btn"
+          >
+            See all
+          </button>
+        </div>
+
+        {/* Examples section - masonry grid */}
+        <div className="examples-section-new">
+          <h2 className="section-title">Examples of generation</h2>
+          <p className="section-subtitle">with Slind AI</p>
+          
+          <div className="examples-grid">
+            <div className="examples-column">
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
+            </div>
+            <div className="examples-column">
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item landscape">
+                <div className="example-placeholder" />
+              </div>
+              <div className="example-item portrait">
+                <div className="example-placeholder" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="examples-fade" />
+          
+          <button 
+            className="start-create-btn"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              setTimeout(() => textareaRef.current?.focus(), 500);
+            }}
+            data-testid="start-create-btn"
+          >
+            Start create
+          </button>
+        </div>
+      </div>
+
+      {/* Formats Popup */}
+      {showFormatsPopup && (
+        <div className={`formats-popup-overlay ${isPopupClosing ? "closing" : ""}`} onClick={handleClosePopup}>
+          <div className={`formats-popup ${isPopupClosing ? "closing" : ""}`} onClick={(e) => e.stopPropagation()}>
+            <div className="popup-handle" />
+            
+            {/* Search */}
+            <div className="popup-search">
+              <Search className="search-icon" />
+              <input 
+                type="text"
+                placeholder="Найти формат контента"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            
+            {/* Tabs */}
+            <div className="popup-tabs">
+              {FORMAT_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  className={`popup-tab ${activeTab === tab ? "active" : ""}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
               ))}
             </div>
             
-            {/* Format name */}
-            <h3 className="format-detail-name">{selectedFormat.name}</h3>
-            
-            {/* Generate prompt checkbox */}
-            <label className="generate-prompt-row">
-              <div className={`custom-checkbox ${generatePrompt ? 'checked' : ''}`}>
-                {generatePrompt && <Check className="check-icon" />}
-              </div>
-              <span>Generate prompt</span>
-            </label>
-            
-            {/* Use button */}
-            <button 
-              className="format-use-btn"
-              onClick={handleUseFormat}
-              data-testid="format-use-btn"
-            >
-              <SparklesIcon className="sparkles-icon" />
-              <span>Use</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Formats List Popup (search) */}
-      {showFormatsListPopup && (
-        <div 
-          className="format-popup-overlay"
-          onClick={() => setShowFormatsListPopup(false)}
-        >
-          <div 
-            className="formats-list-popup"
-            style={{ transform: `translateY(${popupDragY}px)` }}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={handlePopupTouchStart}
-            onTouchMove={handlePopupTouchMove}
-            onTouchEnd={() => handlePopupTouchEnd(() => setShowFormatsListPopup(false))}
-          >
-            <div className="popup-drag-handle" />
-            
-            <h2 className="formats-list-title">Formats</h2>
-            
-            <div className="formats-list-grid">
+            {/* Grid */}
+            <div className="popup-grid">
               {FORMATS.map((format) => (
-                <button 
-                  key={format.id}
-                  className="formats-list-item"
-                  onClick={() => {
-                    handleSelectFormat(format);
-                    setShowFormatsListPopup(false);
-                  }}
-                  data-testid={`formats-list-${format.id}`}
-                >
+                <div key={format.id} className="popup-format-card">
                   <div 
-                    className="formats-list-thumb"
+                    className="popup-format-preview"
                     style={{ backgroundColor: format.color }}
                   />
-                  <span className="formats-list-name">{format.name}</span>
-                </button>
+                  <span className="popup-format-name">{format.name}</span>
+                </div>
               ))}
             </div>
           </div>
