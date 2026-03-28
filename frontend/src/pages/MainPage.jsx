@@ -51,6 +51,8 @@ const FORMATS = [
   { id: 4, name: "Meme Format", color: "#5A4A3A", videos: [] },
   { id: 5, name: "Before/After", color: "#3A5A4A", videos: [] },
   { id: 6, name: "Tutorial", color: "#4A4A4A", videos: [] },
+  { id: 7, name: "Promo Video", color: "#5A3A4A", videos: [] },
+  { id: 8, name: "Story Time", color: "#3A4A4A", videos: [] },
 ];
 
 export const MainPage = () => {
@@ -362,56 +364,12 @@ export const MainPage = () => {
 
         {/* Content based on active tab */}
         {activeMainTab === 'Create' ? (
-          <div className="create-content">
+          <div className="create-content-v2">
             {/* Heading */}
             <div className="create-heading">
               <h1 className="create-title">
                 Ready to create?
               </h1>
-            </div>
-
-            {/* Format pills row */}
-            <div className="format-pills-row">
-              {/* Format pills - horizontal scroll including search */}
-              <div className="format-pills-scroll">
-                {/* Search button inside scroll */}
-                <button 
-                  className="format-search-btn"
-                  onClick={() => setShowFormatsListPopup(true)}
-                  data-testid="format-search-btn"
-                >
-                  <SearchIconCustom className="format-search-icon" />
-                </button>
-                
-                {selectedFormat && (
-                  <button 
-                    className="format-pill selected"
-                    onClick={() => setShowFormatPopup(true)}
-                    data-testid="selected-format-pill"
-                  >
-                    <div 
-                      className="format-pill-thumb"
-                      style={{ backgroundColor: selectedFormat.color }}
-                    />
-                    <span className="format-pill-name">{selectedFormat.name}</span>
-                  </button>
-                )}
-                
-                {FORMATS.filter(f => f.id !== selectedFormat?.id).map((format) => (
-                  <button 
-                    key={format.id}
-                    className="format-pill"
-                    onClick={() => handleSelectFormat(format)}
-                    data-testid={`format-pill-${format.id}`}
-                  >
-                    <div 
-                      className="format-pill-thumb"
-                      style={{ backgroundColor: format.color }}
-                    />
-                    <span className="format-pill-name">{format.name}</span>
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Input area */}
@@ -488,6 +446,35 @@ export const MainPage = () => {
                   className="hidden"
                 />
               </div>
+            </div>
+
+            {/* Formats Section */}
+            <div className="create-formats-section">
+              <h2 className="create-formats-title">Formats</h2>
+              
+              <div className="create-formats-grid">
+                {FORMATS.slice(0, 8).map((format) => (
+                  <button 
+                    key={format.id}
+                    className={`create-format-card ${selectedFormat?.id === format.id ? 'selected' : ''}`}
+                    onClick={() => handleSelectFormat(format)}
+                    data-testid={`create-format-${format.id}`}
+                  >
+                    <div 
+                      className="create-format-video"
+                      style={{ backgroundColor: format.color }}
+                    />
+                  </button>
+                ))}
+              </div>
+              
+              <button 
+                className="create-see-all-btn"
+                onClick={() => navigate('/formats')}
+                data-testid="create-see-all-btn"
+              >
+                See all
+              </button>
             </div>
           </div>
         ) : (
