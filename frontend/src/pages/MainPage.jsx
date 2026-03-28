@@ -74,7 +74,7 @@ export const MainPage = () => {
   const [headerScrolled, setHeaderScrolled] = useState(false);
   
   // New states for logged-in view
-  const [activeMainTab, setActiveMainTab] = useState("Create");
+  const [activeMainTab, setActiveMainTab] = useState("Formats");
   const [selectedFormat, setSelectedFormat] = useState(null);
   const [showFormatPopup, setShowFormatPopup] = useState(false);
   const [showFormatsListPopup, setShowFormatsListPopup] = useState(false);
@@ -319,35 +319,20 @@ export const MainPage = () => {
         
         {/* Fixed Header */}
         <header className="main-fixed-header">
-          <div className="header-left">
-            <img src={LOGO_URL} alt="Slind" className="header-logo-small" />
+          <div className="header-left-logo">
+            <img src={LOGO_URL} alt="Slind" className="header-logo-large" />
+            <span className="header-logo-text">Slind</span>
           </div>
           
-          <div className="header-tabs">
-            <div 
-              className="header-tabs-indicator"
-              style={{
-                left: activeMainTab === 'Create' ? '4px' : '50%',
-                width: activeMainTab === 'Create' ? 'calc(50% - 4px)' : 'calc(50% - 4px)'
-              }}
-            />
+          <div className="header-right-actions">
             <button 
-              className={`header-tab ${activeMainTab === 'Create' ? 'active' : ''}`}
-              onClick={() => setActiveMainTab('Create')}
-              data-testid="create-tab"
+              className="header-upgrade-btn"
+              onClick={() => {/* TODO: Upgrade flow */}}
+              data-testid="upgrade-btn"
             >
-              Create
+              Upgrade
             </button>
-            <button 
-              className={`header-tab ${activeMainTab === 'Library' ? 'active' : ''}`}
-              onClick={() => setActiveMainTab('Library')}
-              data-testid="library-tab"
-            >
-              Library
-            </button>
-          </div>
-          
-          <div className="header-right">
+            
             <button 
               className="header-avatar-btn"
               onClick={handleAvatarClick}
@@ -362,9 +347,8 @@ export const MainPage = () => {
           </div>
         </header>
 
-        {/* Content based on active tab */}
-        {activeMainTab === 'Create' ? (
-          <div className="create-content-v2">
+        {/* Content - always Create view */}
+        <div className="create-content-v2">
             {/* Center section - heading and input */}
             <div className="create-center-section">
               {/* Heading */}
@@ -451,90 +435,95 @@ export const MainPage = () => {
             </div>
             </div>
 
-            {/* Formats Section */}
-            <div className="create-formats-section">
-              <h2 className="create-formats-title">Formats</h2>
-              
-              <div className="create-formats-grid">
-                {FORMATS.slice(0, 8).map((format) => (
-                  <button 
-                    key={format.id}
-                    className={`create-format-card ${selectedFormat?.id === format.id ? 'selected' : ''}`}
-                    onClick={() => handleSelectFormat(format)}
-                    data-testid={`create-format-${format.id}`}
-                  >
-                    <div 
-                      className="create-format-video"
-                      style={{ backgroundColor: format.color }}
-                    />
-                  </button>
-                ))}
-              </div>
-              
-              <button 
-                className="create-see-all-btn"
-                onClick={() => navigate('/formats')}
-                data-testid="create-see-all-btn"
-              >
-                See all
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Library Tab */
-          <div className="library-content">
-            <h2 className="library-title">My creations</h2>
-            
-            {isLoadingVideos ? (
-              <div className="library-loading">Loading...</div>
-            ) : completedVideos.length > 0 ? (
-              <div className="library-grid">
-                {completedVideos.map((video) => (
-                  <div 
-                    key={video.id} 
-                    className="library-item"
-                    onClick={() => navigate(`/video/${video.id}`)}
-                    data-testid={`library-video-${video.id}`}
-                  >
-                    {video.poster_url ? (
-                      <img 
-                        src={`${BACKEND_URL}${video.poster_url}`} 
-                        alt={video.title || 'Video'}
-                        className="library-thumb"
-                      />
-                    ) : video.video_url ? (
-                      <video 
-                        src={`${BACKEND_URL}${video.video_url}`}
-                        className="library-thumb"
-                        muted
-                        playsInline
-                      />
-                    ) : (
-                      <div className="library-placeholder" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="library-empty">
-                <div className="library-empty-grid">
-                  <div className="library-empty-item" />
-                  <div className="library-empty-item" />
-                  <div className="library-empty-item" />
-                  <div className="library-empty-item" />
-                </div>
-                <p className="library-empty-text">No videos yet</p>
+            {/* Bottom Tabs Section */}
+            <div className="bottom-tabs-section">
+              <div className="bottom-tabs">
                 <button 
-                  className="library-create-btn"
-                  onClick={() => setActiveMainTab('Create')}
-                  data-testid="library-create-btn"
+                  className={`bottom-tab ${activeMainTab === 'Creations' ? 'active' : ''}`}
+                  onClick={() => setActiveMainTab('Creations')}
+                  data-testid="creations-tab"
                 >
-                  Start create!
+                  My creations
+                </button>
+                <button 
+                  className={`bottom-tab ${activeMainTab === 'Formats' ? 'active' : ''}`}
+                  onClick={() => setActiveMainTab('Formats')}
+                  data-testid="formats-tab"
+                >
+                  Formats
                 </button>
               </div>
-            )}
+
+              {activeMainTab === 'Formats' ? (
+                <>
+                  <div className="create-formats-grid">
+                    {FORMATS.slice(0, 8).map((format) => (
+                      <button 
+                        key={format.id}
+                        className={`create-format-card ${selectedFormat?.id === format.id ? 'selected' : ''}`}
+                        onClick={() => handleSelectFormat(format)}
+                        data-testid={`create-format-${format.id}`}
+                      >
+                        <div 
+                          className="create-format-video"
+                          style={{ backgroundColor: format.color }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button 
+                    className="create-see-all-btn"
+                    onClick={() => navigate('/formats')}
+                    data-testid="create-see-all-btn"
+                  >
+                    See all
+                  </button>
+                </>
+              ) : (
+                /* My Creations */
+                <>
+                  {isLoadingVideos ? (
+                    <div className="library-loading">Loading...</div>
+                  ) : completedVideos.length > 0 ? (
+                    <div className="create-formats-grid">
+                      {completedVideos.map((video) => (
+                        <div 
+                          key={video.id} 
+                          className="create-format-card"
+                          onClick={() => navigate(`/video/${video.id}`)}
+                          data-testid={`library-video-${video.id}`}
+                        >
+                          {video.poster_url ? (
+                            <img 
+                              src={`${BACKEND_URL}${video.poster_url}`} 
+                              alt={video.title || 'Video'}
+                              className="create-format-video"
+                              style={{ objectFit: 'cover' }}
+                            />
+                          ) : video.video_url ? (
+                            <video 
+                              src={`${BACKEND_URL}${video.video_url}`}
+                              className="create-format-video"
+                              style={{ objectFit: 'cover' }}
+                              muted
+                              playsInline
+                            />
+                          ) : (
+                            <div className="create-format-video" style={{ backgroundColor: '#2A2B2D' }} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="library-empty-inline">
+                      <p>No videos yet</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        )}
 
         {/* Format Detail Popup */}
         {showFormatPopup && selectedFormat && (

@@ -3633,14 +3633,50 @@ body {
   z-index: 10;
 }
 
-.header-left {
-  width: 48px;
+.header-left-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.header-logo-small {
-  width: 32px;
-  height: 32px;
+.header-logo-large {
+  width: 40px;
+  height: 40px;
   object-fit: contain;
+}
+
+.header-logo-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-upgrade-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #0066FF 0%, #0044CC 100%);
+  color: var(--white);
+  border: none;
+  border-radius: 50px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.header-upgrade-btn:hover {
+  opacity: 0.9;
+}
+
+.header-upgrade-btn:active {
+  transform: scale(0.95);
 }
 
 .header-tabs {
@@ -3758,8 +3794,42 @@ body {
 }
 
 /* ===== CREATE FORMATS SECTION ===== */
-.create-formats-section {
-  padding: 60px 0 40px;
+.bottom-tabs-section {
+  padding: 0 0 40px;
+}
+
+.bottom-tabs {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.bottom-tab {
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.bottom-tab.active {
+  color: var(--white);
+}
+
+.library-empty-inline {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.library-empty-inline p {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
 }
 
 .create-formats-title {
@@ -3775,6 +3845,7 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 20px;
+  max-width: 400px;
 }
 
 .create-format-card {
