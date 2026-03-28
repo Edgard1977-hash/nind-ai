@@ -365,47 +365,49 @@ export const MainPage = () => {
         {/* Content based on active tab */}
         {activeMainTab === 'Create' ? (
           <div className="create-content-v2">
-            {/* Heading */}
-            <div className="create-heading">
-              <h1 className="create-title">
-                Ready to create?
-              </h1>
-            </div>
+            {/* Center section - heading and input */}
+            <div className="create-center-section">
+              {/* Heading */}
+              <div className="create-heading">
+                <h1 className="create-title">
+                  Ready to create?
+                </h1>
+              </div>
 
-            {/* Input area */}
-            <div className="create-input-area">
-              <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
-                {attachments.length > 0 && (
-                  <div className="attachments-row">
-                    {attachments.map((attachment) => (
-                      <div key={attachment.id} className="attachment-item">
-                        <img 
-                          src={attachment.preview} 
-                          alt="Attachment" 
-                          className="attachment-preview"
-                        />
-                        <button 
-                          className="attachment-remove"
-                          onClick={() => removeAttachment(attachment.id)}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {/* Input area */}
+              <div className="create-input-area">
+                <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
+                  {attachments.length > 0 && (
+                    <div className="attachments-row">
+                      {attachments.map((attachment) => (
+                        <div key={attachment.id} className="attachment-item">
+                          <img 
+                            src={attachment.preview} 
+                            alt="Attachment" 
+                            className="attachment-preview"
+                          />
+                          <button 
+                            className="attachment-remove"
+                            onClick={() => removeAttachment(attachment.id)}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                <div className="input-inner">
-                  <textarea
-                    ref={textareaRef}
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Создать контент…"
-                    className="prompt-textarea"
-                    rows={2}
-                    disabled={isGenerating}
-                    data-testid="prompt-input"
-                  />
+                  <div className="input-inner">
+                    <textarea
+                      ref={textareaRef}
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Создать контент…"
+                      className="prompt-textarea"
+                      rows={2}
+                      disabled={isGenerating}
+                      data-testid="prompt-input"
+                    />
                 </div>
 
                 <div className="input-bottom-row">
@@ -446,6 +448,7 @@ export const MainPage = () => {
                   className="hidden"
                 />
               </div>
+            </div>
             </div>
 
             {/* Formats Section */}

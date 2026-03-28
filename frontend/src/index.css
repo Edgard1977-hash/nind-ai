@@ -3727,25 +3727,32 @@ body {
   display: flex;
   flex-direction: column;
   padding: 0 20px;
-  padding-bottom: 40px;
   position: relative;
   z-index: 1;
   overflow-y: auto;
 }
 
+.create-center-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
 .create-content-v2 .create-heading {
   text-align: center;
-  padding: 40px 0 24px;
+  margin-bottom: 24px;
 }
 
 .create-content-v2 .create-input-area {
   width: 100%;
-  margin-bottom: 32px;
 }
 
 /* ===== CREATE FORMATS SECTION ===== */
 .create-formats-section {
-  margin-top: auto;
+  padding-bottom: 40px;
 }
 
 .create-formats-title {
