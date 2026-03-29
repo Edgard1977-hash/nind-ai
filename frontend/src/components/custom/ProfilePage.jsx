@@ -103,6 +103,33 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
     fetchNotifications();
   }, []);
 
+  // Swipe to close popup states
+  const [popupDragY, setPopupDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const popupStartY = useRef(0);
+
+  const handlePopupTouchStart = (e) => {
+    popupStartY.current = e.touches[0].clientY;
+    setIsDragging(true);
+  };
+
+  const handlePopupTouchMove = (e) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - popupStartY.current;
+    if (diff > 0) {
+      setPopupDragY(diff);
+    }
+  };
+
+  const handlePopupTouchEnd = (closePopup) => {
+    if (popupDragY > 100) {
+      closePopup();
+    }
+    setPopupDragY(0);
+    setIsDragging(false);
+  };
+
   const fetchNotifications = async () => {
     try {
       const response = await axios.get(`${API}/user/notifications`);
@@ -201,8 +228,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
     if (onLanguageChange) {
       onLanguageChange(langCode);
     }
-    setShowLanguagePopup(false);
-    showSuccessToast(t('languageChanged'));
+    // Don't close popup automatically - user closes it manually
   };
 
   const handleConfirmAction = () => {
@@ -359,20 +385,27 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         {/* Language Popup */}
         {showLanguagePopup && (
           <div className="popup-overlay" onClick={() => setShowLanguagePopup(false)}>
-            <div className="language-popup" onClick={e => e.stopPropagation()}>
+            <div 
+              className="language-popup" 
+              onClick={e => e.stopPropagation()}
+              onTouchStart={handlePopupTouchStart}
+              onTouchMove={handlePopupTouchMove}
+              onTouchEnd={() => handlePopupTouchEnd(() => setShowLanguagePopup(false))}
+              style={{ transform: `translateY(${popupDragY}px)` }}
+            >
               <div className="popup-handle" />
               <h3 className="popup-title">{t('selectLanguage')}</h3>
               <div className="language-list">
                 {LANGUAGES.map(lang => (
                   <button
                     key={lang.code}
-                    className="language-item"
+                    className={`language-item ${selectedLanguage === lang.code ? 'selected' : ''}`}
                     onClick={() => handleLanguageSelect(lang.code)}
                   >
                     <span className="language-flag">{lang.flag}</span>
                     <span className="language-name">{lang.name}</span>
                     <div className={`language-radio ${selectedLanguage === lang.code ? 'selected' : ''}`}>
-                      <div className={`language-radio-inner ${selectedLanguage === lang.code ? 'visible' : ''}`} />
+                      <div className="language-radio-inner" />
                     </div>
                   </button>
                 ))}
@@ -384,7 +417,14 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         {/* Confirm Popup */}
         {showConfirmPopup && (
           <div className="popup-overlay" onClick={() => setShowConfirmPopup(null)}>
-            <div className="confirm-popup" onClick={e => e.stopPropagation()}>
+            <div 
+              className="confirm-popup" 
+              onClick={e => e.stopPropagation()}
+              onTouchStart={handlePopupTouchStart}
+              onTouchMove={handlePopupTouchMove}
+              onTouchEnd={() => handlePopupTouchEnd(() => setShowConfirmPopup(null))}
+              style={{ transform: `translateY(${popupDragY}px)` }}
+            >
               <div className="popup-handle" />
               <h3 className="confirm-popup-title">{t('areYouSure')}</h3>
               <div className="confirm-popup-buttons">
