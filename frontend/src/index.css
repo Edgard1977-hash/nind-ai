@@ -2837,6 +2837,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: border-color 0.2s ease;
 }
 
 .language-radio.selected {
@@ -2848,6 +2849,14 @@ body {
   height: 12px;
   background: var(--white);
   border-radius: 50%;
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.language-radio-inner.visible {
+  transform: scale(1);
+  opacity: 1;
 }
 
 /* Confirm Popup */

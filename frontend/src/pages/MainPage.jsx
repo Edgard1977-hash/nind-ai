@@ -4,6 +4,7 @@ import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, Check } from "lucide-r
 import { toast } from "sonner";
 import axios from "axios";
 import ProfilePage from "../components/custom/ProfilePage";
+import { getTranslation } from "../utils/translations";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -114,6 +115,16 @@ export const MainPage = () => {
   const [placeholderText, setPlaceholderText] = useState("");
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
+
+  // Language state
+  const [currentLang, setCurrentLang] = useState(localStorage.getItem('slind_language') || 'en');
+
+  // Translation helper
+  const t = (key) => getTranslation(currentLang, key);
+
+  const handleLanguageChange = (langCode) => {
+    setCurrentLang(langCode);
+  };
 
   // Check auth status and setup scroll listener
   useEffect(() => {
@@ -371,6 +382,8 @@ export const MainPage = () => {
         onBack={() => setShowProfile(false)}
         onLogout={handleLogout}
         onUpdateUser={handleUpdateUser}
+        currentLang={currentLang}
+        onLanguageChange={handleLanguageChange}
       />
     );
   }
@@ -533,14 +546,14 @@ export const MainPage = () => {
                   onClick={() => setActiveMainTab('Creations')}
                   data-testid="creations-tab"
                 >
-                  My creations
+                  {t('myCreations')}
                 </button>
                 <button 
                   className={`bottom-tab ${activeMainTab === 'Formats' ? 'active' : ''}`}
                   onClick={() => setActiveMainTab('Formats')}
                   data-testid="formats-tab"
                 >
-                  Formats
+                  {t('formats')}
                 </button>
               </div>
 
@@ -573,7 +586,7 @@ export const MainPage = () => {
                       onClick={() => navigate('/formats')}
                       data-testid="create-see-all-btn"
                     >
-                      See all
+                      {t('seeAll')}
                     </button>
                   </>
                 ) : (
@@ -627,7 +640,7 @@ export const MainPage = () => {
                         </div>
                         <div className="creations-empty-fade" />
                         <div className="creations-empty-overlay">
-                          <p className="creations-empty-text">No videos yet</p>
+                          <p className="creations-empty-text">{t('noVideosYet')}</p>
                           <button 
                             className="creations-start-btn"
                             onClick={() => {
@@ -636,7 +649,7 @@ export const MainPage = () => {
                             }}
                             data-testid="start-create-btn"
                           >
-                            Start create
+                            {t('startCreate')}
                           </button>
                         </div>
                       </div>
@@ -913,7 +926,7 @@ export const MainPage = () => {
             onClick={() => navigate('/formats')}
             data-testid="see-all-btn"
           >
-            See all
+            {t('seeAll')}
           </button>
         </div>
 

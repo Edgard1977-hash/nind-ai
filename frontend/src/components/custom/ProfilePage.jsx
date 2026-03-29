@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, X, Globe, Bell, HelpCircle, LogOut, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import { translations, getTranslation } from "../../utils/translations";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -43,14 +44,6 @@ const ChevronIcon = ({ className }) => (
   </svg>
 );
 
-// Plan labels
-const PLAN_CONFIG = {
-  free: { label: "Free Plan" },
-  start: { label: "Start Plan" },
-  plus: { label: "Plus Plan" },
-  creator: { label: "Creator Plan" }
-};
-
 // Languages
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -69,17 +62,42 @@ const getProgressColor = (percentage) => {
   return '#01E0FD';
 };
 
-export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
+// Show success toast
+const showSuccessToast = (message) => {
+  toast.success(message, {
+    style: {
+      background: '#1D1E20',
+      color: '#fff',
+      border: '1px solid rgba(255,255,255,0.1)',
+    },
+  });
+};
+
+export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang, onLanguageChange }) => {
   const [activeView, setActiveView] = useState('main');
   const [editUsername, setEditUsername] = useState(user?.username || user?.name || '');
   const [isSaving, setIsSaving] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [showLanguagePopup, setShowLanguagePopup] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [showConfirmPopup, setShowConfirmPopup] = useState(null); // 'logout' or 'delete'
+  const [selectedLanguage, setSelectedLanguage] = useState(currentLang || localStorage.getItem('slind_language') || 'en');
+  const [showConfirmPopup, setShowConfirmPopup] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const fileInputRef = useRef(null);
+
+  // Translation helper
+  const t = (key) => getTranslation(selectedLanguage, key);
+
+  // Plan labels with translations
+  const getPlanLabel = (plan) => {
+    const planKeys = {
+      free: 'freePlan',
+      start: 'startPlan',
+      plus: 'plusPlan',
+      creator: 'creatorPlan'
+    };
+    return t(planKeys[plan] || 'freePlan');
+  };
 
   useEffect(() => {
     fetchNotifications();
@@ -134,13 +152,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
       localStorage.setItem("slind_user", JSON.stringify(updatedUser));
       if (onUpdateUser) onUpdateUser(updatedUser);
       
-      toast.custom(() => (
-        <div className="custom-toast-success">
-          <img src={CHECK_ICON} alt="" className="toast-icon" />
-          <span>Saved changes!</span>
-        </div>
-      ), { duration: 2000 });
-      
+      showSuccessToast(t('savedChanges'));
       setActiveView('main');
     } catch (error) {
       console.error("Failed to save profile:", error);
@@ -176,13 +188,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
       localStorage.setItem("slind_user", JSON.stringify(updatedUser));
       if (onUpdateUser) onUpdateUser(updatedUser);
       
-      toast.custom(() => (
-        <div className="custom-toast-success">
-          <img src={CHECK_ICON} alt="" className="toast-icon" />
-          <span>Avatar updated!</span>
-        </div>
-      ), { duration: 2000 });
-      
+      showSuccessToast(t('avatarUpdated'));
     } catch (error) {
       console.error("Failed to upload avatar:", error);
       toast.error("Failed to upload avatar");
@@ -191,21 +197,18 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
 
   const handleLanguageSelect = (langCode) => {
     setSelectedLanguage(langCode);
+    localStorage.setItem('slind_language', langCode);
+    if (onLanguageChange) {
+      onLanguageChange(langCode);
+    }
     setShowLanguagePopup(false);
-    // TODO: Implement actual language change
-    toast.custom(() => (
-      <div className="custom-toast-success">
-        <img src={CHECK_ICON} alt="" className="toast-icon" />
-        <span>Language changed!</span>
-      </div>
-    ), { duration: 2000 });
+    showSuccessToast(t('languageChanged'));
   };
 
   const handleConfirmAction = () => {
     if (showConfirmPopup === 'logout') {
       onLogout();
     } else if (showConfirmPopup === 'delete') {
-      // TODO: Implement account deletion
       toast.error("Account deletion not implemented yet");
     }
     setShowConfirmPopup(null);
@@ -215,7 +218,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
   const userPlan = user?.plan || 'free';
   const userCredits = user?.credits || 0;
   const lastDeposit = user?.last_deposit || userCredits || 1;
-  const planConfig = PLAN_CONFIG[userPlan];
   
   const progressPercentage = lastDeposit > 0 ? Math.round((userCredits / lastDeposit) * 100) : 0;
   const progressColor = getProgressColor(progressPercentage);
@@ -234,7 +236,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             <X className="w-5 h-5" />
           </button>
           
-          <h1 className="profile-v2-title">Account</h1>
+          <h1 className="profile-v2-title">{t('account')}</h1>
           
           <div className="header-spacer" />
         </div>
@@ -258,7 +260,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           
           <div className="profile-v2-user-info">
             <h2 className="profile-v2-username">{userName}</h2>
-            <p className="profile-v2-plan">{planConfig.label}</p>
+            <p className="profile-v2-plan">{getPlanLabel(userPlan)}</p>
           </div>
           
           <ChevronIcon className="profile-v2-arrow" />
@@ -269,7 +271,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           <div className="credits-balance-row">
             <CreditsIcon className="credits-icon-small" color="#FFFFFF" />
             <span className="credits-amount">{userCredits}</span>
-            <span className="credits-label">credits left</span>
+            <span className="credits-label">{t('creditsLeft')}</span>
           </div>
           <div className="credits-progress-track">
             <div 
@@ -286,14 +288,14 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
         <div className="get-more-card">
           <div className="get-more-left">
             <UpgradeIcon className="get-more-icon" color="#01E0FD" />
-            <span className="get-more-text">Get more</span>
+            <span className="get-more-text">{t('getMore')}</span>
           </div>
           <button 
             className="get-more-upgrade-btn"
             onClick={() => {/* TODO: Upgrade flow */}}
             data-testid="upgrade-btn"
           >
-            Upgrade
+            {t('upgrade')}
           </button>
         </div>
 
@@ -308,7 +310,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             data-testid="language-btn"
           >
             <Globe className="settings-menu-icon" />
-            <span className="settings-menu-text">Language</span>
+            <span className="settings-menu-text">{t('language')}</span>
             <ChevronIcon className="settings-menu-arrow" />
           </button>
 
@@ -318,7 +320,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             data-testid="notifications-btn"
           >
             <Bell className="settings-menu-icon" fill="currentColor" />
-            <span className="settings-menu-text">Notifications</span>
+            <span className="settings-menu-text">{t('notifications')}</span>
             <ChevronIcon className="settings-menu-arrow" />
           </button>
 
@@ -328,7 +330,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             data-testid="help-btn"
           >
             <HelpCircle className="settings-menu-icon" />
-            <span className="settings-menu-text">Help & Support</span>
+            <span className="settings-menu-text">{t('helpSupport')}</span>
             <ChevronIcon className="settings-menu-arrow" />
           </button>
 
@@ -338,7 +340,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             data-testid="logout-btn"
           >
             <LogOut className="settings-menu-icon" />
-            <span className="settings-menu-text">Log out</span>
+            <span className="settings-menu-text">{t('logOut')}</span>
           </button>
         </div>
 
@@ -350,7 +352,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             data-testid="delete-account-btn"
           >
             <Trash2 className="settings-menu-icon" />
-            <span className="settings-menu-text">Delete account</span>
+            <span className="settings-menu-text">{t('deleteAccount')}</span>
           </button>
         </div>
 
@@ -359,7 +361,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           <div className="popup-overlay" onClick={() => setShowLanguagePopup(false)}>
             <div className="language-popup" onClick={e => e.stopPropagation()}>
               <div className="popup-handle" />
-              <h3 className="popup-title">Select Language</h3>
+              <h3 className="popup-title">{t('selectLanguage')}</h3>
               <div className="language-list">
                 {LANGUAGES.map(lang => (
                   <button
@@ -370,7 +372,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
                     <span className="language-flag">{lang.flag}</span>
                     <span className="language-name">{lang.name}</span>
                     <div className={`language-radio ${selectedLanguage === lang.code ? 'selected' : ''}`}>
-                      {selectedLanguage === lang.code && <div className="language-radio-inner" />}
+                      <div className={`language-radio-inner ${selectedLanguage === lang.code ? 'visible' : ''}`} />
                     </div>
                   </button>
                 ))}
@@ -384,19 +386,19 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           <div className="popup-overlay" onClick={() => setShowConfirmPopup(null)}>
             <div className="confirm-popup" onClick={e => e.stopPropagation()}>
               <div className="popup-handle" />
-              <h3 className="confirm-popup-title">Are you sure?</h3>
+              <h3 className="confirm-popup-title">{t('areYouSure')}</h3>
               <div className="confirm-popup-buttons">
                 <button 
                   className="confirm-btn-back"
                   onClick={() => setShowConfirmPopup(null)}
                 >
-                  No, back
+                  {t('noBack')}
                 </button>
                 <button 
                   className="confirm-btn-yes"
                   onClick={handleConfirmAction}
                 >
-                  Yes
+                  {t('yes')}
                 </button>
               </div>
             </div>
@@ -418,7 +420,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             <ChevronLeft className="w-6 h-6" />
           </button>
           
-          <h1 className="profile-v2-title">Notifications</h1>
+          <h1 className="profile-v2-title">{t('notifications')}</h1>
           
           <div className="header-spacer" />
         </div>
@@ -427,7 +429,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           {notifications.length === 0 ? (
             <div className="notifications-empty">
               <Bell className="notifications-empty-icon" />
-              <p>No notifications yet</p>
+              <p>{t('noNotifications')}</p>
             </div>
           ) : (
             notifications.map((notif, index) => (
@@ -458,7 +460,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             <ChevronLeft className="w-6 h-6" />
           </button>
           
-          <h1 className="profile-v2-title">Profile</h1>
+          <h1 className="profile-v2-title">{t('profile')}</h1>
           
           <div className="header-spacer" />
         </div>
@@ -491,7 +493,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
 
         <div className="profile-edit-form">
           <div className="profile-edit-field">
-            <label className="profile-edit-label">Username</label>
+            <label className="profile-edit-label">{t('username')}</label>
             <input
               type="text"
               value={editUsername}
@@ -501,7 +503,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
               }}
               onBlur={() => editUsername.length >= 3 && checkUsernameAvailability(editUsername)}
               className={`profile-edit-input ${usernameError ? 'error' : ''}`}
-              placeholder="Your username"
+              placeholder={t('username')}
               data-testid="profile-username-input"
             />
             {usernameError && (
@@ -515,7 +517,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             disabled={isSaving || editUsername.trim() === userName || !!usernameError || isCheckingUsername}
             data-testid="profile-save-btn"
           >
-            {isSaving ? 'Saving...' : isCheckingUsername ? 'Checking...' : 'Save'}
+            {isSaving ? t('saving') : isCheckingUsername ? t('checking') : t('save')}
           </button>
         </div>
       </div>
