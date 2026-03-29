@@ -2587,9 +2587,10 @@ body {
 }
 
 .credits-icon-small {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
+  margin-right: 2px;
 }
 
 .credits-amount {
@@ -2608,15 +2609,15 @@ body {
 
 .credits-progress-track {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: #3A3B3F;
-  border-radius: 4px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
 .credits-progress-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 5px;
   transition: width 0.5s ease, background-color 0.3s ease;
 }
 
