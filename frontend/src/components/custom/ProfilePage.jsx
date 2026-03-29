@@ -204,9 +204,9 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
         </button>
 
         {/* Credits Progress Bar */}
-        <div className="credits-progress-section">
+        <div className="credits-progress-card">
           <div className="credits-balance-row">
-            <CreditsIcon className="credits-icon-small" color="#01E0FD" />
+            <CreditsIcon className="credits-icon-small" color="#FFFFFF" />
             <span className="credits-amount">{userCredits}</span>
             <span className="credits-label">credits left</span>
           </div>
