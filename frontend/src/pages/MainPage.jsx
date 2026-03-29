@@ -449,7 +449,7 @@ export const MainPage = () => {
               {/* Heading */}
               <div className="create-heading">
                 <h1 className="create-title">
-                  Ready to create?
+                  {t('readyToCreate')}
                 </h1>
               </div>
 
@@ -795,7 +795,7 @@ export const MainPage = () => {
             onClick={handleGetStarted}
             data-testid="get-started-btn"
           >
-            Get started
+            {t('getStarted')}
           </button>
         </div>
       </header>
@@ -804,8 +804,8 @@ export const MainPage = () => {
       <div className="main-content">
         {/* Heading section */}
         <div className="heading-section">
-          <h1 className="heading-main">Create better</h1>
-          <p className="heading-sub">Make video editing entirely with AI</p>
+          <h1 className="heading-main">{t('createBetter')}</h1>
+          <p className="heading-sub">{t('makeVideoEditing')}</p>
         </div>
 
         {/* Input area - centered */}
