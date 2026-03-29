@@ -2635,12 +2635,12 @@ body {
 .get-more-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .get-more-icon {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
 }
 
 .get-more-text {
@@ -3728,24 +3728,24 @@ body {
 }
 
 .header-upgrade-btn {
-  padding: 10px 20px;
+  padding: 10px 20px 10px 16px;
   background: #2A2B2D;
   color: var(--white);
   border: none;
   border-radius: 50px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .upgrade-btn-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .header-upgrade-btn:hover {
