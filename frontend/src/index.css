@@ -4106,7 +4106,7 @@ body {
 .format-card-thumb {
   width: 90px;
   height: 135px;
-  border-radius: 16px 0 0 16px;
+  border-radius: 16px;
   flex-shrink: 0;
 }
 
