@@ -61,14 +61,14 @@ const PLACEHOLDER_PHRASES = [
 
 // Placeholder formats with videos
 const FORMATS = [
-  { id: 1, name: "Reels Story", color: "#3A3A3A", videos: [] },
-  { id: 2, name: "TikTok Trend", color: "#4A3A5A", videos: [] },
-  { id: 3, name: "Product Showcase", color: "#3A4A5A", videos: [] },
-  { id: 4, name: "Meme Format", color: "#5A4A3A", videos: [] },
-  { id: 5, name: "Before/After", color: "#3A5A4A", videos: [] },
-  { id: 6, name: "Tutorial", color: "#4A4A4A", videos: [] },
-  { id: 7, name: "Promo Video", color: "#5A3A4A", videos: [] },
-  { id: 8, name: "Story Time", color: "#3A4A4A", videos: [] },
+  { id: 1, name: "Reels Story", subtitle: "Vertical video for Instagram", color: "#3A3A3A", videos: [] },
+  { id: 2, name: "TikTok Trend", subtitle: "Trending short-form content", color: "#4A3A5A", videos: [] },
+  { id: 3, name: "Product Showcase", subtitle: "Highlight your products", color: "#3A4A5A", videos: [] },
+  { id: 4, name: "Meme Format", subtitle: "Fun viral content", color: "#5A4A3A", videos: [] },
+  { id: 5, name: "Before/After", subtitle: "Transformation videos", color: "#3A5A4A", videos: [] },
+  { id: 6, name: "Tutorial", subtitle: "Step-by-step guides", color: "#4A4A4A", videos: [] },
+  { id: 7, name: "Promo Video", subtitle: "Marketing content", color: "#5A3A4A", videos: [] },
+  { id: 8, name: "Story Time", subtitle: "Narrative storytelling", color: "#3A4A4A", videos: [] },
 ];
 
 export const MainPage = () => {
@@ -540,18 +540,22 @@ export const MainPage = () => {
               <div className="bottom-panel-content">
                 {activeMainTab === 'Formats' ? (
                   <>
-                    <div className="create-formats-grid">
-                      {FORMATS.slice(0, 8).map((format) => (
+                    <div className="formats-list-horizontal">
+                      {FORMATS.slice(0, 6).map((format) => (
                         <button 
                           key={format.id}
-                          className={`create-format-card ${selectedFormat?.id === format.id ? 'selected' : ''}`}
+                          className="format-card-horizontal"
                           onClick={() => handleSelectFormat(format)}
                           data-testid={`create-format-${format.id}`}
                         >
                           <div 
-                            className="create-format-video"
+                            className="format-card-thumb"
                             style={{ backgroundColor: format.color }}
                           />
+                          <div className="format-card-info">
+                            <span className="format-card-title">{format.name}</span>
+                            <span className="format-card-subtitle">{format.subtitle}</span>
+                          </div>
                         </button>
                       ))}
                     </div>

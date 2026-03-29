@@ -3847,12 +3847,12 @@ body {
 }
 
 .create-center-section {
-  height: calc(100vh - 80px);
+  height: calc(100vh - 120px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding-bottom: 100px;
+  padding-bottom: 60px;
 }
 
 .create-content-v2 .create-heading {
@@ -4072,6 +4072,53 @@ body {
   gap: 12px;
   margin-bottom: 20px;
   max-width: 400px;
+}
+
+/* Horizontal Formats List */
+.formats-list-horizontal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.format-card-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.format-card-thumb {
+  width: 64px;
+  height: 96px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.format-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.format-card-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.format-card-subtitle {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .create-format-card {
