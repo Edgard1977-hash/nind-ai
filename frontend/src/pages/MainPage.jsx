@@ -67,6 +67,13 @@ const PLACEHOLDER_PHRASES = [
   "Make motion graphics for…"
 ];
 
+// Placeholder keys for translation
+const PLACEHOLDER_KEYS = [
+  'placeholder1', 'placeholder2', 'placeholder3', 'placeholder4',
+  'placeholder5', 'placeholder6', 'placeholder7', 'placeholder8',
+  'placeholder9', 'placeholder10', 'placeholder11', 'placeholder12'
+];
+
 // Placeholder formats with videos
 const FORMATS = [
   { id: 1, name: "Reels Story", subtitle: "Vertical video for Instagram", color: "#3A3A3A", videos: [] },
@@ -160,7 +167,7 @@ export const MainPage = () => {
 
   // Animated placeholder typing effect
   useEffect(() => {
-    const currentPhrase = PLACEHOLDER_PHRASES[phraseIndex];
+    const currentPhrase = t(PLACEHOLDER_KEYS[phraseIndex]);
     let timeout;
 
     if (isTyping) {
@@ -183,13 +190,20 @@ export const MainPage = () => {
         }, 30);
       } else {
         // Finished erasing, move to next phrase
-        setPhraseIndex((prev) => (prev + 1) % PLACEHOLDER_PHRASES.length);
+        setPhraseIndex((prev) => (prev + 1) % PLACEHOLDER_KEYS.length);
         setIsTyping(true);
       }
     }
 
     return () => clearTimeout(timeout);
-  }, [placeholderText, phraseIndex, isTyping]);
+  }, [placeholderText, phraseIndex, isTyping, currentLang]);
+
+  // Reset placeholder when language changes
+  useEffect(() => {
+    setPlaceholderText("");
+    setPhraseIndex(0);
+    setIsTyping(true);
+  }, [currentLang]);
 
   // Intersection Observer for section animations
   useEffect(() => {

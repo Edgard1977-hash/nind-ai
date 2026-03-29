@@ -35,7 +35,20 @@ export const translations = {
     formats: "Formats",
     noVideosYet: "No videos yet",
     startCreate: "Start create",
-    seeAll: "See all"
+    seeAll: "See all",
+    // Placeholder phrases
+    placeholder1: "Cut my video and…",
+    placeholder2: "create logo animation for…",
+    placeholder3: "make video story about…",
+    placeholder4: "create motion design for…",
+    placeholder5: "make promo video for…",
+    placeholder6: "create short-form video for…",
+    placeholder7: "make highlights from…",
+    placeholder8: "create fan edit about…",
+    placeholder9: "add visual effects in…",
+    placeholder10: "make colour grading for…",
+    placeholder11: "create sound effects for…",
+    placeholder12: "Make motion graphics for…"
   },
   fr: {
     account: "Compte",
@@ -72,7 +85,19 @@ export const translations = {
     formats: "Formats",
     noVideosYet: "Pas encore de vidéos",
     startCreate: "Commencer à créer",
-    seeAll: "Voir tout"
+    seeAll: "Voir tout",
+    placeholder1: "Coupe ma vidéo et…",
+    placeholder2: "crée une animation de logo pour…",
+    placeholder3: "fais une histoire vidéo sur…",
+    placeholder4: "crée un motion design pour…",
+    placeholder5: "fais une vidéo promo pour…",
+    placeholder6: "crée une vidéo courte pour…",
+    placeholder7: "fais des highlights de…",
+    placeholder8: "crée un fan edit sur…",
+    placeholder9: "ajoute des effets visuels dans…",
+    placeholder10: "fais un étalonnage pour…",
+    placeholder11: "crée des effets sonores pour…",
+    placeholder12: "Fais du motion graphics pour…"
   },
   de: {
     account: "Konto",
@@ -109,7 +134,19 @@ export const translations = {
     formats: "Formate",
     noVideosYet: "Noch keine Videos",
     startCreate: "Mit Erstellen beginnen",
-    seeAll: "Alle anzeigen"
+    seeAll: "Alle anzeigen",
+    placeholder1: "Schneide mein Video und…",
+    placeholder2: "erstelle Logo-Animation für…",
+    placeholder3: "mache Video-Story über…",
+    placeholder4: "erstelle Motion Design für…",
+    placeholder5: "mache Promo-Video für…",
+    placeholder6: "erstelle Kurzform-Video für…",
+    placeholder7: "mache Highlights von…",
+    placeholder8: "erstelle Fan-Edit über…",
+    placeholder9: "füge visuelle Effekte hinzu in…",
+    placeholder10: "mache Farbkorrektur für…",
+    placeholder11: "erstelle Soundeffekte für…",
+    placeholder12: "Mache Motion Graphics für…"
   },
   pt: {
     account: "Conta",
@@ -146,7 +183,19 @@ export const translations = {
     formats: "Formatos",
     noVideosYet: "Nenhum vídeo ainda",
     startCreate: "Começar a criar",
-    seeAll: "Ver tudo"
+    seeAll: "Ver tudo",
+    placeholder1: "Corte meu vídeo e…",
+    placeholder2: "crie animação de logo para…",
+    placeholder3: "faça história em vídeo sobre…",
+    placeholder4: "crie motion design para…",
+    placeholder5: "faça vídeo promocional para…",
+    placeholder6: "crie vídeo curto para…",
+    placeholder7: "faça highlights de…",
+    placeholder8: "crie fan edit sobre…",
+    placeholder9: "adicione efeitos visuais em…",
+    placeholder10: "faça correção de cor para…",
+    placeholder11: "crie efeitos sonoros para…",
+    placeholder12: "Faça motion graphics para…"
   },
   es: {
     account: "Cuenta",
@@ -183,7 +232,19 @@ export const translations = {
     formats: "Formatos",
     noVideosYet: "Sin videos todavía",
     startCreate: "Empezar a crear",
-    seeAll: "Ver todo"
+    seeAll: "Ver todo",
+    placeholder1: "Corta mi video y…",
+    placeholder2: "crea animación de logo para…",
+    placeholder3: "haz historia en video sobre…",
+    placeholder4: "crea motion design para…",
+    placeholder5: "haz video promocional para…",
+    placeholder6: "crea video corto para…",
+    placeholder7: "haz highlights de…",
+    placeholder8: "crea fan edit sobre…",
+    placeholder9: "añade efectos visuales en…",
+    placeholder10: "haz corrección de color para…",
+    placeholder11: "crea efectos de sonido para…",
+    placeholder12: "Haz motion graphics para…"
   },
   ru: {
     account: "Аккаунт",
@@ -220,7 +281,19 @@ export const translations = {
     formats: "Форматы",
     noVideosYet: "Пока нет видео",
     startCreate: "Начать создавать",
-    seeAll: "Смотреть все"
+    seeAll: "Смотреть все",
+    placeholder1: "Обрежь моё видео и…",
+    placeholder2: "создай анимацию логотипа для…",
+    placeholder3: "сделай видео-историю о…",
+    placeholder4: "создай моушн-дизайн для…",
+    placeholder5: "сделай промо-видео для…",
+    placeholder6: "создай короткое видео для…",
+    placeholder7: "сделай хайлайты из…",
+    placeholder8: "создай фан-эдит о…",
+    placeholder9: "добавь визуальные эффекты в…",
+    placeholder10: "сделай цветокоррекцию для…",
+    placeholder11: "создай звуковые эффекты для…",
+    placeholder12: "Сделай моушн-графику для…"
   }
 };
 
