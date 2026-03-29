@@ -2606,7 +2606,7 @@ body {
 }
 
 .credits-progress-inner {
-  background: #1D1E20;
+  background: #121212;
   border-radius: 45px;
   padding: 20px 24px;
   display: flex;
@@ -2661,7 +2661,7 @@ body {
 
 .get-more-text {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--white);
 }
