@@ -2638,7 +2638,7 @@ body {
   gap: 12px;
 }
 
-.get-more-star {
+.get-more-icon {
   width: 24px;
   height: 24px;
 }
@@ -2655,7 +2655,7 @@ body {
   color: #000;
   border: none;
   padding: 12px 24px;
-  border-radius: 50px;
+  border-radius: 46px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 15px;
   font-weight: 700;
@@ -3738,6 +3738,14 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.upgrade-btn-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .header-upgrade-btn:hover {
