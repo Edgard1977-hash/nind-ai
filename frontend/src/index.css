@@ -3728,13 +3728,13 @@ body {
 }
 
 .header-upgrade-btn {
-  padding: 10px 20px 10px 16px;
+  padding: 8px 18px 8px 14px;
   background: #2A2B2D;
   color: var(--white);
   border: none;
   border-radius: 50px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -3744,8 +3744,8 @@ body {
 }
 
 .upgrade-btn-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 
 .header-upgrade-btn:hover {
@@ -3815,8 +3815,8 @@ body {
 }
 
 .header-avatar-btn {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: none;
   background: #2A2B2D;
@@ -3827,7 +3827,7 @@ body {
   justify-content: center;
   color: var(--white);
   font-family: -apple-system, 'SF Pro Text', sans-serif;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
 }
 
