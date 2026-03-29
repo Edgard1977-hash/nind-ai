@@ -204,18 +204,20 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
         </button>
 
         {/* Credits Progress Bar */}
-        <div className="credits-progress-container">
-          <div 
-            className="credits-progress-inner"
-            style={{ 
-              borderColor: progressColor,
-              borderWidth: '5px',
-              borderStyle: 'solid'
-            }}
-          >
-            <CreditsIcon className="credits-star-icon" color="#01E0FD" />
+        <div className="credits-progress-section">
+          <div className="credits-balance-row">
+            <CreditsIcon className="credits-icon-small" color="#01E0FD" />
             <span className="credits-amount">{userCredits}</span>
             <span className="credits-label">credits left</span>
+          </div>
+          <div className="credits-progress-track">
+            <div 
+              className="credits-progress-fill"
+              style={{ 
+                width: `${progressPercentage}%`,
+                backgroundColor: progressColor
+              }}
+            />
           </div>
         </div>
 
