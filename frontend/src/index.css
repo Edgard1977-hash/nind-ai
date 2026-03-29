@@ -2624,6 +2624,7 @@ body {
 /* Get More Card */
 .get-more-card {
   background: #1D1E20;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 16px 20px;
   display: flex;
@@ -2635,12 +2636,12 @@ body {
 .get-more-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .get-more-icon {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
 }
 
 .get-more-text {
@@ -2655,7 +2656,7 @@ body {
   color: #000;
   border: none;
   padding: 12px 24px;
-  border-radius: 46px;
+  border-radius: 43px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 15px;
   font-weight: 700;
@@ -2669,6 +2670,300 @@ body {
 
 .get-more-upgrade-btn:active {
   transform: scale(0.95);
+}
+
+/* Account Divider */
+.account-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 24px 0;
+}
+
+/* Settings Menu */
+.settings-menu-card {
+  background: #1D1E20;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.settings-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settings-menu-item:last-child {
+  border-bottom: none;
+}
+
+.settings-menu-item:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-menu-item.logout .settings-menu-icon,
+.settings-menu-item.logout .settings-menu-text {
+  color: #FF6B6B;
+}
+
+.settings-menu-item.delete .settings-menu-icon,
+.settings-menu-item.delete .settings-menu-text {
+  color: #FF4444;
+}
+
+.settings-menu-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--white);
+}
+
+.settings-menu-text {
+  flex: 1;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--white);
+  text-align: left;
+}
+
+.settings-menu-arrow {
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Delete Account Card */
+.delete-account-card {
+  background: #1D1E20;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+/* Language Popup */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.language-popup {
+  background: #1D1E20;
+  border-radius: 24px 24px 0 0;
+  padding: 12px 20px 40px;
+  width: 100%;
+  max-width: 500px;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.popup-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+.popup-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  margin: 0 0 20px;
+}
+
+.language-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.language-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #252629;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.language-item:active {
+  background: #2A2B2F;
+}
+
+.language-flag {
+  font-size: 24px;
+}
+
+.language-name {
+  flex: 1;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--white);
+  text-align: left;
+}
+
+.language-radio {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.language-radio.selected {
+  border-color: var(--cyan);
+}
+
+.language-radio-inner {
+  width: 12px;
+  height: 12px;
+  background: var(--white);
+  border-radius: 50%;
+}
+
+/* Confirm Popup */
+.confirm-popup {
+  background: #1D1E20;
+  border-radius: 24px 24px 0 0;
+  padding: 12px 20px 40px;
+  width: 100%;
+  max-width: 500px;
+  animation: slideUp 0.3s ease;
+}
+
+.confirm-popup-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+.confirm-popup-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-btn-back {
+  flex: 1;
+  padding: 16px;
+  background: var(--cyan);
+  border: none;
+  border-radius: 50px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.confirm-btn-back:active {
+  opacity: 0.8;
+}
+
+.confirm-btn-yes {
+  flex: 1;
+  padding: 16px;
+  background: #3A3B3F;
+  border: none;
+  border-radius: 50px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--white);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.confirm-btn-yes:active {
+  opacity: 0.8;
+}
+
+/* Notifications */
+.notifications-list {
+  padding-top: 16px;
+}
+
+.notifications-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.notifications-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.notification-item {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #1D1E20;
+  border-radius: 16px;
+  margin-bottom: 8px;
+}
+
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--cyan);
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+  color: var(--white);
+  margin: 0 0 4px;
+}
+
+.notification-time {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Library */

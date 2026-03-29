@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Globe, Bell, HelpCircle, LogOut, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// User's custom icons
 const CHECK_ICON = "/assets/check-icon.png";
 
-// Credits icon SVG (user's custom sparkle)
+// Credits icon SVG
 const CreditsIcon = ({ className, color = "currentColor" }) => (
   <svg viewBox="0 0 1024 1024" fill={color} className={className}>
     <path d="M 498.04 902.32 C487.03,900.01 475.94,891.85 469.24,881.12 C466.30,876.39 464.43,871.45 454.27,841.50 C449.60,827.75 442.50,806.83 438.48,795.00 C434.46,783.17 424.65,754.60 416.68,731.50 C408.71,708.40 399.39,681.40 395.98,671.50 C388.62,650.16 385.22,643.34 378.45,636.41 C370.67,628.43 369.90,628.12 300.00,604.00 C285.98,599.16 263.25,591.29 249.50,586.52 C235.75,581.74 212.35,573.65 197.50,568.54 C161.94,556.30 145.49,550.28 139.99,547.49 C127.63,541.24 116.17,529.21 111.93,518.06 C104.36,498.12 110.23,477.38 127.50,463.09 C139.35,453.28 138.70,453.53 288.34,404.03 C330.05,390.24 366.01,378.02 368.23,376.88 C374.55,373.66 381.40,366.60 384.85,359.76 C386.58,356.32 398.77,321.33 411.93,282.00 C448.35,173.17 459.60,140.54 463.46,132.51 C472.77,113.15 492.48,102.78 514.11,105.84 C532.90,108.49 546.88,120.13 553.76,138.82 C555.11,142.49 572.11,192.83 591.54,250.67 C610.97,308.52 627.63,357.34 628.57,359.17 C631.46,364.83 636.05,369.98 641.39,373.58 C646.67,377.15 663.73,382.97 789.00,424.00 C873.18,451.56 877.75,453.41 890.17,464.84 C907.43,480.74 911.43,504.29 900.21,524.00 C891.35,539.58 880.18,546.86 848.50,557.74 C841.35,560.19 819.30,567.74 799.50,574.52 C691.95,611.32 651.67,625.51 645.98,628.61 C639.57,632.10 632.84,638.77 629.14,645.31 C626.23,650.46 617.93,673.51 600.98,723.50 C589.01,758.79 554.96,857.43 551.01,868.23 C545.18,884.21 537.37,893.59 525.12,899.32 C519.44,901.99 517.22,902.46 509.50,902.63 C504.55,902.74 499.39,902.60 498.04,902.32 Z"/>
@@ -37,6 +36,13 @@ const PencilIcon = ({ className }) => (
   </svg>
 );
 
+// Chevron icon (arrow without line)
+const ChevronIcon = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </svg>
+);
+
 // Plan labels
 const PLAN_CONFIG = {
   free: { label: "Free Plan" },
@@ -45,12 +51,22 @@ const PLAN_CONFIG = {
   creator: { label: "Creator Plan" }
 };
 
+// Languages
+const LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+];
+
 // Get progress bar color based on percentage
 const getProgressColor = (percentage) => {
-  if (percentage === 0) return '#3A3B3F'; // gray
-  if (percentage < 15) return '#FF4444'; // red
-  if (percentage < 30) return '#FFD700'; // yellow
-  return '#01E0FD'; // cyan
+  if (percentage === 0) return '#3A3B3F';
+  if (percentage < 15) return '#FF4444';
+  if (percentage < 30) return '#FFD700';
+  return '#01E0FD';
 };
 
 export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
@@ -59,7 +75,24 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [showLanguagePopup, setShowLanguagePopup] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [showConfirmPopup, setShowConfirmPopup] = useState(null); // 'logout' or 'delete'
+  const [notifications, setNotifications] = useState([]);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await axios.get(`${API}/user/notifications`);
+      setNotifications(response.data.notifications || []);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
 
   const checkUsernameAvailability = async (username) => {
     if (username.length < 3) {
@@ -156,13 +189,34 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
     }
   };
 
+  const handleLanguageSelect = (langCode) => {
+    setSelectedLanguage(langCode);
+    setShowLanguagePopup(false);
+    // TODO: Implement actual language change
+    toast.custom(() => (
+      <div className="custom-toast-success">
+        <img src={CHECK_ICON} alt="" className="toast-icon" />
+        <span>Language changed!</span>
+      </div>
+    ), { duration: 2000 });
+  };
+
+  const handleConfirmAction = () => {
+    if (showConfirmPopup === 'logout') {
+      onLogout();
+    } else if (showConfirmPopup === 'delete') {
+      // TODO: Implement account deletion
+      toast.error("Account deletion not implemented yet");
+    }
+    setShowConfirmPopup(null);
+  };
+
   const userName = user?.username || user?.name || user?.email?.split('@')[0] || 'User';
   const userPlan = user?.plan || 'free';
   const userCredits = user?.credits || 0;
-  const lastDeposit = user?.last_deposit || userCredits || 1; // Prevent division by zero
+  const lastDeposit = user?.last_deposit || userCredits || 1;
   const planConfig = PLAN_CONFIG[userPlan];
   
-  // Calculate progress percentage based on last deposit
   const progressPercentage = lastDeposit > 0 ? Math.round((userCredits / lastDeposit) * 100) : 0;
   const progressColor = getProgressColor(progressPercentage);
 
@@ -207,7 +261,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             <p className="profile-v2-plan">{planConfig.label}</p>
           </div>
           
-          <ChevronRight className="profile-v2-arrow" />
+          <ChevronIcon className="profile-v2-arrow" />
         </button>
 
         {/* Credits Progress Bar */}
@@ -242,6 +296,151 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             Upgrade
           </button>
         </div>
+
+        {/* Divider */}
+        <div className="account-divider" />
+
+        {/* Settings Menu */}
+        <div className="settings-menu-card">
+          <button 
+            className="settings-menu-item"
+            onClick={() => setShowLanguagePopup(true)}
+            data-testid="language-btn"
+          >
+            <Globe className="settings-menu-icon" />
+            <span className="settings-menu-text">Language</span>
+            <ChevronIcon className="settings-menu-arrow" />
+          </button>
+
+          <button 
+            className="settings-menu-item"
+            onClick={() => setActiveView('notifications')}
+            data-testid="notifications-btn"
+          >
+            <Bell className="settings-menu-icon" fill="currentColor" />
+            <span className="settings-menu-text">Notifications</span>
+            <ChevronIcon className="settings-menu-arrow" />
+          </button>
+
+          <button 
+            className="settings-menu-item"
+            onClick={() => {/* TODO: Help & Support */}}
+            data-testid="help-btn"
+          >
+            <HelpCircle className="settings-menu-icon" />
+            <span className="settings-menu-text">Help & Support</span>
+            <ChevronIcon className="settings-menu-arrow" />
+          </button>
+
+          <button 
+            className="settings-menu-item logout"
+            onClick={() => setShowConfirmPopup('logout')}
+            data-testid="logout-btn"
+          >
+            <LogOut className="settings-menu-icon" />
+            <span className="settings-menu-text">Log out</span>
+          </button>
+        </div>
+
+        {/* Delete Account */}
+        <div className="delete-account-card">
+          <button 
+            className="settings-menu-item delete"
+            onClick={() => setShowConfirmPopup('delete')}
+            data-testid="delete-account-btn"
+          >
+            <Trash2 className="settings-menu-icon" />
+            <span className="settings-menu-text">Delete account</span>
+          </button>
+        </div>
+
+        {/* Language Popup */}
+        {showLanguagePopup && (
+          <div className="popup-overlay" onClick={() => setShowLanguagePopup(false)}>
+            <div className="language-popup" onClick={e => e.stopPropagation()}>
+              <div className="popup-handle" />
+              <h3 className="popup-title">Select Language</h3>
+              <div className="language-list">
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    className="language-item"
+                    onClick={() => handleLanguageSelect(lang.code)}
+                  >
+                    <span className="language-flag">{lang.flag}</span>
+                    <span className="language-name">{lang.name}</span>
+                    <div className={`language-radio ${selectedLanguage === lang.code ? 'selected' : ''}`}>
+                      {selectedLanguage === lang.code && <div className="language-radio-inner" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirm Popup */}
+        {showConfirmPopup && (
+          <div className="popup-overlay" onClick={() => setShowConfirmPopup(null)}>
+            <div className="confirm-popup" onClick={e => e.stopPropagation()}>
+              <div className="popup-handle" />
+              <h3 className="confirm-popup-title">Are you sure?</h3>
+              <div className="confirm-popup-buttons">
+                <button 
+                  className="confirm-btn-back"
+                  onClick={() => setShowConfirmPopup(null)}
+                >
+                  No, back
+                </button>
+                <button 
+                  className="confirm-btn-yes"
+                  onClick={handleConfirmAction}
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ============ NOTIFICATIONS VIEW ============
+  if (activeView === 'notifications') {
+    return (
+      <div className="profile-page-v2" data-testid="notifications-page">
+        <div className="profile-v2-header">
+          <button 
+            className="profile-v2-back-btn"
+            onClick={() => setActiveView('main')}
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          
+          <h1 className="profile-v2-title">Notifications</h1>
+          
+          <div className="header-spacer" />
+        </div>
+
+        <div className="notifications-list">
+          {notifications.length === 0 ? (
+            <div className="notifications-empty">
+              <Bell className="notifications-empty-icon" />
+              <p>No notifications yet</p>
+            </div>
+          ) : (
+            notifications.map((notif, index) => (
+              <div key={index} className="notification-item">
+                <div className="notification-dot" />
+                <div className="notification-content">
+                  <p className="notification-text">{notif.message}</p>
+                  <span className="notification-time">{notif.time}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     );
   }
@@ -250,7 +449,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
   if (activeView === 'profile-edit') {
     return (
       <div className="profile-page-v2 edit-view" data-testid="profile-edit-page">
-        {/* Header */}
         <div className="profile-v2-header">
           <button 
             className="profile-v2-back-btn"
@@ -265,7 +463,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           <div className="header-spacer" />
         </div>
 
-        {/* Avatar with edit */}
         <div className="profile-edit-avatar-section">
           <div className="profile-edit-avatar-wrapper">
             <div className="profile-edit-avatar-large">
@@ -292,7 +489,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           </div>
         </div>
 
-        {/* Username input */}
         <div className="profile-edit-form">
           <div className="profile-edit-field">
             <label className="profile-edit-label">Username</label>
@@ -320,17 +516,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             data-testid="profile-save-btn"
           >
             {isSaving ? 'Saving...' : isCheckingUsername ? 'Checking...' : 'Save'}
-          </button>
-        </div>
-
-        {/* Logout */}
-        <div className="profile-logout-section">
-          <button 
-            className="profile-logout-btn"
-            onClick={onLogout}
-            data-testid="logout-btn"
-          >
-            Log out
           </button>
         </div>
       </div>
