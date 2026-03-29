@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, X, Bell } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -9,10 +9,10 @@ const API = `${BACKEND_URL}/api`;
 // User's custom icons
 const CHECK_ICON = "/assets/check-icon.png";
 
-// Credits icon SVG
-const CreditsIcon = ({ className }) => (
-  <svg viewBox="0 0 1024 1024" fill="currentColor" className={className}>
-    <path d="M 498.04 902.32 C487.03,900.01 475.94,891.85 469.24,881.12 C466.30,876.39 464.43,871.45 454.27,841.50 C449.60,827.75 442.50,806.83 438.48,795.00 C434.46,783.17 424.65,754.60 416.68,731.50 C408.71,708.40 399.39,681.40 395.98,671.50 C388.62,650.16 385.22,643.34 378.45,636.41 C370.67,628.43 369.90,628.12 300.00,604.00 C285.98,599.16 263.25,591.29 249.50,586.52 C235.75,581.74 212.35,573.65 197.50,568.54 C161.94,556.30 145.49,550.28 139.99,547.49 C127.63,541.24 116.17,529.21 111.93,518.06 C104.36,498.12 110.23,477.38 127.50,463.09 C139.35,453.28 138.70,453.53 288.34,404.03 C330.05,390.24 366.01,378.02 368.23,376.88 C374.55,373.66 381.40,366.60 384.85,359.76 C386.58,356.32 398.77,321.33 411.93,282.00 C448.35,173.17 459.60,140.54 463.46,132.51 C472.77,113.15 492.48,102.78 514.11,105.84 C532.90,108.49 546.88,120.13 553.76,138.82 C555.11,142.49 572.11,192.83 591.54,250.67 C610.97,308.52 627.63,357.34 628.57,359.17 C631.46,364.83 636.05,369.98 641.39,373.58 C646.67,377.15 663.73,382.97 789.00,424.00 C873.18,451.56 877.75,453.41 890.17,464.84 C907.43,480.74 911.43,504.29 900.21,524.00 C891.35,539.58 880.18,546.86 848.50,557.74 C841.35,560.19 819.30,567.74 799.50,574.52 C691.95,611.32 651.67,625.51 645.98,628.61 C639.57,632.10 632.84,638.77 629.14,645.31 C626.23,650.46 617.93,673.51 600.98,723.50 C589.01,758.79 554.96,857.43 551.01,868.23 C545.18,884.21 537.37,893.59 525.12,899.32 C519.44,901.99 517.22,902.46 509.50,902.63 C504.55,902.74 499.39,902.60 498.04,902.32 Z"/>
+// Star icon SVG (user's custom)
+const StarIcon = ({ className, color = "currentColor" }) => (
+  <svg viewBox="0 0 1024 1024" fill={color} className={className}>
+    <path d="M 258.67 993.43 C241.26,990.72 225.95,985.25 211.01,976.40 C204.99,972.83 200.31,968.92 193.81,962.01 C169.14,935.77 156.00,904.97 156.00,873.36 C156.00,865.24 159.17,845.22 176.47,744.00 C178.96,729.42 183.50,702.88 186.54,685.00 L 192.08 652.50 L 188.29 649.07 C184.55,645.69 149.24,611.40 84.18,547.98 C65.85,530.12 48.33,513.26 45.25,510.51 C34.38,500.84 22.94,484.47 17.61,470.97 C11.40,455.23 10.50,449.96 10.53,429.50 C10.55,408.82 11.24,404.82 18.12,385.32 C28.99,354.50 50.47,330.48 79.19,317.03 C90.04,311.95 99.36,309.44 116.50,306.97 C183.06,297.38 312.90,277.77 314.50,277.07 C315.86,276.47 324.36,260.01 340.96,225.84 C389.84,125.27 408.97,86.81 413.58,79.88 C419.67,70.72 433.22,56.51 442.62,49.44 C462.85,34.22 487.17,26.00 512.00,26.00 C542.23,26.00 569.71,37.28 592.36,59.00 C607.63,73.64 611.35,79.50 632.05,121.50 C651.85,161.68 686.98,233.54 700.12,260.73 C706.28,273.47 708.45,277.07 710.23,277.48 C711.48,277.77 756.60,284.54 810.50,292.53 C864.40,300.51 912.79,308.10 918.04,309.40 C949.67,317.24 975.07,335.24 993.46,362.87 C1005.49,380.93 1010.30,394.88 1011.90,416.28 C1014.01,444.53 1007.47,470.29 992.41,493.09 C984.86,504.53 986.96,502.38 904.99,581.99 C851.21,634.21 833.56,651.31 832.73,652.00 C832.05,652.56 835.92,676.40 849.49,755.50 C865.85,850.81 868.00,864.83 868.00,876.30 C868.00,909.65 856.35,936.89 831.56,961.51 C821.36,971.64 819.55,972.98 808.99,978.22 C785.59,989.81 770.01,993.52 745.00,993.45 C726.14,993.40 718.29,992.09 703.45,986.53 C697.61,984.34 666.44,968.52 627.50,947.96 C622.55,945.35 604.78,936.03 588.00,927.24 C571.22,918.46 547.52,906.04 535.32,899.64 C523.12,893.24 512.66,888.00 512.08,888.00 C511.49,888.00 469.50,909.73 418.76,936.30 C368.02,962.86 324.25,985.54 321.50,986.69 C303.85,994.06 279.50,996.67 258.67,993.43 Z"/>
   </svg>
 );
 
@@ -30,93 +30,29 @@ const PencilIcon = ({ className }) => (
   </svg>
 );
 
-// Plus icon SVG
-const PlusIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <line x1="12" y1="5" x2="12" y2="19"></line>
-    <line x1="5" y1="12" x2="19" y2="12"></line>
-  </svg>
-);
-
-// Plan labels and credits
+// Plan labels
 const PLAN_CONFIG = {
-  free: { label: "Free Plan", maxCredits: 30 },
-  start: { label: "Start Plan", maxCredits: 100 },
-  plus: { label: "Plus Plan", maxCredits: 500 },
-  creator: { label: "Creator Plan", maxCredits: 2000 }
+  free: { label: "Free Plan" },
+  start: { label: "Start Plan" },
+  plus: { label: "Plus Plan" },
+  creator: { label: "Creator Plan" }
+};
+
+// Get progress bar color based on percentage
+const getProgressColor = (percentage) => {
+  if (percentage === 0) return '#3A3B3F'; // gray
+  if (percentage < 15) return '#FF4444'; // red
+  if (percentage < 30) return '#FFD700'; // yellow
+  return '#01E0FD'; // cyan
 };
 
 export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
   const [activeView, setActiveView] = useState('main');
-  const [userVideos, setUserVideos] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [editUsername, setEditUsername] = useState(user?.username || user?.name || '');
   const [isSaving, setIsSaving] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const fileInputRef = useRef(null);
-  
-  // Team state
-  const [teamMembers, setTeamMembers] = useState([]);
-  const [showInvitePopup, setShowInvitePopup] = useState(false);
-  const [inviteUsername, setInviteUsername] = useState('');
-  const [inviteError, setInviteError] = useState('');
-  const [isSendingInvite, setIsSendingInvite] = useState(false);
-  
-  // Notifications state
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  
-  // Swipe popup state
-  const [popupDragY, setPopupDragY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const popupStartY = useRef(0);
-
-  useEffect(() => {
-    fetchUserVideos();
-    fetchTeam();
-    fetchNotifications();
-  }, [user]);
-
-  const fetchUserVideos = async () => {
-    if (!user?.user_id) {
-      setIsLoading(false);
-      return;
-    }
-    
-    try {
-      const response = await axios.get(`${API}/videos/user/${user.user_id}`);
-      setUserVideos(response.data.projects || []);
-    } catch (error) {
-      console.error("Failed to fetch user videos:", error);
-      setUserVideos([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchTeam = async () => {
-    if (!user?.user_id) return;
-    
-    try {
-      const response = await axios.get(`${API}/users/${user.user_id}/team`);
-      setTeamMembers(response.data.team || []);
-    } catch (error) {
-      console.error("Failed to fetch team:", error);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    if (!user?.user_id) return;
-    
-    try {
-      const response = await axios.get(`${API}/users/${user.user_id}/notifications`);
-      setNotifications(response.data.notifications || []);
-      setUnreadCount(response.data.unread_count || 0);
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-    }
-  };
 
   const checkUsernameAvailability = async (username) => {
     if (username.length < 3) {
@@ -213,149 +149,17 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
     }
   };
 
-  const handleSendInvite = async () => {
-    if (inviteUsername.length < 3) return;
-    
-    setIsSendingInvite(true);
-    setInviteError('');
-    
-    try {
-      await axios.post(`${API}/users/${user.user_id}/team/invite`, {
-        username: inviteUsername.trim()
-      });
-      
-      toast.custom(() => (
-        <div className="custom-toast-success">
-          <img src={CHECK_ICON} alt="" className="toast-icon" />
-          <span>Invite sent!</span>
-        </div>
-      ), { duration: 2000 });
-      
-      setShowInvitePopup(false);
-      setInviteUsername('');
-    } catch (error) {
-      console.error("Failed to send invite:", error);
-      setInviteError(error.response?.data?.detail || 'Failed to send invite');
-    } finally {
-      setIsSendingInvite(false);
-    }
-  };
-
-  const handleAcceptInvite = async (inviteId) => {
-    try {
-      await axios.post(`${API}/team/invites/${inviteId}/accept`);
-      fetchNotifications();
-      fetchTeam();
-      toast.custom(() => (
-        <div className="custom-toast-success">
-          <img src={CHECK_ICON} alt="" className="toast-icon" />
-          <span>Joined team!</span>
-        </div>
-      ), { duration: 2000 });
-    } catch (error) {
-      console.error("Failed to accept invite:", error);
-      toast.error("Failed to accept invite");
-    }
-  };
-
-  const handleDeclineInvite = async (inviteId) => {
-    try {
-      await axios.post(`${API}/team/invites/${inviteId}/decline`);
-      fetchNotifications();
-    } catch (error) {
-      console.error("Failed to decline invite:", error);
-    }
-  };
-
-  // Swipe handlers for popup
-  const handlePopupTouchStart = (e) => {
-    popupStartY.current = e.touches[0].clientY;
-    setIsDragging(true);
-  };
-
-  const handlePopupTouchMove = (e) => {
-    if (!isDragging) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - popupStartY.current;
-    if (diff > 0) {
-      setPopupDragY(diff);
-    }
-  };
-
-  const handlePopupTouchEnd = () => {
-    setIsDragging(false);
-    if (popupDragY > 100) {
-      setShowInvitePopup(false);
-    }
-    setPopupDragY(0);
-  };
-
-  const completedVideos = userVideos.filter(v => v.status === 'completed');
   const userName = user?.username || user?.name || user?.email?.split('@')[0] || 'User';
   const userPlan = user?.plan || 'free';
   const userCredits = user?.credits || 0;
+  const lastDeposit = user?.last_deposit || userCredits || 1; // Prevent division by zero
   const planConfig = PLAN_CONFIG[userPlan];
+  
+  // Calculate progress percentage based on last deposit
+  const progressPercentage = lastDeposit > 0 ? Math.round((userCredits / lastDeposit) * 100) : 0;
+  const progressColor = getProgressColor(progressPercentage);
 
-  // ============ NOTIFICATIONS VIEW ============
-  if (activeView === 'notifications') {
-    return (
-      <div className="profile-page-v2" data-testid="notifications-page">
-        <div className="profile-v2-header">
-          <button 
-            className="profile-v2-back-btn"
-            onClick={() => setActiveView('main')}
-            data-testid="notifications-back-btn"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          
-          <h1 className="profile-v2-title">Notifications</h1>
-          
-          <div className="header-spacer" />
-        </div>
-
-        <div className="notifications-list">
-          {notifications.length === 0 ? (
-            <div className="notifications-empty">
-              <p>No notifications yet</p>
-            </div>
-          ) : (
-            notifications.map((notif) => (
-              <div 
-                key={notif.id} 
-                className={`notification-item ${!notif.read ? 'unread' : ''}`}
-                data-testid={`notification-${notif.id}`}
-              >
-                <div className="notification-content">
-                  <p className="notification-title">{notif.title}</p>
-                  <p className="notification-message">{notif.message}</p>
-                </div>
-                
-                {notif.type === 'team_invite' && notif.data?.invite_id && (
-                  <div className="notification-actions">
-                    <button 
-                      className="notif-accept-btn"
-                      onClick={() => handleAcceptInvite(notif.data.invite_id)}
-                    >
-                      Accept
-                    </button>
-                    <button 
-                      className="notif-decline-btn"
-                      onClick={() => handleDeclineInvite(notif.data.invite_id)}
-                    >
-                      Decline
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ============ MAIN PROFILE VIEW ============
+  // ============ MAIN ACCOUNT VIEW ============
   if (activeView === 'main') {
     return (
       <div className="profile-page-v2" data-testid="profile-page">
@@ -369,25 +173,9 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
             <X className="w-5 h-5" />
           </button>
           
-          <h1 className="profile-v2-title">Профиль</h1>
+          <h1 className="profile-v2-title">Account</h1>
           
-          <div className="profile-v2-header-right">
-            <button 
-              className="profile-v2-notif-btn"
-              onClick={() => setActiveView('notifications')}
-              data-testid="notifications-btn"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="notif-badge">{unreadCount}</span>
-              )}
-            </button>
-            
-            <div className="profile-v2-credits">
-              <CreditsIcon className="credits-icon-svg" />
-              <span>{userCredits}</span>
-            </div>
-          </div>
+          <div className="header-spacer" />
         </div>
 
         {/* User Card */}
@@ -415,149 +203,36 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser }) => {
           <ChevronRight className="profile-v2-arrow" />
         </button>
 
-        {/* Team Section */}
-        <div className="profile-section">
-          <h3 className="profile-section-title">Team</h3>
-          <p className="profile-section-subtitle">Create together</p>
-          
-          <div className="team-cards-row">
-            {/* Invite Member Card */}
-            <button 
-              className="team-invite-card"
-              onClick={() => setShowInvitePopup(true)}
-              data-testid="invite-member-btn"
-            >
-              <div className="team-invite-circle">
-                <PlusIcon className="team-plus-icon" />
-              </div>
-              <span className="team-invite-text">Invite member</span>
-            </button>
-            
-            {/* Team Members */}
-            {teamMembers.map((member) => (
-              <div 
-                key={member.id} 
-                className="team-member-card"
-                data-testid={`team-member-${member.member_id}`}
-              >
-                <div className="team-member-avatar">
-                  {member.member_info?.picture ? (
-                    <img src={member.member_info.picture} alt="" />
-                  ) : (
-                    <PersonIcon className="team-member-icon" />
-                  )}
-                </div>
-                <span className="team-member-name">
-                  {member.member_info?.username || member.member_info?.name || 'User'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* My Creations Section */}
-        <div className="profile-section">
-          <h3 className="profile-section-title">My creations</h3>
-          
-          {isLoading ? (
-            <div className="profile-loading">Loading...</div>
-          ) : completedVideos.length > 0 ? (
-            <div className="creations-grid">
-              {completedVideos.map((video) => (
-                <div 
-                  key={video.id} 
-                  className="creation-item"
-                  data-testid={`video-${video.id}`}
-                >
-                  {video.poster_url ? (
-                    <img 
-                      src={`${BACKEND_URL}${video.poster_url}`} 
-                      alt={video.title || 'Video'}
-                      className="creation-thumb"
-                    />
-                  ) : video.video_url ? (
-                    <video 
-                      src={`${BACKEND_URL}${video.video_url}`}
-                      className="creation-thumb"
-                      muted
-                      playsInline
-                    />
-                  ) : (
-                    <div className="creation-placeholder" />
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="creations-empty">
-              <div className="creations-empty-grid">
-                <div className="creation-item-empty top-left" />
-                <div className="creation-item-empty top-right" />
-                <div className="creation-item-empty bottom-left" />
-                <div className="creation-item-empty bottom-right" />
-              </div>
-              <div className="creations-empty-overlay">
-                <p className="creations-empty-text">No videos yet</p>
-                <button 
-                  className="creations-start-btn"
-                  onClick={onBack}
-                  data-testid="start-create-btn"
-                >
-                  Start create!
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Invite Popup */}
-        {showInvitePopup && (
+        {/* Credits Progress Bar */}
+        <div className="credits-progress-container">
           <div 
-            className="invite-popup-overlay"
-            onClick={(e) => e.target === e.currentTarget && setShowInvitePopup(false)}
+            className="credits-progress-inner"
+            style={{ 
+              borderColor: progressColor,
+              borderWidth: '5px',
+              borderStyle: 'solid'
+            }}
           >
-            <div 
-              className="invite-popup"
-              style={{ transform: `translateY(${popupDragY}px)` }}
-              onTouchStart={handlePopupTouchStart}
-              onTouchMove={handlePopupTouchMove}
-              onTouchEnd={handlePopupTouchEnd}
-            >
-              <div className="popup-drag-handle" />
-              
-              <h2 className="invite-popup-title">Invite member</h2>
-              
-              <input
-                type="text"
-                value={inviteUsername}
-                onChange={(e) => {
-                  setInviteUsername(e.target.value);
-                  setInviteError('');
-                }}
-                placeholder="username"
-                className="invite-input"
-                data-testid="invite-username-input"
-              />
-              
-              {inviteError && (
-                <p className="invite-error">{inviteError}</p>
-              )}
-              
-              <button 
-                className={`invite-send-btn ${inviteUsername.length >= 3 ? 'active' : ''}`}
-                onClick={handleSendInvite}
-                disabled={inviteUsername.length < 3 || isSendingInvite}
-                data-testid="send-invite-btn"
-              >
-                {isSendingInvite ? 'Sending...' : 'Send invite'}
-              </button>
-              
-              <p className="invite-hint">
-                Invitations will be sent to users via notifications.
-              </p>
-            </div>
+            <StarIcon className="credits-star-icon" color="#01E0FD" />
+            <span className="credits-amount">{userCredits}</span>
+            <span className="credits-label">credits left</span>
           </div>
-        )}
+        </div>
+
+        {/* Get More Card */}
+        <div className="get-more-card">
+          <div className="get-more-left">
+            <StarIcon className="get-more-star" color="#01E0FD" />
+            <span className="get-more-text">Get more</span>
+          </div>
+          <button 
+            className="get-more-upgrade-btn"
+            onClick={() => {/* TODO: Upgrade flow */}}
+            data-testid="upgrade-btn"
+          >
+            Upgrade
+          </button>
+        </div>
       </div>
     );
   }

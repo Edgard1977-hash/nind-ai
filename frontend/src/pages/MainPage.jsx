@@ -779,7 +779,7 @@ export const MainPage = () => {
       <div className="main-content">
         {/* Heading section */}
         <div className="heading-section">
-          <h1 className="heading-main">Create more better</h1>
+          <h1 className="heading-main">Create better</h1>
           <p className="heading-sub">Make video editing entirely with AI</p>
         </div>
 
