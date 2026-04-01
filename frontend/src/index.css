@@ -265,6 +265,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 120px 16px 32px;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
@@ -905,11 +906,13 @@ body {
 /* Examples section - masonry grid */
 .examples-section-new {
   margin-top: 48px;
+  margin-left: -16px;
+  margin-right: -16px;
   padding: 0;
   padding-bottom: 40px;
   position: relative;
   overflow: hidden;
-  width: 100%;
+  width: calc(100% + 32px);
 }
 
 .examples-section-new .section-title {
@@ -937,7 +940,9 @@ body {
 .examples-carousel-inner {
   display: flex;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 10px 0;
+  padding-left: calc((100% - 75%) / 2);
+  padding-right: calc((100% - 75%) / 2);
   scroll-snap-type: x mandatory;
 }
 
@@ -945,11 +950,7 @@ body {
   flex-shrink: 0;
   width: 75%;
   box-sizing: border-box;
-  scroll-snap-align: start;
-}
-
-.example-card:last-child {
-  margin-right: calc(25% - 28px);
+  scroll-snap-align: center;
 }
 
 .example-card-content {
