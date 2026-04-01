@@ -159,12 +159,20 @@ export const MainPage = () => {
   const handleCarouselTransitionEnd = () => {
     if (exampleIndex === 0) {
       setIsCarouselTransition(false);
-      setExampleIndex(carouselLength);
-      setTimeout(() => setIsCarouselTransition(true), 20);
+      requestAnimationFrame(() => {
+        setExampleIndex(carouselLength);
+        requestAnimationFrame(() => {
+          setIsCarouselTransition(true);
+        });
+      });
     } else if (exampleIndex === carouselLength + 1) {
       setIsCarouselTransition(false);
-      setExampleIndex(1);
-      setTimeout(() => setIsCarouselTransition(true), 20);
+      requestAnimationFrame(() => {
+        setExampleIndex(1);
+        requestAnimationFrame(() => {
+          setIsCarouselTransition(true);
+        });
+      });
     }
   };
 
@@ -1020,7 +1028,7 @@ export const MainPage = () => {
           >
             <div 
               className={`examples-carousel-inner ${!isCarouselTransition ? 'no-transition' : ''}`}
-              style={{ transform: `translateX(calc(-${exampleIndex * 70}% + 15%))` }}
+              style={{ transform: `translateX(calc(-${exampleIndex * 68}%))` }}
               onTransitionEnd={handleCarouselTransitionEnd}
             >
               {infiniteVideos.map((video, idx) => (

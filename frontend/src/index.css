@@ -911,25 +911,32 @@ body {
   width: 100%;
   position: relative;
   touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 3%, black 12%, black 88%, transparent 97%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, transparent 3%, black 12%, black 88%, transparent 97%, transparent 100%);
 }
 
 .examples-carousel-inner {
   display: flex;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .examples-carousel-inner.no-transition {
-  transition: none;
+  transition: none !important;
 }
 
 .example-card {
   flex-shrink: 0;
-  width: 70%;
-  padding: 0 6px;
+  width: 68%;
+  padding: 0 4px;
   box-sizing: border-box;
   transition: transform 0.3s ease, opacity 0.3s ease;
-  opacity: 0.4;
-  transform: scale(0.9);
+  opacity: 0.35;
+  transform: scale(0.88);
+}
+
+.example-card:first-child {
+  margin-left: 16%;
 }
 
 .example-card.active {
