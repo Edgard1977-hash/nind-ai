@@ -911,8 +911,6 @@ body {
   width: 100%;
   position: relative;
   touch-action: pan-y;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 3%, black 12%, black 88%, transparent 97%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, transparent 3%, black 12%, black 88%, transparent 97%, transparent 100%);
 }
 
 .examples-carousel-inner {
@@ -927,16 +925,16 @@ body {
 
 .example-card {
   flex-shrink: 0;
-  width: 68%;
+  width: 82%;
   padding: 0 4px;
   box-sizing: border-box;
   transition: transform 0.3s ease, opacity 0.3s ease;
-  opacity: 0.35;
-  transform: scale(0.88);
+  opacity: 0.3;
+  transform: scale(0.75);
 }
 
 .example-card:first-child {
-  margin-left: 16%;
+  margin-left: 9%;
 }
 
 .example-card.active {
