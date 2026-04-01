@@ -982,24 +982,8 @@ export const MainPage = () => {
           
           <div 
             className="examples-carousel-wrapper"
-            onTouchStart={(e) => {
-              touchStartX.current = e.touches[0].clientX;
-            }}
-            onTouchEnd={(e) => {
-              const diff = touchStartX.current - e.changedTouches[0].clientX;
-              if (Math.abs(diff) > 50) {
-                if (diff > 0) {
-                  handleCarouselNext();
-                } else {
-                  handleCarouselPrev();
-                }
-              }
-            }}
           >
-            <div 
-              className="examples-carousel-inner"
-              style={{ transform: `translateX(calc(-${exampleIndex * 70}%))` }}
-            >
+            <div className="examples-carousel-inner">
               {EXAMPLE_VIDEOS.map((video, idx) => (
                 <div 
                   key={video.id} 
@@ -1018,23 +1002,6 @@ export const MainPage = () => {
                 </div>
               ))}
             </div>
-          </div>
-          
-          <div className="examples-nav-buttons">
-            <button 
-              className={`examples-nav-btn ${exampleIndex === 0 ? 'disabled' : ''}`}
-              onClick={handleCarouselPrev}
-              disabled={exampleIndex === 0}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              className={`examples-nav-btn ${exampleIndex === EXAMPLE_VIDEOS.length - 1 ? 'disabled' : ''}`}
-              onClick={handleCarouselNext}
-              disabled={exampleIndex === EXAMPLE_VIDEOS.length - 1}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
           </div>
           
           <button 
