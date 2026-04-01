@@ -937,9 +937,9 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   padding: 10px 16px;
-  padding-right: 16%;
+  padding-right: 20%;
   scroll-snap-type: x mandatory;
 }
 
@@ -957,7 +957,7 @@ body {
 .example-card-content {
   width: 100%;
   aspect-ratio: 2 / 3;
-  border-radius: 29px;
+  border-radius: 34px;
   overflow: hidden;
   position: relative;
 }
