@@ -938,15 +938,18 @@ body {
   display: flex;
   gap: 12px;
   padding: 10px 16px;
-  padding-right: calc(50% - 32.5% + 16px);
   scroll-snap-type: x mandatory;
 }
 
 .example-card {
   flex-shrink: 0;
-  width: 65%;
+  width: 75%;
   box-sizing: border-box;
-  scroll-snap-align: center;
+  scroll-snap-align: start;
+}
+
+.example-card:last-child {
+  margin-right: calc(25% - 28px);
 }
 
 .example-card-content {
