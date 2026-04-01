@@ -971,10 +971,24 @@ export const MainPage = () => {
           <h2 className="section-title">You can do</h2>
           <p className="section-subtitle">with Slind AI</p>
           
-          <div className="examples-carousel-wrapper">
+          <div 
+            className="examples-carousel-wrapper"
+            onTouchStart={(e) => {
+              examplesCarouselRef.current = e.touches[0].clientX;
+            }}
+            onTouchEnd={(e) => {
+              const diff = examplesCarouselRef.current - e.changedTouches[0].clientX;
+              if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                  setExampleIndex(prev => (prev + 1) % EXAMPLE_VIDEOS.length);
+                } else {
+                  setExampleIndex(prev => prev === 0 ? EXAMPLE_VIDEOS.length - 1 : prev - 1);
+                }
+              }
+            }}
+          >
             <div 
-              className="examples-carousel"
-              ref={examplesCarouselRef}
+              className="examples-carousel-inner"
               style={{ transform: `translateX(calc(-${exampleIndex} * (65% + 12px)))` }}
             >
               {EXAMPLE_VIDEOS.map((video, idx) => (
