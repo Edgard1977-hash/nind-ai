@@ -905,16 +905,14 @@ body {
 /* Examples section - masonry grid */
 .examples-section-new {
   margin-top: 48px;
-  margin-left: -16px;
-  margin-right: -16px;
   padding: 0;
   padding-bottom: 40px;
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
-.examples-section-new .section-title,
-.examples-section-new .section-subtitle {
+.examples-section-new .section-title {
   padding: 0 16px;
 }
 
@@ -940,6 +938,7 @@ body {
   display: flex;
   gap: 12px;
   padding: 10px 16px;
+  padding-right: calc(50% - 32.5% + 16px);
   scroll-snap-type: x mandatory;
 }
 
