@@ -144,6 +144,7 @@ body {
   align-items: center;
   transition: opacity 0.4s ease, transform 0.4s ease;
   height: 68px;
+  overflow: visible;
 }
 
 .logo-container.hidden {
@@ -152,10 +153,10 @@ body {
   pointer-events: none;
 }
 
-.logo-image {
-  height: 68px;
+.logo-svg {
+  height: 40px;
   width: auto;
-  object-fit: contain;
+  fill: var(--white);
 }
 
 .header-overview-text {
@@ -4031,12 +4032,13 @@ body {
 .header-left-logo {
   display: flex;
   align-items: center;
+  overflow: visible;
 }
 
-.header-logo-large {
-  width: 100px;
-  height: auto;
-  object-fit: contain;
+.header-logo-svg {
+  height: 32px;
+  width: auto;
+  fill: var(--white);
 }
 
 .header-right-actions {
