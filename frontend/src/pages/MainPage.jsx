@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, Check } from "lucide-react";
+import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import ProfilePage from "../components/custom/ProfilePage";
@@ -92,6 +92,15 @@ const FORMATS = [
   { id: 8, name: "Story Time", subtitle: "Narrative storytelling", color: "#3A4A4A", videos: [] },
 ];
 
+// Example videos for carousel
+const EXAMPLE_VIDEOS = [
+  { id: 1, title: "Logo Animation", subtitle: "Brand identity motion", color: "#2A3A4A" },
+  { id: 2, title: "Product Promo", subtitle: "E-commerce showcase", color: "#3A2A4A" },
+  { id: 3, title: "Social Reels", subtitle: "Instagram & TikTok", color: "#4A3A2A" },
+  { id: 4, title: "Event Highlights", subtitle: "Memorable moments", color: "#2A4A3A" },
+  { id: 5, title: "Tutorial Video", subtitle: "Step-by-step guide", color: "#3A4A3A" },
+];
+
 export const MainPage = () => {
   const navigate = useNavigate();
   const textareaRef = useRef(null);
@@ -123,6 +132,10 @@ export const MainPage = () => {
   const [popupDragY, setPopupDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const popupStartY = useRef(0);
+
+  // Examples carousel state
+  const [exampleIndex, setExampleIndex] = useState(0);
+  const examplesCarouselRef = useRef(null);
 
   // Animated placeholder state
   const [placeholderText, setPlaceholderText] = useState("");
@@ -953,43 +966,51 @@ export const MainPage = () => {
           </button>
         </div>
 
-        {/* Examples section - masonry grid */}
+        {/* You can do section - carousel */}
         <div className="examples-section-new">
-          <h2 className="section-title">Examples of generation</h2>
+          <h2 className="section-title">You can do</h2>
           <p className="section-subtitle">with Slind AI</p>
           
-          <div className="examples-grid">
-            <div className="examples-column">
-              <div className="example-item portrait">
-                <div className="example-placeholder" />
-              </div>
-              <div className="example-item landscape">
-                <div className="example-placeholder" />
-              </div>
-              <div className="example-item portrait">
-                <div className="example-placeholder" />
-              </div>
-              <div className="example-item landscape">
-                <div className="example-placeholder" />
-              </div>
-            </div>
-            <div className="examples-column">
-              <div className="example-item landscape">
-                <div className="example-placeholder" />
-              </div>
-              <div className="example-item portrait">
-                <div className="example-placeholder" />
-              </div>
-              <div className="example-item landscape">
-                <div className="example-placeholder" />
-              </div>
-              <div className="example-item portrait">
-                <div className="example-placeholder" />
-              </div>
+          <div className="examples-carousel-wrapper">
+            <div 
+              className="examples-carousel"
+              ref={examplesCarouselRef}
+              style={{ transform: `translateX(calc(-${exampleIndex * 72}%))` }}
+            >
+              {EXAMPLE_VIDEOS.map((video, idx) => (
+                <div 
+                  key={video.id} 
+                  className={`example-card ${idx === exampleIndex ? 'active' : ''}`}
+                >
+                  <div 
+                    className="example-card-video"
+                    style={{ backgroundColor: video.color }}
+                  />
+                  <div className="example-card-overlay">
+                    <h3 className="example-card-title">{video.title}</h3>
+                    <p className="example-card-subtitle">{video.subtitle}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
           
-          <div className="examples-fade" />
+          <div className="examples-nav-buttons">
+            <button 
+              className={`examples-nav-btn ${exampleIndex === 0 ? 'disabled' : ''}`}
+              onClick={() => setExampleIndex(prev => Math.max(0, prev - 1))}
+              disabled={exampleIndex === 0}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button 
+              className={`examples-nav-btn ${exampleIndex === EXAMPLE_VIDEOS.length - 1 ? 'disabled' : ''}`}
+              onClick={() => setExampleIndex(prev => Math.min(EXAMPLE_VIDEOS.length - 1, prev + 1))}
+              disabled={exampleIndex === EXAMPLE_VIDEOS.length - 1}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
           
           <button 
             className="start-create-btn"

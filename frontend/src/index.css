@@ -905,6 +905,103 @@ body {
   position: relative;
 }
 
+/* Examples carousel */
+.examples-carousel-wrapper {
+  overflow: hidden;
+  margin: 0 -20px;
+  padding: 0 20px;
+}
+
+.examples-carousel {
+  display: flex;
+  gap: 16px;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 10px 0;
+  padding-left: 15%;
+}
+
+.example-card {
+  flex-shrink: 0;
+  width: 65%;
+  aspect-ratio: 2 / 3;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.example-card.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.example-card-video {
+  width: 100%;
+  height: 100%;
+  background: var(--panel-bg);
+}
+
+.example-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 16px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, transparent 100%);
+}
+
+.example-card-title {
+  font-family: 'Indivisible', 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 4px;
+}
+
+.example-card-subtitle {
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.examples-nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.examples-nav-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2A2B2D;
+  border: none;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.examples-nav-btn:hover:not(.disabled) {
+  background: #3A3B3D;
+}
+
+.examples-nav-btn:active:not(.disabled) {
+  transform: scale(0.95);
+}
+
+.examples-nav-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .examples-grid {
   display: flex;
   gap: 12px;
