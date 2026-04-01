@@ -137,6 +137,7 @@ export const MainPage = () => {
   const [exampleIndex, setExampleIndex] = useState(0);
   const [isCarouselTransition, setIsCarouselTransition] = useState(true);
   const touchStartX = useRef(0);
+  const examplesCarouselRef = useRef(null);
 
   const handleCarouselNext = () => {
     setExampleIndex(prev => Math.min(EXAMPLE_VIDEOS.length - 1, prev + 1));
@@ -523,7 +524,7 @@ export const MainPage = () => {
                       ref={textareaRef}
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder={`Slind AI, ${placeholderText}`}
+                      placeholder={`nind ai, ${placeholderText}`}
                       className="prompt-textarea"
                       rows={2}
                       disabled={isGenerating}
@@ -890,7 +891,7 @@ export const MainPage = () => {
                 ref={textareaRef}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder={`Slind AI, ${placeholderText}`}
+                placeholder={`nind ai, ${placeholderText}`}
                 className="prompt-textarea"
                 rows={2}
                 disabled={isGenerating}
@@ -978,10 +979,10 @@ export const MainPage = () => {
         {/* You can do section - carousel */}
         <div className="examples-section-new">
           <h2 className="section-title">You can do</h2>
-          <p className="section-subtitle">with Slind AI</p>
           
           <div 
             className="examples-carousel-wrapper"
+            ref={examplesCarouselRef}
           >
             <div className="examples-carousel-inner">
               {EXAMPLE_VIDEOS.map((video, idx) => (
@@ -1004,16 +1005,28 @@ export const MainPage = () => {
             </div>
           </div>
           
-          <button 
-            className="start-create-btn"
-            onClick={() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              setTimeout(() => textareaRef.current?.focus(), 500);
-            }}
-            data-testid="start-create-btn"
-          >
-            Start create
-          </button>
+          <div className="examples-nav-buttons-left">
+            <button 
+              className="examples-nav-btn"
+              onClick={() => {
+                if (examplesCarouselRef.current) {
+                  examplesCarouselRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                }
+              }}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button 
+              className="examples-nav-btn"
+              onClick={() => {
+                if (examplesCarouselRef.current) {
+                  examplesCarouselRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+                }
+              }}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 

@@ -900,6 +900,8 @@ body {
 /* Examples section - masonry grid */
 .examples-section-new {
   margin-top: 48px;
+  margin-left: -16px;
+  margin-right: -16px;
   padding: 0;
   padding-bottom: 40px;
   position: relative;
@@ -919,6 +921,7 @@ body {
   touch-action: pan-x;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .examples-carousel-wrapper::-webkit-scrollbar {
@@ -927,31 +930,14 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-}
-
-.examples-carousel-inner.no-transition {
-  transition: none !important;
-}
-
-.examples-carousel-inner.no-transition .example-card {
-  transition: none !important;
+  gap: 12px;
+  padding: 10px 16px;
 }
 
 .example-card {
   flex-shrink: 0;
-  width: 75%;
-  padding: 0 6px;
+  width: 65%;
   box-sizing: border-box;
-}
-
-.example-card:first-child {
-  padding-left: 16px;
-}
-
-.example-card:last-child {
-  padding-right: 16px;
 }
 
 .example-card-content {
@@ -1000,9 +986,17 @@ body {
   margin-top: 20px;
 }
 
+.examples-nav-buttons-left {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 0 16px;
+}
+
 .examples-nav-btn {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #2A2B2D;
   border: none;
