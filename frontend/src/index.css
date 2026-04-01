@@ -917,7 +917,6 @@ body {
   margin-left: -16px;
   position: relative;
   touch-action: pan-y;
-  clip-path: inset(0);
 }
 
 .examples-carousel-inner {
@@ -939,10 +938,8 @@ body {
   width: 70%;
   padding: 0 6px;
   box-sizing: border-box;
-  transition: transform 0.4s ease, opacity 0.4s ease;
-  opacity: 0.4;
-  transform: scale(0.85);
-  transform-origin: center center;
+  transition: opacity 0.4s ease;
+  opacity: 0.5;
 }
 
 .example-card:first-child {
@@ -951,7 +948,6 @@ body {
 
 .example-card.active {
   opacity: 1;
-  transform: scale(1);
 }
 
 .example-card-content {
