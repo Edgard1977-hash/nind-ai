@@ -939,15 +939,14 @@ body {
   padding: 0 6px;
   box-sizing: border-box;
   transition: opacity 0.4s ease;
-  opacity: 0.5;
 }
 
 .example-card:first-child {
-  margin-left: 15%;
+  margin-left: 16px;
 }
 
-.example-card.active {
-  opacity: 1;
+.example-card:last-child {
+  margin-right: 16px;
 }
 
 .example-card-content {

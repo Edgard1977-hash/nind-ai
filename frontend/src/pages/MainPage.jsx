@@ -134,38 +134,16 @@ export const MainPage = () => {
   const popupStartY = useRef(0);
 
   // Examples carousel state
-  const [exampleIndex, setExampleIndex] = useState(1);
+  const [exampleIndex, setExampleIndex] = useState(0);
   const [isCarouselTransition, setIsCarouselTransition] = useState(true);
   const touchStartX = useRef(0);
-  const carouselLength = EXAMPLE_VIDEOS.length;
-
-  // Create infinite array: [last, ...all, first]
-  const infiniteVideos = [
-    EXAMPLE_VIDEOS[EXAMPLE_VIDEOS.length - 1],
-    ...EXAMPLE_VIDEOS,
-    EXAMPLE_VIDEOS[0]
-  ];
 
   const handleCarouselNext = () => {
-    if (!isCarouselTransition) return;
-    setExampleIndex(prev => prev + 1);
+    setExampleIndex(prev => Math.min(EXAMPLE_VIDEOS.length - 1, prev + 1));
   };
 
   const handleCarouselPrev = () => {
-    if (!isCarouselTransition) return;
-    setExampleIndex(prev => prev - 1);
-  };
-
-  const handleCarouselTransitionEnd = () => {
-    if (exampleIndex === 0) {
-      setIsCarouselTransition(false);
-      setExampleIndex(carouselLength);
-      setTimeout(() => setIsCarouselTransition(true), 10);
-    } else if (exampleIndex === carouselLength + 1) {
-      setIsCarouselTransition(false);
-      setExampleIndex(1);
-      setTimeout(() => setIsCarouselTransition(true), 10);
-    }
+    setExampleIndex(prev => Math.max(0, prev - 1));
   };
 
   // Animated placeholder state
@@ -1019,14 +997,13 @@ export const MainPage = () => {
             }}
           >
             <div 
-              className={`examples-carousel-inner ${!isCarouselTransition ? 'no-transition' : ''}`}
+              className="examples-carousel-inner"
               style={{ transform: `translateX(calc(-${exampleIndex * 70}%))` }}
-              onTransitionEnd={handleCarouselTransitionEnd}
             >
-              {infiniteVideos.map((video, idx) => (
+              {EXAMPLE_VIDEOS.map((video, idx) => (
                 <div 
-                  key={`${video.id}-${idx}`} 
-                  className={`example-card ${idx === exampleIndex ? 'active' : ''}`}
+                  key={video.id} 
+                  className="example-card"
                 >
                   <div className="example-card-content">
                     <div 
@@ -1045,14 +1022,16 @@ export const MainPage = () => {
           
           <div className="examples-nav-buttons">
             <button 
-              className="examples-nav-btn"
+              className={`examples-nav-btn ${exampleIndex === 0 ? 'disabled' : ''}`}
               onClick={handleCarouselPrev}
+              disabled={exampleIndex === 0}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button 
-              className="examples-nav-btn"
+              className={`examples-nav-btn ${exampleIndex === EXAMPLE_VIDEOS.length - 1 ? 'disabled' : ''}`}
               onClick={handleCarouselNext}
+              disabled={exampleIndex === EXAMPLE_VIDEOS.length - 1}
             >
               <ChevronRight className="w-5 h-5" />
             </button>
