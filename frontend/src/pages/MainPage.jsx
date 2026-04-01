@@ -1020,7 +1020,7 @@ export const MainPage = () => {
           >
             <div 
               className={`examples-carousel-inner ${!isCarouselTransition ? 'no-transition' : ''}`}
-              style={{ transform: `translateX(calc(-${exampleIndex * 82}%))` }}
+              style={{ transform: `translateX(calc(-${exampleIndex * 70}%))` }}
               onTransitionEnd={handleCarouselTransitionEnd}
             >
               {infiniteVideos.map((video, idx) => (

@@ -900,17 +900,24 @@ body {
 /* Examples section - masonry grid */
 .examples-section-new {
   margin-top: 48px;
-  padding: 0;
+  padding: 0 16px;
   padding-bottom: 40px;
   position: relative;
+}
+
+.examples-section-new .section-title,
+.examples-section-new .section-subtitle {
+  padding: 0;
 }
 
 /* Examples carousel */
 .examples-carousel-wrapper {
   overflow: hidden;
-  width: 100%;
+  width: calc(100% + 32px);
+  margin-left: -16px;
   position: relative;
   touch-action: pan-y;
+  clip-path: inset(0);
 }
 
 .examples-carousel-inner {
@@ -923,18 +930,23 @@ body {
   transition: none !important;
 }
 
+.examples-carousel-inner.no-transition .example-card {
+  transition: none !important;
+}
+
 .example-card {
   flex-shrink: 0;
-  width: 82%;
-  padding: 0 4px;
+  width: 70%;
+  padding: 0 6px;
   box-sizing: border-box;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  opacity: 0.3;
-  transform: scale(0.75);
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  opacity: 0.4;
+  transform: scale(0.85);
+  transform-origin: center center;
 }
 
 .example-card:first-child {
-  margin-left: 9%;
+  margin-left: 15%;
 }
 
 .example-card.active {
