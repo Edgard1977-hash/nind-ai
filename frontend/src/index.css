@@ -903,6 +903,7 @@ body {
   padding: 0 16px;
   padding-bottom: 40px;
   position: relative;
+  overflow: hidden;
 }
 
 .examples-section-new .section-title,
@@ -912,9 +913,8 @@ body {
 
 /* Examples carousel */
 .examples-carousel-wrapper {
-  overflow: hidden;
-  width: calc(100% + 32px);
-  margin-left: -16px;
+  overflow: visible;
+  width: 100%;
   position: relative;
   touch-action: pan-y;
 }
@@ -942,11 +942,11 @@ body {
 }
 
 .example-card:first-child {
-  margin-left: 16px;
+  margin-left: 0;
 }
 
 .example-card:last-child {
-  margin-right: 16px;
+  margin-right: 0;
 }
 
 .example-card-content {
