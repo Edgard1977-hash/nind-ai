@@ -134,36 +134,10 @@ export const MainPage = () => {
   const popupStartY = useRef(0);
 
   // Examples carousel state
-  const [exampleIndex, setExampleIndex] = useState(1); // Start at 1 because of clone
+  const [exampleIndex, setExampleIndex] = useState(1);
   const [isCarouselTransition, setIsCarouselTransition] = useState(true);
   const touchStartX = useRef(0);
   const carouselLength = EXAMPLE_VIDEOS.length;
-
-  // Handle infinite loop reset
-  useEffect(() => {
-    if (!isCarouselTransition) {
-      const timer = setTimeout(() => setIsCarouselTransition(true), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isCarouselTransition]);
-
-  const handleCarouselNext = () => {
-    setExampleIndex(prev => prev + 1);
-  };
-
-  const handleCarouselPrev = () => {
-    setExampleIndex(prev => prev - 1);
-  };
-
-  const handleCarouselTransitionEnd = () => {
-    if (exampleIndex === 0) {
-      setIsCarouselTransition(false);
-      setExampleIndex(carouselLength);
-    } else if (exampleIndex === carouselLength + 1) {
-      setIsCarouselTransition(false);
-      setExampleIndex(1);
-    }
-  };
 
   // Create infinite array: [last, ...all, first]
   const infiniteVideos = [
@@ -171,6 +145,28 @@ export const MainPage = () => {
     ...EXAMPLE_VIDEOS,
     EXAMPLE_VIDEOS[0]
   ];
+
+  const handleCarouselNext = () => {
+    if (!isCarouselTransition) return;
+    setExampleIndex(prev => prev + 1);
+  };
+
+  const handleCarouselPrev = () => {
+    if (!isCarouselTransition) return;
+    setExampleIndex(prev => prev - 1);
+  };
+
+  const handleCarouselTransitionEnd = () => {
+    if (exampleIndex === 0) {
+      setIsCarouselTransition(false);
+      setExampleIndex(carouselLength);
+      setTimeout(() => setIsCarouselTransition(true), 20);
+    } else if (exampleIndex === carouselLength + 1) {
+      setIsCarouselTransition(false);
+      setExampleIndex(1);
+      setTimeout(() => setIsCarouselTransition(true), 20);
+    }
+  };
 
   // Animated placeholder state
   const [placeholderText, setPlaceholderText] = useState("");
@@ -1024,7 +1020,7 @@ export const MainPage = () => {
           >
             <div 
               className={`examples-carousel-inner ${!isCarouselTransition ? 'no-transition' : ''}`}
-              style={{ transform: `translateX(-${exampleIndex * 100}%)` }}
+              style={{ transform: `translateX(calc(-${exampleIndex * 70}% + 15%))` }}
               onTransitionEnd={handleCarouselTransitionEnd}
             >
               {infiniteVideos.map((video, idx) => (
