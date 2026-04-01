@@ -1013,12 +1013,17 @@ export const MainPage = () => {
                   const newIndex = exampleIndex - 1;
                   setExampleIndex(newIndex);
                   if (examplesCarouselRef.current) {
-                    const cardWidth = examplesCarouselRef.current.querySelector('.example-card')?.offsetWidth || 0;
-                    const gap = 12;
-                    examplesCarouselRef.current.scrollTo({ 
-                      left: newIndex * (cardWidth + gap), 
-                      behavior: 'smooth' 
-                    });
+                    const card = examplesCarouselRef.current.querySelectorAll('.example-card')[newIndex];
+                    if (card) {
+                      const containerWidth = examplesCarouselRef.current.offsetWidth;
+                      const cardLeft = card.offsetLeft;
+                      const cardWidth = card.offsetWidth;
+                      const scrollPos = cardLeft - (containerWidth - cardWidth) / 2;
+                      examplesCarouselRef.current.scrollTo({ 
+                        left: scrollPos, 
+                        behavior: 'smooth' 
+                      });
+                    }
                   }
                 }
               }}
@@ -1033,12 +1038,17 @@ export const MainPage = () => {
                   const newIndex = exampleIndex + 1;
                   setExampleIndex(newIndex);
                   if (examplesCarouselRef.current) {
-                    const cardWidth = examplesCarouselRef.current.querySelector('.example-card')?.offsetWidth || 0;
-                    const gap = 12;
-                    examplesCarouselRef.current.scrollTo({ 
-                      left: newIndex * (cardWidth + gap), 
-                      behavior: 'smooth' 
-                    });
+                    const card = examplesCarouselRef.current.querySelectorAll('.example-card')[newIndex];
+                    if (card) {
+                      const containerWidth = examplesCarouselRef.current.offsetWidth;
+                      const cardLeft = card.offsetLeft;
+                      const cardWidth = card.offsetWidth;
+                      const scrollPos = cardLeft - (containerWidth - cardWidth) / 2;
+                      examplesCarouselRef.current.scrollTo({ 
+                        left: scrollPos, 
+                        behavior: 'smooth' 
+                      });
+                    }
                   }
                 }
               }}
