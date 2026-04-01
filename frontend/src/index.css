@@ -906,13 +906,11 @@ body {
 /* Examples section - masonry grid */
 .examples-section-new {
   margin-top: 48px;
-  margin-left: -16px;
-  margin-right: -16px;
   padding: 0;
   padding-bottom: 40px;
   position: relative;
   overflow: hidden;
-  width: calc(100% + 32px);
+  width: 100%;
 }
 
 .examples-section-new .section-title {
@@ -939,9 +937,9 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   padding: 10px 16px;
-  padding-right: calc((100% - 75%) / 2);
+  padding-right: 16%;
   scroll-snap-type: x mandatory;
 }
 
@@ -959,7 +957,7 @@ body {
 .example-card-content {
   width: 100%;
   aspect-ratio: 2 / 3;
-  border-radius: 24px;
+  border-radius: 29px;
   overflow: hidden;
   position: relative;
 }
