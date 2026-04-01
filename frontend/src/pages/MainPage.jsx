@@ -975,7 +975,7 @@ export const MainPage = () => {
             <div 
               className="examples-carousel"
               ref={examplesCarouselRef}
-              style={{ transform: `translateX(calc(-${exampleIndex * 72}%))` }}
+              style={{ transform: `translateX(calc(-${exampleIndex} * (65% + 12px)))` }}
             >
               {EXAMPLE_VIDEOS.map((video, idx) => (
                 <div 
