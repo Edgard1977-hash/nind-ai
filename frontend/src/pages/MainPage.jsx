@@ -822,14 +822,16 @@ export const MainPage = () => {
 
       {/* Main content - scrollable */}
       <div className="main-content">
-        {/* Heading section */}
-        <div className="heading-section">
-          <h1 className="heading-main">{t('createBetter')}</h1>
-          <p className="heading-sub">{t('makeVideoEditing')}</p>
-        </div>
+        {/* Center section - same layout as logged in */}
+        <div className="create-center-section-landing">
+          {/* Heading */}
+          <div className="create-heading">
+            <h1 className="create-title">{t('createBetter')}</h1>
+            <p className="create-subtitle">{t('makeVideoEditing')}</p>
+          </div>
 
-        {/* Input area - centered */}
-        <div className="input-area">
+          {/* Input area */}
+          <div className="create-input-area">
           <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
             {attachments.length > 0 && (
               <div className="attachments-row">
@@ -914,6 +916,7 @@ export const MainPage = () => {
             
             {isUploading && <div className="uploading-border" />}
           </div>
+        </div>
         </div>
 
         {/* How it works section */}
