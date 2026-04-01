@@ -134,8 +134,43 @@ export const MainPage = () => {
   const popupStartY = useRef(0);
 
   // Examples carousel state
-  const [exampleIndex, setExampleIndex] = useState(0);
-  const examplesCarouselRef = useRef(null);
+  const [exampleIndex, setExampleIndex] = useState(1); // Start at 1 because of clone
+  const [isCarouselTransition, setIsCarouselTransition] = useState(true);
+  const touchStartX = useRef(0);
+  const carouselLength = EXAMPLE_VIDEOS.length;
+
+  // Handle infinite loop reset
+  useEffect(() => {
+    if (!isCarouselTransition) {
+      const timer = setTimeout(() => setIsCarouselTransition(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isCarouselTransition]);
+
+  const handleCarouselNext = () => {
+    setExampleIndex(prev => prev + 1);
+  };
+
+  const handleCarouselPrev = () => {
+    setExampleIndex(prev => prev - 1);
+  };
+
+  const handleCarouselTransitionEnd = () => {
+    if (exampleIndex === 0) {
+      setIsCarouselTransition(false);
+      setExampleIndex(carouselLength);
+    } else if (exampleIndex === carouselLength + 1) {
+      setIsCarouselTransition(false);
+      setExampleIndex(1);
+    }
+  };
+
+  // Create infinite array: [last, ...all, first]
+  const infiniteVideos = [
+    EXAMPLE_VIDEOS[EXAMPLE_VIDEOS.length - 1],
+    ...EXAMPLE_VIDEOS,
+    EXAMPLE_VIDEOS[0]
+  ];
 
   // Animated placeholder state
   const [placeholderText, setPlaceholderText] = useState("");
@@ -974,35 +1009,38 @@ export const MainPage = () => {
           <div 
             className="examples-carousel-wrapper"
             onTouchStart={(e) => {
-              examplesCarouselRef.current = e.touches[0].clientX;
+              touchStartX.current = e.touches[0].clientX;
             }}
             onTouchEnd={(e) => {
-              const diff = examplesCarouselRef.current - e.changedTouches[0].clientX;
+              const diff = touchStartX.current - e.changedTouches[0].clientX;
               if (Math.abs(diff) > 50) {
                 if (diff > 0) {
-                  setExampleIndex(prev => (prev + 1) % EXAMPLE_VIDEOS.length);
+                  handleCarouselNext();
                 } else {
-                  setExampleIndex(prev => prev === 0 ? EXAMPLE_VIDEOS.length - 1 : prev - 1);
+                  handleCarouselPrev();
                 }
               }
             }}
           >
             <div 
-              className="examples-carousel-inner"
-              style={{ transform: `translateX(calc(-${exampleIndex} * (65% + 12px)))` }}
+              className={`examples-carousel-inner ${!isCarouselTransition ? 'no-transition' : ''}`}
+              style={{ transform: `translateX(-${exampleIndex * 100}%)` }}
+              onTransitionEnd={handleCarouselTransitionEnd}
             >
-              {EXAMPLE_VIDEOS.map((video, idx) => (
+              {infiniteVideos.map((video, idx) => (
                 <div 
-                  key={video.id} 
+                  key={`${video.id}-${idx}`} 
                   className={`example-card ${idx === exampleIndex ? 'active' : ''}`}
                 >
-                  <div 
-                    className="example-card-video"
-                    style={{ backgroundColor: video.color }}
-                  />
-                  <div className="example-card-overlay">
-                    <h3 className="example-card-title">{video.title}</h3>
-                    <p className="example-card-subtitle">{video.subtitle}</p>
+                  <div className="example-card-content">
+                    <div 
+                      className="example-card-video"
+                      style={{ backgroundColor: video.color }}
+                    />
+                    <div className="example-card-overlay">
+                      <h3 className="example-card-title">{video.title}</h3>
+                      <p className="example-card-subtitle">{video.subtitle}</p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1012,13 +1050,13 @@ export const MainPage = () => {
           <div className="examples-nav-buttons">
             <button 
               className="examples-nav-btn"
-              onClick={() => setExampleIndex(prev => prev === 0 ? EXAMPLE_VIDEOS.length - 1 : prev - 1)}
+              onClick={handleCarouselPrev}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button 
               className="examples-nav-btn"
-              onClick={() => setExampleIndex(prev => prev === EXAMPLE_VIDEOS.length - 1 ? 0 : prev + 1)}
+              onClick={handleCarouselNext}
             >
               <ChevronRight className="w-5 h-5" />
             </button>

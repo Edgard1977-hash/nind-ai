@@ -915,27 +915,30 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 12px;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 10px 0;
-  padding-left: 17.5%;
+}
+
+.examples-carousel-inner.no-transition {
+  transition: none;
 }
 
 .example-card {
   flex-shrink: 0;
-  width: 65%;
+  width: 100%;
+  padding: 0 12.5%;
+  box-sizing: border-box;
+}
+
+.example-card-content {
+  width: 100%;
   aspect-ratio: 2 / 3;
   border-radius: 24px;
   overflow: hidden;
   position: relative;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  opacity: 0.5;
-  transform: scale(0.9);
 }
 
-.example-card.active {
+.example-card.active .example-card-content {
   opacity: 1;
-  transform: scale(1);
 }
 
 .example-card-video {
@@ -950,7 +953,7 @@ body {
   left: 0;
   right: 0;
   padding: 24px 16px 16px;
-  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
 }
 
 .example-card-title {
