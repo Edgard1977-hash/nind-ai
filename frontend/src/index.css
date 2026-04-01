@@ -911,6 +911,7 @@ body {
   position: relative;
   overflow: hidden;
   width: 100%;
+  max-width: 100vw;
 }
 
 .examples-section-new .section-title {
@@ -937,15 +938,15 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 24px;
+  gap: 28px;
   padding: 10px 16px;
-  padding-right: 20%;
+  padding-right: 18%;
   scroll-snap-type: x mandatory;
 }
 
 .example-card {
   flex-shrink: 0;
-  width: 75%;
+  width: 80%;
   box-sizing: border-box;
   scroll-snap-align: center;
 }
