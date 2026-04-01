@@ -1007,24 +1007,44 @@ export const MainPage = () => {
           
           <div className="examples-nav-buttons-left">
             <button 
-              className="examples-nav-btn"
+              className={`examples-nav-btn ${exampleIndex === 0 ? 'disabled' : ''}`}
               onClick={() => {
-                if (examplesCarouselRef.current) {
-                  examplesCarouselRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                if (exampleIndex > 0) {
+                  const newIndex = exampleIndex - 1;
+                  setExampleIndex(newIndex);
+                  if (examplesCarouselRef.current) {
+                    const cardWidth = examplesCarouselRef.current.querySelector('.example-card')?.offsetWidth || 0;
+                    const gap = 12;
+                    examplesCarouselRef.current.scrollTo({ 
+                      left: newIndex * (cardWidth + gap), 
+                      behavior: 'smooth' 
+                    });
+                  }
                 }
               }}
+              disabled={exampleIndex === 0}
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-6 h-6" />
             </button>
             <button 
-              className="examples-nav-btn"
+              className={`examples-nav-btn ${exampleIndex === EXAMPLE_VIDEOS.length - 1 ? 'disabled' : ''}`}
               onClick={() => {
-                if (examplesCarouselRef.current) {
-                  examplesCarouselRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+                if (exampleIndex < EXAMPLE_VIDEOS.length - 1) {
+                  const newIndex = exampleIndex + 1;
+                  setExampleIndex(newIndex);
+                  if (examplesCarouselRef.current) {
+                    const cardWidth = examplesCarouselRef.current.querySelector('.example-card')?.offsetWidth || 0;
+                    const gap = 12;
+                    examplesCarouselRef.current.scrollTo({ 
+                      left: newIndex * (cardWidth + gap), 
+                      behavior: 'smooth' 
+                    });
+                  }
                 }
               }}
+              disabled={exampleIndex === EXAMPLE_VIDEOS.length - 1}
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-6 h-6" />
             </button>
           </div>
         </div>
