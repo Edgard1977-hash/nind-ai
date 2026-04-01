@@ -920,6 +920,7 @@ body {
   padding-bottom: 40px;
   position: relative;
   overflow: hidden;
+  clip-path: inset(0);
 }
 
 .examples-section-new .section-title {
@@ -937,6 +938,7 @@ body {
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
+  clip-path: inset(0);
 }
 
 .examples-carousel-wrapper::-webkit-scrollbar {
@@ -947,7 +949,7 @@ body {
   display: flex;
   gap: 28px;
   padding: 10px 16px;
-  padding-right: 18%;
+  padding-right: 10%;
   scroll-snap-type: x mandatory;
 }
 
