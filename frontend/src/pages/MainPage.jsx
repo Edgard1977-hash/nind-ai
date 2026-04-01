@@ -221,7 +221,7 @@ export const MainPage = () => {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0, rootMargin: '50px 0px 0px 0px' }
     );
 
     const titles = document.querySelectorAll('.section-title, .section-subtitle');

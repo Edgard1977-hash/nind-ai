@@ -281,7 +281,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 0 12px;
-  padding-bottom: 80px;
+  padding-bottom: 140px;
 }
 
 .create-center-section-landing .create-heading {
@@ -824,7 +824,7 @@ body {
 
 /* How it works section */
 .how-section {
-  margin-top: 180px;
+  margin-top: 80px;
   padding: 0;
 }
 
@@ -841,7 +841,7 @@ body {
 
 /* Formats section - grid */
 .formats-section-new {
-  margin-top: 48px;
+  margin-top: 32px;
   padding: 0;
 }
 
