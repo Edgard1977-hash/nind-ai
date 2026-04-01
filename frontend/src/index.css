@@ -37,6 +37,7 @@
 
 html {
   overflow-x: hidden;
+  max-width: 100vw;
 }
 
 body {
@@ -47,6 +48,7 @@ body {
   color: var(--white);
   overflow-x: hidden;
   max-width: 100vw;
+  width: 100%;
 }
 
 /* ===== MAIN PAGE ===== */
@@ -58,6 +60,7 @@ body {
   position: relative;
   overflow-x: hidden;
   max-width: 100vw;
+  width: 100%;
 }
 
 /* Background */
@@ -946,7 +949,7 @@ body {
 
 .example-card {
   flex-shrink: 0;
-  width: 85%;
+  width: 90%;
   box-sizing: border-box;
   scroll-snap-align: center;
 }
