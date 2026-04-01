@@ -946,7 +946,7 @@ body {
 
 .example-card {
   flex-shrink: 0;
-  width: 80%;
+  width: 85%;
   box-sizing: border-box;
   scroll-snap-align: center;
 }
