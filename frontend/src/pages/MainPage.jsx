@@ -997,16 +997,14 @@ export const MainPage = () => {
           
           <div className="examples-nav-buttons">
             <button 
-              className={`examples-nav-btn ${exampleIndex === 0 ? 'disabled' : ''}`}
-              onClick={() => setExampleIndex(prev => Math.max(0, prev - 1))}
-              disabled={exampleIndex === 0}
+              className="examples-nav-btn"
+              onClick={() => setExampleIndex(prev => prev === 0 ? EXAMPLE_VIDEOS.length - 1 : prev - 1)}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button 
-              className={`examples-nav-btn ${exampleIndex === EXAMPLE_VIDEOS.length - 1 ? 'disabled' : ''}`}
-              onClick={() => setExampleIndex(prev => Math.min(EXAMPLE_VIDEOS.length - 1, prev + 1))}
-              disabled={exampleIndex === EXAMPLE_VIDEOS.length - 1}
+              className="examples-nav-btn"
+              onClick={() => setExampleIndex(prev => prev === EXAMPLE_VIDEOS.length - 1 ? 0 : prev + 1)}
             >
               <ChevronRight className="w-5 h-5" />
             </button>
