@@ -768,28 +768,6 @@ body {
   margin-top: 16px;
 }
 
-.examples-nav-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--white);
-  transition: all 0.2s ease;
-}
-
-.examples-nav-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.examples-nav-btn:active {
-  transform: scale(0.95);
-}
-
 /* About Section */
 .about-section {
   margin-top: 48px;
@@ -840,7 +818,7 @@ body {
 
 /* How it works section */
 .how-section {
-  margin-top: 80px;
+  margin-top: 48px;
   padding: 0;
 }
 
@@ -955,9 +933,16 @@ body {
 .examples-carousel-inner {
   display: flex;
   gap: 20px;
-  padding: 10px 32px 10px 16px;
+  padding: 10px 16px;
+  padding-right: calc(16px + 16px);
   scroll-snap-type: x mandatory;
   background: var(--bg-main);
+}
+
+.examples-carousel-inner::after {
+  content: '';
+  flex-shrink: 0;
+  width: 1px;
 }
 
 .example-card {
