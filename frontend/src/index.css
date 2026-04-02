@@ -945,6 +945,7 @@ body {
   scroll-behavior: smooth;
   clip-path: inset(0);
   background: var(--bg-main);
+  scroll-padding-left: 16px;
 }
 
 .examples-carousel-wrapper::-webkit-scrollbar {
