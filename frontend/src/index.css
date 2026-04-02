@@ -85,7 +85,7 @@ body {
   right: 0;
   top: 120px;
   height: 500px;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   opacity: 0;
   mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 70%, transparent 100%);
@@ -195,7 +195,7 @@ body {
 
 .get-started-btn {
   padding: 10px 20px;
-  background: #01E0FD;
+  background: #FFFFFF;
   color: #000;
   border: none;
   border-radius: 19px;
@@ -277,7 +277,6 @@ body {
   padding: 120px 16px 32px;
   overflow-x: hidden;
   overflow-y: auto;
-  background: var(--bg-main);
 }
 
 /* Heading section */
@@ -946,6 +945,7 @@ body {
   clip-path: inset(0);
   background: var(--bg-main);
   scroll-padding-left: 16px;
+  scroll-padding-right: 16px;
 }
 
 .examples-carousel-wrapper::-webkit-scrollbar {
@@ -954,8 +954,8 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 20px;
+  padding: 10px 32px 10px 16px;
   scroll-snap-type: x mandatory;
   background: var(--bg-main);
 }
@@ -1027,8 +1027,8 @@ body {
 }
 
 .examples-nav-btn {
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: #2A2B2D;
   border: none;
@@ -1037,16 +1037,12 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .examples-nav-btn.disabled {
   opacity: 0.3;
   cursor: not-allowed;
-}
-
-.examples-nav-btn:hover:not(.disabled) {
-  background: #3A3B3D;
 }
 
 .examples-nav-btn:active:not(.disabled) {
