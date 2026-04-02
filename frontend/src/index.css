@@ -833,10 +833,92 @@ body {
   background: var(--panel-bg);
 }
 
-/* Formats section - grid */
+/* Formats section - horizontal scroll */
 .formats-section-new {
   margin-top: 32px;
   padding: 0;
+}
+
+.formats-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.formats-header-row .section-title {
+  margin: 0;
+}
+
+.see-all-btn-small {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--white);
+  border: none;
+  border-radius: 20px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.see-all-btn-small:active {
+  opacity: 0.7;
+}
+
+.formats-carousel-wrapper {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+.formats-carousel-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.formats-carousel-inner {
+  display: flex;
+  gap: 12px;
+  padding-right: 16px;
+}
+
+.format-card-carousel {
+  flex-shrink: 0;
+  width: 140px;
+  aspect-ratio: 3 / 4;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.format-card-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--card-bg);
+}
+
+.format-card-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+}
+
+.format-card-name {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
 }
 
 .formats-grid {
@@ -1022,21 +1104,15 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .examples-nav-btn.disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .examples-nav-btn:active:not(.disabled) {
   transform: scale(0.95);
-}
-
-.examples-nav-btn.disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 .examples-grid {

@@ -950,30 +950,33 @@ export const MainPage = () => {
           </div>
         </div>
 
-        {/* Formats section - grid */}
+        {/* Formats section - horizontal scroll */}
         <div className="formats-section-new">
-          <h2 className="section-title">Formats</h2>
-          <p className="section-subtitle">Find an idea faster</p>
-          
-          <div className="formats-grid">
-            {FORMATS.slice(0, 8).map((format) => (
-              <div key={format.id} className="format-card-new">
-                <div 
-                  className="format-preview-new"
-                  style={{ backgroundColor: format.color }}
-                />
-                <span className="format-name-new">{format.name}</span>
-              </div>
-            ))}
+          <div className="formats-header-row">
+            <h2 className="section-title">Formats</h2>
+            <button 
+              className="see-all-btn-small"
+              onClick={() => navigate('/formats')}
+              data-testid="see-all-btn"
+            >
+              {t('seeAll')}
+            </button>
           </div>
           
-          <button 
-            className="see-all-btn"
-            onClick={() => navigate('/formats')}
-            data-testid="see-all-btn"
-          >
-            {t('seeAll')}
-          </button>
+          <div className="formats-carousel-wrapper">
+            <div className="formats-carousel-inner">
+              {FORMATS.slice(0, 8).map((format) => (
+                <div key={format.id} className="format-card-carousel">
+                  <div 
+                    className="format-card-bg"
+                    style={{ backgroundColor: format.color }}
+                  />
+                  <div className="format-card-gradient" />
+                  <span className="format-card-name">{format.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* You can do section - carousel */}
