@@ -950,19 +950,19 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 28px;
-  padding: 10px 16px;
-  padding-right: 10%;
+  gap: 16px;
+  padding: 10px 0;
   scroll-snap-type: x mandatory;
   background: var(--bg-main);
 }
 
 .example-card {
   flex-shrink: 0;
-  width: 90%;
+  width: 100%;
   box-sizing: border-box;
   scroll-snap-align: center;
   background: var(--bg-main);
+  padding: 0 16px;
 }
 
 .example-card:first-child {
