@@ -999,7 +999,7 @@ body {
   aspect-ratio: 16 / 9;
   padding: 20px;
   background: #1D1E20;
-  border-radius: 26px;
+  border-radius: 29px;
   position: relative;
   overflow: hidden;
 }
@@ -1050,11 +1050,11 @@ body {
 }
 
 .start-create-btn {
-  width: calc(100% - 24px);
-  max-width: 366px;
+  width: calc(100% - 16px);
+  max-width: 374px;
   padding: 16px;
-  background: #FFFFFF;
-  color: #000;
+  background: #1D1E20;
+  color: #FFFFFF;
   border: none;
   border-radius: 26px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
@@ -1182,7 +1182,7 @@ body {
 
 .examples-nav-buttons-left {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
   gap: 10px;
   margin-top: 16px;
   padding: 0 16px;
