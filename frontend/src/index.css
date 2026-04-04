@@ -1050,8 +1050,8 @@ body {
 }
 
 .start-create-btn {
-  width: calc(100% - 32px);
-  max-width: 358px;
+  width: calc(100% - 24px);
+  max-width: 366px;
   padding: 16px;
   background: #FFFFFF;
   color: #000;
