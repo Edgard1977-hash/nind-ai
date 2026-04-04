@@ -983,7 +983,7 @@ body {
 
 .discover-tool-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   padding: 20px;
   background: #1D1E20;
@@ -993,12 +993,13 @@ body {
 }
 
 .discover-tool-icon {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 2px;
 }
 
 .discover-tool-icon svg {
@@ -1010,8 +1011,7 @@ body {
 .discover-tool-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  justify-content: center;
+  gap: 4px;
 }
 
 .discover-tool-title {
