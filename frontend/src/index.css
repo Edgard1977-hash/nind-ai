@@ -1032,7 +1032,7 @@ body {
 .example-card-content {
   width: 100%;
   aspect-ratio: 3 / 4;
-  border-radius: 34px;
+  border-radius: 39px;
   overflow: hidden;
   position: relative;
 }

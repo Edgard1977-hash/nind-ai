@@ -944,7 +944,7 @@ export const MainPage = () => {
 
         {/* How it works section */}
         <div className="how-section">
-          <h2 className="section-title">How Slind AI works?</h2>
+          <h2 className="section-title">Explore nind ai</h2>
           <div className="how-video-wrapper">
             <div className="how-video-placeholder" />
           </div>
