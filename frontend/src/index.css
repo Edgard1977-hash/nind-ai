@@ -983,11 +983,11 @@ body {
 
 .discover-tool-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
   padding: 20px;
   background: #1D1E20;
-  border-radius: 34px;
+  border-radius: 30px;
   position: relative;
   overflow: hidden;
 }
@@ -1011,14 +1011,16 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-top: 4px;
 }
 
 .discover-tool-title {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: #FFFFFF;
+  background: linear-gradient(180deg, #FFFFFF 0%, #DBDBDB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .discover-tool-subtitle {
@@ -1026,7 +1028,6 @@ body {
   font-size: 15px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
-  margin-top: 2px;
 }
 
 /* Bottom fade gradient with button */
@@ -1044,7 +1045,7 @@ body {
 }
 
 .start-create-btn {
-  padding: 14px 32px;
+  padding: 14px 48px;
   background: #FFFFFF;
   color: #000;
   border: none;
