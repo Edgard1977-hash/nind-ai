@@ -976,33 +976,44 @@ body {
 
 .discover-tools-grid {
   display: flex;
-  flex-direction: column;
   gap: 12px;
-  padding-bottom: 80px;
+  padding-bottom: 100px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.discover-tools-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .discover-tool-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 24px;
+  flex-shrink: 0;
+  width: 280px;
+  aspect-ratio: 16 / 9;
   padding: 20px;
   background: #1D1E20;
   border-radius: 26px;
   position: relative;
   overflow: hidden;
-  min-height: 120px;
 }
 
 .discover-tool-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .discover-tool-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1010,14 +1021,14 @@ body {
 }
 
 .discover-tool-icon svg {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   fill: #DBDBDB;
 }
 
 .discover-tool-title {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   background: linear-gradient(180deg, #FFFFFF 0%, #DBDBDB 100%);
   -webkit-background-clip: text;
@@ -1027,7 +1038,7 @@ body {
 
 .discover-tool-subtitle {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
 }
@@ -1036,27 +1047,30 @@ body {
 .discover-tools-fade {
   position: absolute;
   bottom: 0;
-  left: -16px;
-  right: -16px;
+  left: 0;
+  right: 0;
   height: 200px;
   background: linear-gradient(to top, var(--bg-main) 50%, transparent 100%);
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
   padding-bottom: 20px;
+  pointer-events: none;
 }
 
 .start-create-btn {
-  padding: 12px 24px;
+  padding: 10px 20px;
   background: #FFFFFF;
   color: #000;
   border: none;
-  border-radius: 20px;
+  border-radius: 18px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: auto;
 }
 
 .start-create-btn:active {
@@ -1246,31 +1260,6 @@ body {
   height: 150px;
   background: linear-gradient(to bottom, transparent 0%, var(--bg-main) 100%);
   pointer-events: none;
-}
-
-.start-create-btn {
-  position: relative;
-  width: 100%;
-  padding: 14px;
-  background: #1D1E20;
-  color: var(--white);
-  border: none;
-  border-radius: 21px;
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  margin-top: 16px;
-  z-index: 2;
-}
-
-.start-create-btn:hover {
-  opacity: 0.9;
-}
-
-.start-create-btn:active {
-  transform: scale(0.98);
 }
 
 /* ===== END NEW SECTIONS ===== */
