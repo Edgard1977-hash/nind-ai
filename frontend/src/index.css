@@ -983,52 +983,47 @@ body {
 
 .discover-tool-card {
   display: flex;
-  flex-direction: column;
-  padding: 18px 20px;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
   background: #1D1E20;
-  border-radius: 24px;
+  border-radius: 34px;
   position: relative;
   overflow: hidden;
 }
 
-.discover-tool-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .discover-tool-icon {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #DBDBDB;
-  margin-bottom: 4px;
 }
 
 .discover-tool-icon svg {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
 }
 
 .discover-tool-text {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding-top: 4px;
 }
 
 .discover-tool-title {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: #FFFFFF;
 }
 
 .discover-tool-subtitle {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
   margin-top: 2px;
@@ -4738,6 +4733,57 @@ body {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 20px;
+}
+
+/* Formats grid for logged-in view - same style as logged-out */
+.formats-grid-logged {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.format-card-carousel-btn {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 33px;
+  overflow: hidden;
+  position: relative;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.format-card-carousel-btn:active {
+  transform: scale(0.98);
+}
+
+.format-card-carousel-btn .format-card-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--card-bg);
+}
+
+.format-card-carousel-btn .format-card-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+}
+
+.format-card-carousel-btn .format-card-name {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  text-align: left;
 }
 
 .format-card-horizontal {

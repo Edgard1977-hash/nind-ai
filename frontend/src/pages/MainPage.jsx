@@ -604,22 +604,20 @@ export const MainPage = () => {
               <div className="bottom-panel-content">
                 {activeMainTab === 'Formats' ? (
                   <>
-                    <div className="formats-list-horizontal">
-                      {FORMATS.slice(0, 6).map((format) => (
+                    <div className="formats-grid-logged">
+                      {FORMATS.slice(0, 8).map((format) => (
                         <button 
                           key={format.id}
-                          className="format-card-horizontal"
+                          className="format-card-carousel-btn"
                           onClick={() => handleSelectFormat(format)}
                           data-testid={`create-format-${format.id}`}
                         >
                           <div 
-                            className="format-card-thumb"
+                            className="format-card-bg"
                             style={{ backgroundColor: format.color }}
                           />
-                          <div className="format-card-info">
-                            <span className="format-card-title">{format.name}</span>
-                            <span className="format-card-subtitle">{format.subtitle}</span>
-                          </div>
+                          <div className="format-card-gradient" />
+                          <span className="format-card-name">{format.name}</span>
                         </button>
                       ))}
                     </div>
