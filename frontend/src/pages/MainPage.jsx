@@ -900,28 +900,27 @@ export const MainPage = () => {
             <div className="input-bottom-row">
               <button 
                 className="input-icon-btn"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => navigate('/auth')}
                 data-testid="attach-button"
               >
                 <Plus className="w-5 h-5" />
               </button>
 
               <div className="input-bottom-right">
-                <button className="input-icon-btn" data-testid="mic-button">
+                <button 
+                  className="input-icon-btn" 
+                  onClick={() => navigate('/auth')}
+                  data-testid="mic-button"
+                >
                   <MicIcon className="w-5 h-5" />
                 </button>
                 
                 <button 
                   className={`send-button ${prompt.trim() || attachments.length > 0 ? "active" : ""}`}
-                  onClick={handleSubmit}
-                  disabled={isGenerating || (!prompt.trim() && attachments.length === 0)}
+                  onClick={() => navigate('/auth')}
                   data-testid="send-button"
                 >
-                  {isGenerating ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <ArrowUp className="w-5 h-5" />
-                  )}
+                  <ArrowUp className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -1120,7 +1119,7 @@ export const MainPage = () => {
           
           {/* Bottom gradient overlay with button */}
           <div className="discover-tools-fade">
-            <button className="start-create-btn" onClick={() => setShowAuth(true)}>
+            <button className="start-create-btn" onClick={() => navigate('/auth')}>
               Start create
             </button>
           </div>
