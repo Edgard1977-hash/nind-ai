@@ -963,6 +963,89 @@ body {
   transform: scale(0.98);
 }
 
+/* Discover tools section */
+.discover-tools-section {
+  margin-top: 48px;
+  padding: 0;
+}
+
+.discover-tools-section .section-title {
+  margin-bottom: 16px;
+}
+
+.discover-tools-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.discover-tool-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: #1D1E20;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.discover-tool-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #DBDBDB;
+}
+
+.discover-tool-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.discover-tool-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.discover-tool-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.discover-tool-subtitle {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.discover-tool-card.with-overlay .discover-tool-icon,
+.discover-tool-card.with-overlay .discover-tool-text {
+  opacity: 0.4;
+}
+
+.discover-tool-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.discover-tool-overlay span {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
 /* Examples section - masonry grid */
 .examples-section-new {
   margin-top: 48px;

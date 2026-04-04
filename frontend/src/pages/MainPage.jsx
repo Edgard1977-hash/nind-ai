@@ -950,35 +950,6 @@ export const MainPage = () => {
           </div>
         </div>
 
-        {/* Formats section - horizontal scroll */}
-        <div className="formats-section-new">
-          <div className="formats-header-row">
-            <h2 className="section-title">Formats</h2>
-            <button 
-              className="see-all-btn-small"
-              onClick={() => navigate('/formats')}
-              data-testid="see-all-btn"
-            >
-              {t('seeAll')}
-            </button>
-          </div>
-          
-          <div className="formats-carousel-wrapper">
-            <div className="formats-carousel-inner">
-              {FORMATS.slice(0, 8).map((format) => (
-                <div key={format.id} className="format-card-carousel">
-                  <div 
-                    className="format-card-bg"
-                    style={{ backgroundColor: format.color }}
-                  />
-                  <div className="format-card-gradient" />
-                  <span className="format-card-name">{format.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* You can do section - carousel */}
         <div className="examples-section-new">
           <h2 className="section-title">You can do</h2>
@@ -1059,6 +1030,97 @@ export const MainPage = () => {
             >
               <ChevronRight className="w-6 h-6" />
             </button>
+          </div>
+        </div>
+
+        {/* Discover tools section */}
+        <div className="discover-tools-section">
+          <h2 className="section-title">Discover tools</h2>
+          
+          <div className="discover-tools-grid">
+            {/* AI Speech */}
+            <div className="discover-tool-card">
+              <div className="discover-tool-icon">
+                <svg viewBox="0 0 875 875" fill="currentColor">
+                  <path d="M 342.54 740.95 C332.97,739.46 322.83,734.03 315.04,726.24 C311.32,722.53 307.06,717.07 305.56,714.12 C299.73,702.61 300.03,717.98 300.03,438.50 C300.03,187.70 300.08,181.31 301.97,173.82 C306.25,156.81 318.08,143.36 333.57,137.87 C340.97,135.26 353.66,134.37 361.22,135.94 C380.10,139.86 397.36,157.63 400.98,176.89 C402.39,184.36 402.39,693.68 400.98,701.11 C398.73,712.96 390.11,725.68 379.26,733.16 C369.45,739.92 355.26,742.93 342.54,740.95 ZM 519.16 635.84 C498.66,633.46 482.01,619.55 475.72,599.54 L 473.50 592.50 L 473.50 435.50 L 473.50 278.50 L 476.22 271.06 C484.26,249.02 502.82,235.59 525.00,235.76 C547.53,235.94 566.21,249.70 574.18,272.00 L 576.50 278.50 L 576.77 432.74 C577.06,602.84 577.33,594.73 570.83,608.00 C567.24,615.32 559.01,624.51 552.11,628.91 C542.84,634.82 531.28,637.25 519.16,635.84 ZM 161.62 549.89 C145.88,546.19 131.99,533.01 125.81,515.89 L 123.50 509.50 L 123.50 427.50 C123.50,352.10 123.64,344.98 125.27,339.08 C130.52,320.10 146.83,305.08 165.74,301.84 C185.57,298.44 206.57,309.23 216.36,327.87 C223.10,340.69 222.97,338.70 222.99,427.54 C223.00,514.48 223.09,513.00 217.39,524.77 C214.20,531.36 203.73,542.09 197.34,545.33 C186.80,550.66 172.63,552.47 161.62,549.89 ZM 678.10 549.42 C675.14,548.62 670.41,546.74 667.60,545.24 C660.99,541.71 651.23,531.99 647.22,524.93 C640.99,513.96 641.03,514.58 641.01,427.39 C641.01,377.99 641.38,346.25 642.02,342.89 C643.78,333.50 649.14,323.79 656.69,316.28 C664.42,308.59 670.62,304.92 680.00,302.47 C687.61,300.49 698.37,300.88 707.17,303.44 C718.67,306.80 730.48,316.98 736.30,328.57 C742.08,340.06 742.00,338.71 742.00,425.76 C742.00,475.66 741.62,507.75 740.98,511.11 C737.59,529.11 722.96,544.91 705.47,549.47 C698.17,551.37 685.27,551.34 678.10,549.42 Z"/>
+                </svg>
+              </div>
+              <div className="discover-tool-text">
+                <span className="discover-tool-title">AI Speech</span>
+                <span className="discover-tool-subtitle">Generating AI-voiceover</span>
+              </div>
+            </div>
+            
+            {/* AI Soundtrack */}
+            <div className="discover-tool-card">
+              <div className="discover-tool-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                </svg>
+              </div>
+              <div className="discover-tool-text">
+                <span className="discover-tool-title">AI Soundtrack</span>
+                <span className="discover-tool-subtitle">Generating sound effects and music</span>
+              </div>
+            </div>
+            
+            {/* AI Translation */}
+            <div className="discover-tool-card">
+              <div className="discover-tool-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+              </div>
+              <div className="discover-tool-text">
+                <span className="discover-tool-title">AI Translation</span>
+                <span className="discover-tool-subtitle">Video translation with AI-voiceover or subtitles</span>
+              </div>
+            </div>
+            
+            {/* AI Color grading - with overlay */}
+            <div className="discover-tool-card with-overlay">
+              <div className="discover-tool-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                </svg>
+              </div>
+              <div className="discover-tool-text">
+                <span className="discover-tool-title">AI Color grading</span>
+                <span className="discover-tool-subtitle">Color grading for a professional look</span>
+              </div>
+              <div className="discover-tool-overlay">
+                <span>and more</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Formats section */}
+        <div className="formats-section-new">
+          <div className="formats-header-row">
+            <h2 className="section-title">Formats</h2>
+            <button 
+              className="see-all-btn-small"
+              onClick={() => navigate('/formats')}
+              data-testid="see-all-btn"
+            >
+              {t('seeAll')}
+            </button>
+          </div>
+          
+          <div className="formats-carousel-wrapper">
+            <div className="formats-carousel-inner">
+              {FORMATS.slice(0, 8).map((format) => (
+                <div key={format.id} className="format-card-carousel">
+                  <div 
+                    className="format-card-bg"
+                    style={{ backgroundColor: format.color }}
+                  />
+                  <div className="format-card-gradient" />
+                  <span className="format-card-name">{format.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
