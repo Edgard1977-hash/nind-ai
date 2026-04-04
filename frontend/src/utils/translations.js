@@ -29,7 +29,7 @@ export const translations = {
     noNotifications: "No notifications yet",
     readyToCreate: "Ready to create?",
     createBetter: "Create better",
-    makeVideoEditing: "Make video editing entirely with AI",
+    makeVideoEditing: "Edit videos completely with AI",
     getStarted: "Get started",
     myCreations: "My creations",
     formats: "Formats",

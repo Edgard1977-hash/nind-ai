@@ -837,6 +837,7 @@ body {
 .formats-section-new {
   margin-top: 32px;
   padding: 0;
+  padding-bottom: 32px;
 }
 
 .formats-header-row {
@@ -963,9 +964,29 @@ body {
   transform: scale(0.98);
 }
 
+/* Formats start button */
+.formats-start-btn {
+  width: 100%;
+  padding: 16px;
+  background: #FFFFFF;
+  color: #000;
+  border: none;
+  border-radius: 26px;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  margin-top: 20px;
+}
+
+.formats-start-btn:active {
+  transform: scale(0.98);
+}
+
 /* Discover tools section */
 .discover-tools-section {
-  margin-top: 48px;
+  margin-top: 32px;
   padding: 0;
 }
 
@@ -1042,37 +1063,11 @@ body {
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Bottom button container */
-.discover-tools-fade {
-  display: flex;
-  justify-content: center;
-  padding: 16px 0 24px;
-}
-
-.start-create-btn {
-  width: calc(100% - 16px);
-  max-width: 374px;
-  padding: 16px;
-  background: #1D1E20;
-  color: #FFFFFF;
-  border: none;
-  border-radius: 26px;
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.start-create-btn:active {
-  transform: scale(0.98);
-}
-
 /* Examples section - masonry grid */
 .examples-section-new {
-  margin-top: 48px;
+  margin-top: 32px;
   padding: 0;
-  padding-bottom: 40px;
+  padding-bottom: 24px;
   position: relative;
   overflow: hidden;
   clip-path: inset(0);
@@ -1810,6 +1805,10 @@ body {
   color: var(--bg-main);
   opacity: 0.4;
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.send-button svg {
+  stroke-width: 2.5;
 }
 
 .send-button.active {
@@ -4869,6 +4868,19 @@ body {
   font-weight: 700;
   color: var(--white);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.animated-word {
+  display: inline-block;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.animated-word.animating {
+  transform: translateY(20px);
+  opacity: 0;
 }
 
 /* ===== FORMAT PILLS ROW ===== */

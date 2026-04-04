@@ -139,6 +139,23 @@ export const MainPage = () => {
   const touchStartX = useRef(0);
   const examplesCarouselRef = useRef(null);
 
+  // Animated title words
+  const titleWords = ['more', 'better', 'faster', 'easier'];
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [isWordAnimating, setIsWordAnimating] = useState(false);
+
+  // Title word rotation effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsWordAnimating(true);
+      setTimeout(() => {
+        setCurrentWordIndex(prev => (prev + 1) % titleWords.length);
+        setIsWordAnimating(false);
+      }, 400);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleCarouselNext = () => {
     setExampleIndex(prev => Math.min(EXAMPLE_VIDEOS.length - 1, prev + 1));
   };
@@ -847,7 +864,9 @@ export const MainPage = () => {
         <div className="create-center-section-landing">
           {/* Heading */}
           <div className="create-heading">
-            <h1 className="create-title">{t('createBetter')}</h1>
+            <h1 className="create-title">
+              Create <span className={`animated-word ${isWordAnimating ? 'animating' : ''}`}>{titleWords[currentWordIndex]}</span>
+            </h1>
             <p className="create-subtitle">{t('makeVideoEditing')}</p>
           </div>
 
@@ -1030,35 +1049,6 @@ export const MainPage = () => {
           </div>
         </div>
 
-        {/* Formats section */}
-        <div className="formats-section-new">
-          <div className="formats-header-row">
-            <h2 className="section-title">Formats</h2>
-            <button 
-              className="see-all-btn-small"
-              onClick={() => navigate('/formats')}
-              data-testid="see-all-btn"
-            >
-              {t('seeAll')}
-            </button>
-          </div>
-          
-          <div className="formats-carousel-wrapper">
-            <div className="formats-carousel-inner">
-              {FORMATS.slice(0, 8).map((format) => (
-                <div key={format.id} className="format-card-carousel">
-                  <div 
-                    className="format-card-bg"
-                    style={{ backgroundColor: format.color }}
-                  />
-                  <div className="format-card-gradient" />
-                  <span className="format-card-name">{format.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Discover tools section */}
         <div className="discover-tools-section">
           <h2 className="section-title">Discover tools</h2>
@@ -1103,6 +1093,19 @@ export const MainPage = () => {
               <span className="discover-tool-subtitle">Video translation with AI-voiceover or subtitles</span>
             </div>
             
+            {/* AI Cut */}
+            <div className="discover-tool-card">
+              <div className="discover-tool-header">
+                <div className="discover-tool-icon">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                  </svg>
+                </div>
+                <span className="discover-tool-title">AI Cut</span>
+              </div>
+              <span className="discover-tool-subtitle">Cutting video with AI</span>
+            </div>
+            
             {/* AI Script */}
             <div className="discover-tool-card">
               <div className="discover-tool-header">
@@ -1129,13 +1132,30 @@ export const MainPage = () => {
               <span className="discover-tool-subtitle">Color grading for a professional look</span>
             </div>
           </div>
+        </div>
+
+        {/* Formats section */}
+        <div className="formats-section-new">
+          <h2 className="section-title">See formats</h2>
           
-          {/* Bottom gradient overlay with button */}
-          <div className="discover-tools-fade">
-            <button className="start-create-btn" onClick={() => navigate('/auth')}>
-              Start create
-            </button>
+          <div className="formats-carousel-wrapper">
+            <div className="formats-carousel-inner">
+              {FORMATS.slice(0, 8).map((format) => (
+                <div key={format.id} className="format-card-carousel">
+                  <div 
+                    className="format-card-bg"
+                    style={{ backgroundColor: format.color }}
+                  />
+                  <div className="format-card-gradient" />
+                  <span className="format-card-name">{format.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
+          
+          <button className="formats-start-btn" onClick={() => navigate('/auth')}>
+            Start create
+          </button>
         </div>
       </div>
 
