@@ -967,6 +967,7 @@ body {
 .discover-tools-section {
   margin-top: 48px;
   padding: 0;
+  position: relative;
 }
 
 .discover-tools-section .section-title {
@@ -977,73 +978,91 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: 80px;
 }
 
 .discover-tool-card {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
+  flex-direction: column;
+  padding: 18px 20px;
   background: #1D1E20;
-  border-radius: 20px;
+  border-radius: 24px;
   position: relative;
   overflow: hidden;
 }
 
+.discover-tool-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .discover-tool-icon {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #DBDBDB;
+  margin-bottom: 4px;
 }
 
 .discover-tool-icon svg {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
 }
 
 .discover-tool-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .discover-tool-title {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #FFFFFF;
 }
 
 .discover-tool-subtitle {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
 }
 
-.discover-tool-card.with-overlay .discover-tool-icon,
-.discover-tool-card.with-overlay .discover-tool-text {
-  opacity: 0.4;
-}
-
-.discover-tool-overlay {
+/* Bottom fade gradient with button */
+.discover-tools-fade {
   position: absolute;
-  inset: 0;
+  bottom: 0;
+  left: -16px;
+  right: -16px;
+  height: 180px;
+  background: linear-gradient(to top, var(--bg-main) 30%, transparent 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
+  padding-bottom: 20px;
 }
 
-.discover-tool-overlay span {
+.start-create-btn {
+  padding: 14px 32px;
+  background: #FFFFFF;
+  color: #000;
+  border: none;
+  border-radius: 24px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 16px;
-  font-weight: 600;
-  color: #FFFFFF;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.start-create-btn:active {
+  transform: scale(0.98);
 }
 
 /* Examples section - masonry grid */

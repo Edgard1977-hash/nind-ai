@@ -1033,6 +1033,35 @@ export const MainPage = () => {
           </div>
         </div>
 
+        {/* Formats section */}
+        <div className="formats-section-new">
+          <div className="formats-header-row">
+            <h2 className="section-title">Formats</h2>
+            <button 
+              className="see-all-btn-small"
+              onClick={() => navigate('/formats')}
+              data-testid="see-all-btn"
+            >
+              {t('seeAll')}
+            </button>
+          </div>
+          
+          <div className="formats-carousel-wrapper">
+            <div className="formats-carousel-inner">
+              {FORMATS.slice(0, 8).map((format) => (
+                <div key={format.id} className="format-card-carousel">
+                  <div 
+                    className="format-card-bg"
+                    style={{ backgroundColor: format.color }}
+                  />
+                  <div className="format-card-gradient" />
+                  <span className="format-card-name">{format.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Discover tools section */}
         <div className="discover-tools-section">
           <h2 className="section-title">Discover tools</h2>
@@ -1077,8 +1106,8 @@ export const MainPage = () => {
               </div>
             </div>
             
-            {/* AI Color grading - with overlay */}
-            <div className="discover-tool-card with-overlay">
+            {/* AI Color grading */}
+            <div className="discover-tool-card">
               <div className="discover-tool-icon">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
@@ -1088,39 +1117,14 @@ export const MainPage = () => {
                 <span className="discover-tool-title">AI Color grading</span>
                 <span className="discover-tool-subtitle">Color grading for a professional look</span>
               </div>
-              <div className="discover-tool-overlay">
-                <span>and more</span>
-              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Formats section */}
-        <div className="formats-section-new">
-          <div className="formats-header-row">
-            <h2 className="section-title">Formats</h2>
-            <button 
-              className="see-all-btn-small"
-              onClick={() => navigate('/formats')}
-              data-testid="see-all-btn"
-            >
-              {t('seeAll')}
-            </button>
           </div>
           
-          <div className="formats-carousel-wrapper">
-            <div className="formats-carousel-inner">
-              {FORMATS.slice(0, 8).map((format) => (
-                <div key={format.id} className="format-card-carousel">
-                  <div 
-                    className="format-card-bg"
-                    style={{ backgroundColor: format.color }}
-                  />
-                  <div className="format-card-gradient" />
-                  <span className="format-card-name">{format.name}</span>
-                </div>
-              ))}
-            </div>
+          {/* Bottom gradient overlay with button */}
+          <div className="discover-tools-fade">
+            <button className="start-create-btn" onClick={() => setShowAuth(true)}>
+              Start create
+            </button>
           </div>
         </div>
       </div>
