@@ -1046,20 +1046,17 @@ body {
 .discover-tools-fade {
   display: flex;
   justify-content: center;
-  padding: 20px 0;
-  margin-top: -60px;
-  position: relative;
-  z-index: 5;
+  padding: 24px 0;
 }
 
 .start-create-btn {
-  padding: 14px 32px;
+  padding: 16px 48px;
   background: #FFFFFF;
   color: #000;
   border: none;
-  border-radius: 24px;
+  border-radius: 26px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
