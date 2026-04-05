@@ -5243,3 +5243,176 @@ body {
   color: var(--white);
   text-align: left;
 }
+
+
+/* Voice Assistant Overlay */
+.voice-assistant-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-main);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.voice-assistant-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+/* AI Eyes */
+.voice-eyes {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-eye {
+  width: 40px;
+  height: 100px;
+  background: #01E0FF;
+  border-radius: 45px;
+  animation: eyeAppear 0.5s ease forwards, eyeBlink 4s ease-in-out infinite 0.5s;
+  transform-origin: center;
+}
+
+@keyframes eyeAppear {
+  from {
+    height: 20px;
+    opacity: 0;
+  }
+  to {
+    height: 100px;
+    opacity: 1;
+  }
+}
+
+@keyframes eyeBlink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* Listening state */
+.voice-eyes.listening .voice-eye {
+  animation: eyeAppear 0.5s ease forwards, eyeListen 0.5s ease-in-out infinite;
+}
+
+@keyframes eyeListen {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.7);
+  }
+}
+
+/* Speaking state - equalizer effect */
+.voice-eyes.speaking .voice-eye.left {
+  animation: eyeAppear 0.5s ease forwards, eyeEqualizer1 0.3s ease-in-out infinite;
+}
+
+.voice-eyes.speaking .voice-eye.right {
+  animation: eyeAppear 0.5s ease forwards, eyeEqualizer2 0.4s ease-in-out infinite;
+}
+
+@keyframes eyeEqualizer1 {
+  0%, 100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes eyeEqualizer2 {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.5);
+  }
+}
+
+/* Transcript */
+.voice-transcript {
+  margin-top: 40px;
+  text-align: center;
+  max-width: 300px;
+}
+
+.voice-transcript p {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Voice Controls */
+.voice-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  padding-bottom: 48px;
+}
+
+.voice-control-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: #1D1E20;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--white);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.voice-control-btn:active {
+  transform: scale(0.95);
+}
+
+.voice-record-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #1D1E20;
+  border: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--white);
+  transition: transform 0.2s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.voice-record-btn.recording {
+  border-color: #01E0FF;
+  background: rgba(1, 224, 255, 0.1);
+}
+
+.voice-record-btn:active {
+  transform: scale(0.95);
+}
+
+.voice-close-btn {
+  color: rgba(255, 255, 255, 0.6);
+}

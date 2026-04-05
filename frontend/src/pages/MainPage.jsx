@@ -144,6 +144,12 @@ export const MainPage = () => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isWordAnimating, setIsWordAnimating] = useState(false);
 
+  // Voice assistant state
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isAISpeaking, setIsAISpeaking] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+
   // Title word rotation effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -864,9 +870,7 @@ export const MainPage = () => {
         <div className="create-center-section-landing">
           {/* Heading */}
           <div className="create-heading">
-            <h1 className="create-title">
-              Create <span className={`animated-word ${isWordAnimating ? 'animating' : ''}`}>{titleWords[currentWordIndex]}</span>
-            </h1>
+            <h1 className="create-title">Create smarter</h1>
             <p className="create-subtitle">{t('makeVideoEditing')}</p>
           </div>
 
@@ -928,7 +932,7 @@ export const MainPage = () => {
               <div className="input-bottom-right">
                 <button 
                   className="input-icon-btn" 
-                  onClick={() => navigate('/auth')}
+                  onClick={() => setShowVoiceAssistant(true)}
                   data-testid="mic-button"
                 >
                   <MicIcon className="w-5 h-5" />
@@ -1202,6 +1206,91 @@ export const MainPage = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Voice Assistant Overlay */}
+      {showVoiceAssistant && (
+        <div className="voice-assistant-overlay">
+          <div className="voice-assistant-content">
+            {/* AI Eyes */}
+            <div className={`voice-eyes ${isAISpeaking ? 'speaking' : ''} ${isRecording ? 'listening' : ''}`}>
+              <div className="voice-eye left"></div>
+              <div className="voice-eye right"></div>
+            </div>
+            
+            {/* Transcript */}
+            {voiceTranscript && (
+              <div className="voice-transcript">
+                <p>{voiceTranscript}</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Bottom controls */}
+          <div className="voice-controls">
+            <button 
+              className="voice-control-btn voice-upload-btn"
+              onClick={() => {
+                // Handle file upload
+              }}
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+            
+            <button 
+              className={`voice-record-btn ${isRecording ? 'recording' : ''}`}
+              onMouseDown={() => {
+                setIsRecording(true);
+                setVoiceTranscript('Listening...');
+              }}
+              onMouseUp={() => {
+                setIsRecording(false);
+                setVoiceTranscript('Processing your request...');
+                // Simulate AI response
+                setTimeout(() => {
+                  setIsAISpeaking(true);
+                  setVoiceTranscript('Creating video based on your request...');
+                  setTimeout(() => {
+                    setIsAISpeaking(false);
+                    setVoiceTranscript('');
+                  }, 3000);
+                }, 1500);
+              }}
+              onTouchStart={() => {
+                setIsRecording(true);
+                setVoiceTranscript('Listening...');
+              }}
+              onTouchEnd={() => {
+                setIsRecording(false);
+                setVoiceTranscript('Processing your request...');
+                setTimeout(() => {
+                  setIsAISpeaking(true);
+                  setVoiceTranscript('Creating video based on your request...');
+                  setTimeout(() => {
+                    setIsAISpeaking(false);
+                    setVoiceTranscript('');
+                  }, 3000);
+                }, 1500);
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+              </svg>
+            </button>
+            
+            <button 
+              className="voice-control-btn voice-close-btn"
+              onClick={() => {
+                setShowVoiceAssistant(false);
+                setIsRecording(false);
+                setIsAISpeaking(false);
+                setVoiceTranscript('');
+              }}
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
         </div>
       )}
