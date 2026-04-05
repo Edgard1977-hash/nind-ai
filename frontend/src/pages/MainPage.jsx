@@ -149,6 +149,96 @@ export const MainPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const recognitionRef = useRef(null);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = 'ru-RU'; // Russian language
+
+        recognitionRef.current.onresult = (event) => {
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+          }
+          setVoiceTranscript(transcript);
+        };
+
+        recognitionRef.current.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          setIsRecording(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          if (isRecording) {
+            // Restart if still recording
+            try {
+              recognitionRef.current.start();
+            } catch (e) {
+              console.log('Recognition already started');
+            }
+          }
+        };
+      }
+    }
+  }, [isRecording]);
+
+  // Start voice recording
+  const startRecording = async () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in your browser');
+      return;
+    }
+    
+    try {
+      // Request microphone permission
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setIsRecording(true);
+      setVoiceTranscript('');
+      recognitionRef.current.start();
+    } catch (err) {
+      console.error('Microphone access denied:', err);
+      alert('Please allow microphone access to use voice commands');
+    }
+  };
+
+  // Stop voice recording and process
+  const stopRecording = async () => {
+    setIsRecording(false);
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+
+    if (voiceTranscript.trim()) {
+      setIsProcessing(true);
+      
+      // Simulate AI processing
+      setTimeout(() => {
+        setIsAISpeaking(true);
+        setIsProcessing(false);
+        
+        // Simulate video creation
+        setTimeout(() => {
+          setIsAISpeaking(false);
+          // Set the prompt and close voice assistant
+          setPrompt(voiceTranscript);
+          setShowVoiceAssistant(false);
+          setVoiceTranscript('');
+          
+          // If user is not logged in, redirect to auth
+          if (!user) {
+            navigate('/auth');
+          }
+        }, 2000);
+      }, 1500);
+    }
+  };
 
   // Title word rotation effect
   useEffect(() => {
@@ -1220,10 +1310,17 @@ export const MainPage = () => {
               <div className="voice-eye right"></div>
             </div>
             
+            {/* Status Text */}
+            <div className="voice-status">
+              {isRecording && !voiceTranscript && <p>Слушаю...</p>}
+              {isProcessing && <p>Обрабатываю запрос...</p>}
+              {isAISpeaking && <p>Создаю видео по вашему запросу...</p>}
+            </div>
+            
             {/* Transcript */}
             {voiceTranscript && (
               <div className="voice-transcript">
-                <p>{voiceTranscript}</p>
+                <p>"{voiceTranscript}"</p>
               </div>
             )}
           </div>
@@ -1233,7 +1330,7 @@ export const MainPage = () => {
             <button 
               className="voice-control-btn voice-upload-btn"
               onClick={() => {
-                // Handle file upload
+                fileInputRef.current?.click();
               }}
             >
               <Plus className="w-6 h-6" />
@@ -1241,38 +1338,18 @@ export const MainPage = () => {
             
             <button 
               className={`voice-record-btn ${isRecording ? 'recording' : ''}`}
-              onMouseDown={() => {
-                setIsRecording(true);
-                setVoiceTranscript('Listening...');
+              onMouseDown={startRecording}
+              onMouseUp={stopRecording}
+              onMouseLeave={() => {
+                if (isRecording) stopRecording();
               }}
-              onMouseUp={() => {
-                setIsRecording(false);
-                setVoiceTranscript('Processing your request...');
-                // Simulate AI response
-                setTimeout(() => {
-                  setIsAISpeaking(true);
-                  setVoiceTranscript('Creating video based on your request...');
-                  setTimeout(() => {
-                    setIsAISpeaking(false);
-                    setVoiceTranscript('');
-                  }, 3000);
-                }, 1500);
+              onTouchStart={(e) => {
+                e.preventDefault();
+                startRecording();
               }}
-              onTouchStart={() => {
-                setIsRecording(true);
-                setVoiceTranscript('Listening...');
-              }}
-              onTouchEnd={() => {
-                setIsRecording(false);
-                setVoiceTranscript('Processing your request...');
-                setTimeout(() => {
-                  setIsAISpeaking(true);
-                  setVoiceTranscript('Creating video based on your request...');
-                  setTimeout(() => {
-                    setIsAISpeaking(false);
-                    setVoiceTranscript('');
-                  }, 3000);
-                }, 1500);
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                stopRecording();
               }}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
@@ -1287,6 +1364,10 @@ export const MainPage = () => {
                 setIsRecording(false);
                 setIsAISpeaking(false);
                 setVoiceTranscript('');
+                setIsProcessing(false);
+                if (recognitionRef.current) {
+                  recognitionRef.current.stop();
+                }
               }}
             >
               <X className="w-6 h-6" />
