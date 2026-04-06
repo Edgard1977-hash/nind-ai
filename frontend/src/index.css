@@ -1109,7 +1109,7 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   padding: 10px 16px 10px 0;
   scroll-snap-type: x mandatory;
   background: #000000;
@@ -1135,6 +1135,7 @@ body {
 
 .example-card:first-child {
   scroll-snap-align: start;
+  margin-left: 16px;
 }
 
 .example-card-content {
