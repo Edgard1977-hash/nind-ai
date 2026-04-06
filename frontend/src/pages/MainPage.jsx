@@ -1059,7 +1059,7 @@ export const MainPage = () => {
           <div 
             className="examples-carousel-wrapper"
             ref={examplesCarouselRef}
-            style={{ paddingLeft: '16px' }}
+            style={{ paddingLeft: '32px' }}
           >
             <div className="examples-carousel-inner">
               {EXAMPLE_VIDEOS.map((video, idx) => (
