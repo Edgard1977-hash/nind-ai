@@ -1061,7 +1061,6 @@ export const MainPage = () => {
             ref={examplesCarouselRef}
           >
             <div className="examples-carousel-inner">
-              <div style={{ flexShrink: 0, width: '64px', minWidth: '64px', height: '1px' }}></div>
               {EXAMPLE_VIDEOS.map((video, idx) => (
                 <div 
                   key={video.id} 
@@ -1142,6 +1141,30 @@ export const MainPage = () => {
           <div className="how-video-wrapper">
             <div className="how-video-placeholder" />
           </div>
+        </div>
+
+        {/* Formats section */}
+        <div className="formats-section-new">
+          <h2 className="section-title">See formats</h2>
+          
+          <div className="formats-carousel-wrapper">
+            <div className="formats-carousel-inner">
+              {FORMATS.slice(0, 6).map((format) => (
+                <div key={format.id} className="format-card-carousel">
+                  <div 
+                    className="format-card-bg"
+                    style={{ backgroundColor: format.color }}
+                  />
+                  <div className="format-card-gradient" />
+                  <span className="format-card-name">{format.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <button className="formats-start-btn" onClick={() => navigate('/auth')}>
+            Start create
+          </button>
         </div>
 
         {/* Discover tools section */}
@@ -1227,30 +1250,6 @@ export const MainPage = () => {
               <span className="discover-tool-subtitle">Color grading for a professional look</span>
             </div>
           </div>
-        </div>
-
-        {/* Formats section */}
-        <div className="formats-section-new">
-          <h2 className="section-title">See formats</h2>
-          
-          <div className="formats-carousel-wrapper">
-            <div className="formats-carousel-inner">
-              {FORMATS.slice(0, 8).map((format) => (
-                <div key={format.id} className="format-card-carousel">
-                  <div 
-                    className="format-card-bg"
-                    style={{ backgroundColor: format.color }}
-                  />
-                  <div className="format-card-gradient" />
-                  <span className="format-card-name">{format.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <button className="formats-start-btn" onClick={() => navigate('/auth')}>
-            Start create
-          </button>
         </div>
         </div>
       </div>
