@@ -1061,7 +1061,7 @@ export const MainPage = () => {
             ref={examplesCarouselRef}
           >
             <div className="examples-carousel-inner">
-              <div style={{ flexShrink: 0, width: '16px', marginRight: '-12px' }}></div>
+              <div style={{ flexShrink: 0, width: '32px' }}></div>
               {EXAMPLE_VIDEOS.map((video, idx) => (
                 <div 
                   key={video.id} 
