@@ -1054,18 +1054,8 @@ export const MainPage = () => {
 
         {/* Black section wrapper - everything below is black */}
         <div className="black-section-start">
-        {/* How it works section */}
-        <div className="how-section">
-          <h2 className="section-title">Explore nind ai</h2>
-          <div className="how-video-wrapper">
-            <div className="how-video-placeholder" />
-          </div>
-        </div>
-
-        {/* You can do section - carousel */}
+        {/* You can do section - carousel (no title) */}
         <div className="examples-section-new">
-          <h2 className="section-title">You can do</h2>
-          
           <div 
             className="examples-carousel-wrapper"
             ref={examplesCarouselRef}
@@ -1142,6 +1132,14 @@ export const MainPage = () => {
             >
               <ChevronRight className="w-6 h-6" />
             </button>
+          </div>
+        </div>
+
+        {/* How it works section */}
+        <div className="how-section">
+          <h2 className="section-title">Explore nind ai</h2>
+          <div className="how-video-wrapper">
+            <div className="how-video-placeholder" />
           </div>
         </div>
 
