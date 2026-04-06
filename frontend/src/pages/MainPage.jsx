@@ -1052,6 +1052,9 @@ export const MainPage = () => {
         </div>
         </div>
 
+        {/* Sharp transition to black background */}
+        <div className="black-section-divider"></div>
+
         {/* How it works section */}
         <div className="how-section">
           <h2 className="section-title">Explore nind ai</h2>

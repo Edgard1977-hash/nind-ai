@@ -84,12 +84,12 @@ body {
   left: 0;
   right: 0;
   top: 120px;
-  height: 500px;
+  height: 450px;
   z-index: 1;
   pointer-events: none;
   opacity: 0;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 70%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 85%, transparent 100%);
   animation: fadeInGrid 1.2s ease-out 0.3s forwards;
 }
 
@@ -818,8 +818,23 @@ body {
 
 /* How it works section */
 .how-section {
-  margin-top: 48px;
+  margin-top: 0;
   padding: 0;
+  padding-top: 32px;
+  position: relative;
+  background: #000000;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Black section divider */
+.black-section-divider {
+  height: 4px;
+  background: #000000;
+  margin: 0 -16px;
+  margin-top: 40px;
 }
 
 .how-video-wrapper {
@@ -838,6 +853,11 @@ body {
   margin-top: 32px;
   padding: 0;
   padding-bottom: 32px;
+  background: #000000;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .formats-header-row {
@@ -988,6 +1008,11 @@ body {
 .discover-tools-section {
   margin-top: 32px;
   padding: 0;
+  background: #000000;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .discover-tools-section .section-title {
@@ -1071,7 +1096,7 @@ body {
   position: relative;
   overflow: hidden;
   clip-path: inset(0);
-  background: var(--bg-main);
+  background: #000000;
   margin-left: -16px;
   margin-right: -16px;
   width: calc(100% + 32px);
@@ -1108,7 +1133,7 @@ body {
   padding: 10px 16px;
   padding-right: calc(16px + 16px);
   scroll-snap-type: x mandatory;
-  background: var(--bg-main);
+  background: #000000;
 }
 
 .examples-carousel-inner::after {
@@ -1122,7 +1147,7 @@ body {
   width: 68%;
   box-sizing: border-box;
   scroll-snap-align: center;
-  background: var(--bg-main);
+  background: #000000;
 }
 
 .example-card:first-child {
