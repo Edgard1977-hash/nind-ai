@@ -823,7 +823,7 @@ body {
 
 /* How it works section */
 .how-section {
-  margin-top: 0;
+  margin: 0;
   padding: 32px 16px 0 16px;
   position: relative;
   background: #000000;
@@ -832,9 +832,10 @@ body {
 /* Black section start - sharp transition */
 .black-section-start {
   background: #000000;
-  margin: 0 -16px;
   margin-top: -40px;
   padding-top: 40px;
+  margin-left: -16px;
+  margin-right: -16px;
 }
 
 .how-video-wrapper {
@@ -850,7 +851,7 @@ body {
 
 /* Formats section - horizontal scroll */
 .formats-section-new {
-  margin-top: 0;
+  margin: 0;
   padding: 32px 16px;
   background: #000000;
 }
@@ -1001,7 +1002,7 @@ body {
 
 /* Discover tools section */
 .discover-tools-section {
-  margin-top: 0;
+  margin: 0;
   padding: 32px 0 0 0;
   background: #000000;
 }
@@ -1037,6 +1038,10 @@ body {
   border-radius: 29px;
   position: relative;
   overflow: hidden;
+}
+
+.discover-tool-card:first-child {
+  margin-left: 16px;
 }
 
 .discover-tool-header {
@@ -1079,8 +1084,8 @@ body {
 
 /* Examples section - masonry grid */
 .examples-section-new {
-  margin-top: 0;
-  padding: 32px 0 24px 0;
+  margin: 0;
+  padding: 16px 0 24px 0;
   position: relative;
   overflow: visible;
   background: #000000;
@@ -1110,7 +1115,7 @@ body {
 
 .examples-carousel-inner {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   padding: 10px 16px;
   scroll-snap-type: x mandatory;
   background: #000000;
@@ -1132,6 +1137,7 @@ body {
 
 .example-card:first-child {
   scroll-snap-align: start;
+  margin-left: 32px;
 }
 
 .example-card-content {
@@ -5376,64 +5382,10 @@ body {
 }
 
 .voice-transcript p {
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
   font-size: 18px;
-  font-weight: 500;
   color: var(--white);
-  line-height: 1.4;
+  text-align: center;
+  margin: 0;
 }
-
-/* Voice Controls */
-.voice-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 24px;
-  padding-bottom: 48px;
-}
-
-.voice-control-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  background: #1D1E20;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--white);
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.voice-control-btn:active {
-  transform: scale(0.95);
-}
-
-.voice-record-btn {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: #1D1E20;
-  border: 3px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--white);
-  transition: transform 0.2s ease, border-color 0.3s ease, background 0.3s ease;
-}
-
-.voice-record-btn.recording {
-  border-color: #01E0FF;
-  background: rgba(1, 224, 255, 0.1);
-}
-
-.voice-record-btn:active {
-  transform: scale(0.95);
-}
-
-.voice-close-btn {
-  color: rgba(255, 255, 255, 0.6);
-}
+  color: var(--white)
