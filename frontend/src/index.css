@@ -68,6 +68,7 @@ body {
   overflow-x: hidden;
   max-width: 100vw;
   width: 100%;
+  background: #000000;
 }
 
 /* Background */
@@ -850,6 +851,7 @@ body {
 /* Formats section - horizontal scroll */
 .formats-section-new {
   margin: 0;
+  margin-top: 32px;
   padding: 32px 16px;
   background: #000000;
 }

@@ -1162,7 +1162,7 @@ export const MainPage = () => {
             </div>
           </div>
           
-          <button className="formats-start-btn" onClick={() => navigate('/auth')}>
+          <button className="formats-start-btn" onClick={() => navigate('/auth')} style={{ display: 'none' }}>
             Start create
           </button>
         </div>
