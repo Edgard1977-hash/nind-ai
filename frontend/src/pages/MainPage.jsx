@@ -1059,9 +1059,9 @@ export const MainPage = () => {
           <div 
             className="examples-carousel-wrapper"
             ref={examplesCarouselRef}
-            style={{ paddingLeft: '32px' }}
           >
             <div className="examples-carousel-inner">
+              <div style={{ flexShrink: 0, width: '48px', minWidth: '48px', height: '1px' }}></div>
               {EXAMPLE_VIDEOS.map((video, idx) => (
                 <div 
                   key={video.id} 
