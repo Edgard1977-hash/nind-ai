@@ -1052,9 +1052,8 @@ export const MainPage = () => {
         </div>
         </div>
 
-        {/* Sharp transition to black background */}
-        <div className="black-section-divider"></div>
-
+        {/* Black section wrapper - everything below is black */}
+        <div className="black-section-start">
         {/* How it works section */}
         <div className="how-section">
           <h2 className="section-title">Explore nind ai</h2>
@@ -1253,6 +1252,7 @@ export const MainPage = () => {
           <button className="formats-start-btn" onClick={() => navigate('/auth')}>
             Start create
           </button>
+        </div>
         </div>
       </div>
 
