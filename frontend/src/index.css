@@ -1135,7 +1135,7 @@ body {
 
 .example-card:first-child {
   scroll-snap-align: start;
-  margin-left: 16px;
+  margin-left: 32px !important;
 }
 
 .example-card-content {
