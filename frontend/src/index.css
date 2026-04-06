@@ -832,10 +832,8 @@ body {
 /* Black section start - sharp transition */
 .black-section-start {
   background: #000000;
-  margin-top: -40px;
+  margin: -40px -16px 0 -16px;
   padding-top: 40px;
-  margin-left: -16px;
-  margin-right: -16px;
 }
 
 .how-video-wrapper {
@@ -1117,6 +1115,10 @@ body {
   background: #000000;
 }
 
+.examples-carousel-inner > div:first-child {
+  margin-left: 0;
+}
+
 .examples-carousel-inner::after {
   content: '';
   flex-shrink: 0;
@@ -1133,7 +1135,6 @@ body {
 
 .example-card:first-child {
   scroll-snap-align: start;
-  margin-left: 32px;
 }
 
 .example-card-content {
