@@ -1261,7 +1261,27 @@ export const MainPage = () => {
         {/* Footer */}
         <footer className="footer-section">
           <div className="footer-card">
-            <div className="footer-perspective-grid"></div>
+            <div className="footer-perspective-grid">
+              <svg viewBox="0 0 400 300" preserveAspectRatio="none" className="grid-svg">
+                <line x1="0" y1="0" x2="0" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="50" y1="0" x2="50" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="100" y1="0" x2="100" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="150" y1="0" x2="150" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="200" y1="0" x2="200" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="250" y1="0" x2="250" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="300" y1="0" x2="300" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="350" y1="0" x2="350" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                <line x1="400" y1="0" x2="400" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+                
+                <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none"/>
+                <path d="M0,50 Q200,40 400,50" stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none"/>
+                <path d="M0,100 Q200,80 400,100" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
+                <path d="M0,150 Q200,120 400,150" stroke="rgba(255,255,255,0.09)" strokeWidth="1" fill="none"/>
+                <path d="M0,200 Q200,160 400,200" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+                <path d="M0,250 Q200,200 400,250" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+                <path d="M0,300 Q200,240 400,300" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+              </svg>
+            </div>
             
             <div className="footer-logo">
               <LogoSvg className="footer-logo-svg" />
