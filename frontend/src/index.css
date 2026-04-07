@@ -5419,7 +5419,7 @@ body {
 .cta-selection-box {
   position: relative;
   display: inline-block;
-  padding: 5px 10px;
+  padding: 10px 10px;
 }
 
 .sel-line {
@@ -5448,7 +5448,7 @@ body {
   top: 8px;
   bottom: 8px;
   width: 2px;
-  background: linear-gradient(180deg, #fff 0, #fff 8px, transparent 8px, transparent 14px, #fff 14px, #fff 22px, transparent 22px, transparent 28px, #fff 28px);
+  background: repeating-linear-gradient(180deg, #fff 0, #fff 12px, transparent 12px, transparent 18px);
 }
 
 .sel-line-right {
@@ -5456,7 +5456,7 @@ body {
   top: 8px;
   bottom: 8px;
   width: 2px;
-  background: linear-gradient(180deg, #fff 0, #fff 8px, transparent 8px, transparent 14px, #fff 14px, #fff 22px, transparent 22px, transparent 28px, #fff 28px);
+  background: repeating-linear-gradient(180deg, #fff 0, #fff 12px, transparent 12px, transparent 18px);
 }
 
 .sel-corner {
