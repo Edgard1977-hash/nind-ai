@@ -5432,7 +5432,7 @@ body {
   left: 8px;
   right: 8px;
   height: 2px;
-  background: linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 18px, #fff 18px, #fff 30px, transparent 30px, transparent 36px, #fff 36px, #fff 48px, transparent 48px, transparent 54px, #fff 54px, #fff 66px, transparent 66px, transparent 72px, #fff 72px, #fff 84px, transparent 84px, transparent 90px, #fff 90px, #fff 102px, transparent 102px, transparent 108px, #fff 108px, #fff 120px);
+  background: repeating-linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 18px);
 }
 
 .sel-line-bottom {
@@ -5440,7 +5440,7 @@ body {
   left: 8px;
   right: 8px;
   height: 2px;
-  background: linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 18px, #fff 18px, #fff 30px, transparent 30px, transparent 36px, #fff 36px, #fff 48px, transparent 48px, transparent 54px, #fff 54px, #fff 66px, transparent 66px, transparent 72px, #fff 72px, #fff 84px, transparent 84px, transparent 90px, #fff 90px, #fff 102px, transparent 102px, transparent 108px, #fff 108px, #fff 120px);
+  background: repeating-linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 18px);
 }
 
 .sel-line-left {
