@@ -1256,6 +1256,10 @@ export const MainPage = () => {
         <div className="cta-section">
           <h2 className="cta-title">
             Create <span className="cta-selection-box">
+              <span className="selection-line selection-line-top"></span>
+              <span className="selection-line selection-line-bottom"></span>
+              <span className="selection-line selection-line-left"></span>
+              <span className="selection-line selection-line-right"></span>
               <span className="selection-corner selection-corner-tl"></span>
               <span className="selection-corner selection-corner-tr"></span>
               <span className="selection-corner selection-corner-bl"></span>
