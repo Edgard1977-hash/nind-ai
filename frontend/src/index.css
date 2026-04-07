@@ -5399,7 +5399,7 @@ body {
 
 /* CTA Section */
 .cta-section {
-  padding: 60px 16px;
+  padding: 100px 16px 80px;
   text-align: center;
   background: #000000;
 }
@@ -5409,6 +5409,20 @@ body {
   font-weight: 700;
   color: var(--white);
   margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cta-badge {
+  display: inline-block;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-weight: 600;
 }
 
 .cta-subtitle {
@@ -5438,11 +5452,11 @@ body {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 450px;
+  height: 100%;
   z-index: 1;
   pointer-events: none;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
 }
 
 .footer-perspective-grid .grid-svg {

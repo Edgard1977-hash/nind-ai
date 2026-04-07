@@ -1254,7 +1254,7 @@ export const MainPage = () => {
         
         {/* CTA Section */}
         <div className="cta-section">
-          <h2 className="cta-title">Create fully edited videos</h2>
+          <h2 className="cta-title">Create <span className="cta-badge">fully edited</span> videos</h2>
           <p className="cta-subtitle">Turn any prompt into a polished edited video — AI does the rest.</p>
         </div>
         
@@ -1262,24 +1262,22 @@ export const MainPage = () => {
         <footer className="footer-section">
           <div className="footer-card">
             <div className="footer-perspective-grid">
-              <svg viewBox="0 0 400 300" preserveAspectRatio="none" className="grid-svg">
-                <line x1="0" y1="0" x2="0" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="50" y1="0" x2="50" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="100" y1="0" x2="100" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="150" y1="0" x2="150" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="200" y1="0" x2="200" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="250" y1="0" x2="250" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="300" y1="0" x2="300" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="350" y1="0" x2="350" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                <line x1="400" y1="0" x2="400" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+              <svg viewBox="0 0 200 150" preserveAspectRatio="none" className="grid-svg">
+                {/* Вертикальные линии - меньше, расстояние больше */}
+                <line x1="0" y1="0" x2="0" y2="150" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                <line x1="40" y1="0" x2="40" y2="150" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                <line x1="80" y1="0" x2="80" y2="150" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                <line x1="120" y1="0" x2="120" y2="150" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                <line x1="160" y1="0" x2="160" y2="150" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+                <line x1="200" y1="0" x2="200" y2="150" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
                 
-                <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none"/>
-                <path d="M0,50 Q200,40 400,50" stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none"/>
-                <path d="M0,100 Q200,80 400,100" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
-                <path d="M0,150 Q200,120 400,150" stroke="rgba(255,255,255,0.09)" strokeWidth="1" fill="none"/>
-                <path d="M0,200 Q200,160 400,200" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
-                <path d="M0,250 Q200,200 400,250" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
-                <path d="M0,300 Q200,240 400,300" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+                {/* Горизонтальные линии с перспективой - меньше, расстояние больше */}
+                <path d="M0,0 Q100,0 200,0" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
+                <path d="M0,30 Q100,24 200,30" stroke="rgba(255,255,255,0.09)" strokeWidth="1" fill="none"/>
+                <path d="M0,60 Q100,48 200,60" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+                <path d="M0,90 Q100,72 200,90" stroke="rgba(255,255,255,0.11)" strokeWidth="1" fill="none"/>
+                <path d="M0,120 Q100,96 200,120" stroke="rgba(255,255,255,0.12)" strokeWidth="1" fill="none"/>
+                <path d="M0,150 Q100,120 200,150" stroke="rgba(255,255,255,0.12)" strokeWidth="1" fill="none"/>
               </svg>
             </div>
             
