@@ -5432,7 +5432,7 @@ body {
   left: 7px;
   right: 7px;
   height: 1px;
-  border-top: 1px dashed #ffffff;
+  background: repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 10px, transparent 10px, transparent 16px);
 }
 
 .selection-line-bottom {
@@ -5440,7 +5440,7 @@ body {
   left: 7px;
   right: 7px;
   height: 1px;
-  border-top: 1px dashed #ffffff;
+  background: repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 10px, transparent 10px, transparent 16px);
 }
 
 .selection-line-left {
@@ -5448,7 +5448,7 @@ body {
   top: 7px;
   bottom: 7px;
   width: 1px;
-  border-left: 1px dashed #ffffff;
+  background: repeating-linear-gradient(180deg, #ffffff 0px, #ffffff 10px, transparent 10px, transparent 16px);
 }
 
 .selection-line-right {
@@ -5456,7 +5456,7 @@ body {
   top: 7px;
   bottom: 7px;
   width: 1px;
-  border-left: 1px dashed #ffffff;
+  background: repeating-linear-gradient(180deg, #ffffff 0px, #ffffff 10px, transparent 10px, transparent 16px);
 }
 
 .selection-corner {
