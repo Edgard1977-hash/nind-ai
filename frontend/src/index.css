@@ -5419,37 +5419,40 @@ body {
 .cta-selection-box {
   position: relative;
   display: inline-block;
-  padding: 6px 10px;
-  border: 1px dashed rgba(255, 255, 255, 0.5);
-  border-radius: 2px;
+  padding: 4px 8px;
+  background: 
+    linear-gradient(90deg, rgba(255,255,255,0.5) 60%, transparent 60%) top left / 12px 1px repeat-x,
+    linear-gradient(90deg, rgba(255,255,255,0.5) 60%, transparent 60%) bottom left / 12px 1px repeat-x,
+    linear-gradient(0deg, rgba(255,255,255,0.5) 60%, transparent 60%) top left / 1px 12px repeat-y,
+    linear-gradient(0deg, rgba(255,255,255,0.5) 60%, transparent 60%) top right / 1px 12px repeat-y;
 }
 
 .selection-corner {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   background: #ffffff;
-  border-radius: 1px;
+  border-radius: 0;
 }
 
 .selection-corner-tl {
-  top: -4px;
-  left: -4px;
+  top: -3.5px;
+  left: -3.5px;
 }
 
 .selection-corner-tr {
-  top: -4px;
-  right: -4px;
+  top: -3.5px;
+  right: -3.5px;
 }
 
 .selection-corner-bl {
-  bottom: -4px;
-  left: -4px;
+  bottom: -3.5px;
+  left: -3.5px;
 }
 
 .selection-corner-br {
-  bottom: -4px;
-  right: -4px;
+  bottom: -3.5px;
+  right: -3.5px;
 }
 
 .cta-get-started-btn {
