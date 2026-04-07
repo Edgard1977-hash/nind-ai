@@ -5419,43 +5419,70 @@ body {
 .cta-selection-box {
   position: relative;
   display: inline-block;
-  padding: 4px 8px;
+  padding: 5px 10px;
 }
 
-.selection-border {
+.sel-line {
   position: absolute;
+  background-color: #ffffff;
+}
+
+.sel-line-top {
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 18px, #fff 18px, #fff 30px, transparent 30px, transparent 36px, #fff 36px, #fff 48px, transparent 48px, transparent 54px, #fff 54px, #fff 66px, transparent 66px, transparent 72px, #fff 72px, #fff 84px, transparent 84px, transparent 90px, #fff 90px, #fff 102px, transparent 102px, transparent 108px, #fff 108px, #fff 120px);
 }
 
-.selection-corner {
+.sel-line-bottom {
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 18px, #fff 18px, #fff 30px, transparent 30px, transparent 36px, #fff 36px, #fff 48px, transparent 48px, transparent 54px, #fff 54px, #fff 66px, transparent 66px, transparent 72px, #fff 72px, #fff 84px, transparent 84px, transparent 90px, #fff 90px, #fff 102px, transparent 102px, transparent 108px, #fff 108px, #fff 120px);
+}
+
+.sel-line-left {
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, #fff 0, #fff 8px, transparent 8px, transparent 14px, #fff 14px, #fff 22px, transparent 22px, transparent 28px, #fff 28px);
+}
+
+.sel-line-right {
+  right: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, #fff 0, #fff 8px, transparent 8px, transparent 14px, #fff 14px, #fff 22px, transparent 22px, transparent 28px, #fff 28px);
+}
+
+.sel-corner {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   background: #ffffff;
-  border-radius: 0;
   z-index: 2;
 }
 
-.selection-corner-tl {
+.sel-corner-tl {
   top: -3px;
   left: -3px;
 }
 
-.selection-corner-tr {
+.sel-corner-tr {
   top: -3px;
   right: -3px;
 }
 
-.selection-corner-bl {
+.sel-corner-bl {
   bottom: -3px;
   left: -3px;
 }
 
-.selection-corner-br {
+.sel-corner-br {
   bottom: -3px;
   right: -3px;
 }
