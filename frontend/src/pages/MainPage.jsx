@@ -1255,11 +1255,12 @@ export const MainPage = () => {
         {/* CTA Section */}
         <div className="cta-section">
           <h2 className="cta-title">
-            Create <span className="cta-selection">
-              <span className="selection-handle selection-handle-left"></span>
+            Create <span className="cta-selection-box">
+              <span className="selection-corner selection-corner-tl"></span>
+              <span className="selection-corner selection-corner-tr"></span>
+              <span className="selection-corner selection-corner-bl"></span>
+              <span className="selection-corner selection-corner-br"></span>
               fully edited
-              <span className="selection-handle selection-handle-right"></span>
-              <span className="selection-highlight"></span>
             </span> videos
           </h2>
           <p className="cta-subtitle">Turn any prompt into a polished edited video — AI does the rest.</p>
