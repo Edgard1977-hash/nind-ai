@@ -5412,17 +5412,84 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.cta-badge {
+.cta-selection {
+  position: relative;
   display: inline-block;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  padding: 6px 14px;
+  padding: 0 4px;
+}
+
+.selection-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 122, 255, 0.25);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.selection-handle {
+  position: absolute;
+  width: 3px;
+  top: -2px;
+  bottom: -2px;
+  background: #007AFF;
+  border-radius: 2px;
+}
+
+.selection-handle-left {
+  left: -1px;
+}
+
+.selection-handle-left::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: #007AFF;
+  border-radius: 50%;
+}
+
+.selection-handle-right {
+  right: -1px;
+}
+
+.selection-handle-right::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: #007AFF;
+  border-radius: 50%;
+}
+
+.cta-get-started-btn {
+  margin-top: 24px;
+  padding: 14px 32px;
+  background: var(--white);
+  color: #000000;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cta-get-started-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: scale(1.02);
 }
 
 .cta-subtitle {
@@ -5455,8 +5522,8 @@ body {
   height: 100%;
   z-index: 1;
   pointer-events: none;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
 }
 
 .footer-perspective-grid .grid-svg {
