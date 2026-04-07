@@ -1254,76 +1254,65 @@ export const MainPage = () => {
         
         {/* CTA Section */}
         <div className="cta-section">
-          <h2 className="cta-title">Create Fully finished videos</h2>
+          <h2 className="cta-title">Create fully edited videos</h2>
           <p className="cta-subtitle">Turn any prompt into a polished edited video — AI does the rest.</p>
         </div>
         
         {/* Footer */}
         <footer className="footer-section">
-          <div className="footer-grid-bg"></div>
-          
-          <div className="footer-logo">
-            <svg viewBox="0 0 512 512" className="footer-logo-svg">
-              <defs>
-                <linearGradient id="footerGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#01E0FF"/>
-                  <stop offset="100%" stopColor="#8B5CF6"/>
-                </linearGradient>
-              </defs>
-              <circle cx="256" cy="256" r="200" fill="none" stroke="url(#footerGradient1)" strokeWidth="24"/>
-              <circle cx="256" cy="180" r="45" fill="url(#footerGradient1)"/>
-              <circle cx="180" cy="310" r="35" fill="url(#footerGradient1)"/>
-              <circle cx="332" cy="310" r="35" fill="url(#footerGradient1)"/>
-              <path d="M256 225 L256 260 M215 285 L256 260 M297 285 L256 260" stroke="url(#footerGradient1)" strokeWidth="12" strokeLinecap="round"/>
-            </svg>
-            <span className="footer-logo-text">nind</span>
-          </div>
-          
-          <div className="footer-columns">
-            <div className="footer-column">
-              <h4 className="footer-column-title">Company</h4>
-              <a href="#" className="footer-link">Security</a>
-              <a href="#" className="footer-link">Trust Center</a>
-              <a href="#" className="footer-link">Press & Media</a>
-              <a href="#" className="footer-link">Partnerships</a>
+          <div className="footer-card">
+            <div className="footer-perspective-grid"></div>
+            
+            <div className="footer-logo">
+              <LogoSvg className="footer-logo-svg" />
             </div>
             
-            <div className="footer-column">
-              <h4 className="footer-column-title">Product</h4>
-              <a href="#" className="footer-link">Pricing</a>
-              <a href="#" className="footer-link">Status</a>
-              <a href="#" className="footer-link">Formats</a>
-            </div>
-            
-            <div className="footer-column">
-              <h4 className="footer-column-title">Resources</h4>
-              <a href="#" className="footer-link">Support</a>
-              <a href="#" className="footer-link">Guides & Tutorials</a>
-              <a href="#" className="footer-link">Blog</a>
-              <a href="#" className="footer-link">FAQs</a>
-            </div>
-            
-            <div className="footer-column">
-              <h4 className="footer-column-title">Legal</h4>
-              <a href="#" className="footer-link">Privacy policy</a>
-              <a href="#" className="footer-link">Do not sell or share my personal information</a>
-              <a href="#" className="footer-link">Cookie settings</a>
-              <a href="#" className="footer-link">Enterprise terms</a>
-              <a href="#" className="footer-link">General terms</a>
-              <a href="#" className="footer-link">Platform rules</a>
-              <a href="#" className="footer-link">Report abuse</a>
-              <a href="#" className="footer-link">Report security concerns</a>
-              <a href="#" className="footer-link">DPA</a>
-            </div>
-            
-            <div className="footer-column">
-              <h4 className="footer-column-title">Community</h4>
-              <a href="#" className="footer-link">Discord</a>
-              <a href="#" className="footer-link">TikTok</a>
-              <a href="#" className="footer-link">Reddit</a>
-              <a href="#" className="footer-link">X (Twitter)</a>
-              <a href="#" className="footer-link">YouTube</a>
-              <a href="#" className="footer-link">LinkedIn</a>
+            <div className="footer-columns">
+              <div className="footer-column">
+                <h4 className="footer-column-title">Company</h4>
+                <a href="#" className="footer-link">Security</a>
+                <a href="#" className="footer-link">Trust Center</a>
+                <a href="#" className="footer-link">Press & Media</a>
+                <a href="#" className="footer-link">Partnerships</a>
+              </div>
+              
+              <div className="footer-column">
+                <h4 className="footer-column-title">Product</h4>
+                <a href="#" className="footer-link">Pricing</a>
+                <a href="#" className="footer-link">Status</a>
+                <a href="#" className="footer-link">Formats</a>
+              </div>
+              
+              <div className="footer-column">
+                <h4 className="footer-column-title">Resources</h4>
+                <a href="#" className="footer-link">Support</a>
+                <a href="#" className="footer-link">Guides & Tutorials</a>
+                <a href="#" className="footer-link">Blog</a>
+                <a href="#" className="footer-link">FAQs</a>
+              </div>
+              
+              <div className="footer-column">
+                <h4 className="footer-column-title">Legal</h4>
+                <a href="#" className="footer-link">Privacy policy</a>
+                <a href="#" className="footer-link">Do not sell or share my personal information</a>
+                <a href="#" className="footer-link">Cookie settings</a>
+                <a href="#" className="footer-link">Enterprise terms</a>
+                <a href="#" className="footer-link">General terms</a>
+                <a href="#" className="footer-link">Platform rules</a>
+                <a href="#" className="footer-link">Report abuse</a>
+                <a href="#" className="footer-link">Report security concerns</a>
+                <a href="#" className="footer-link">DPA</a>
+              </div>
+              
+              <div className="footer-column">
+                <h4 className="footer-column-title">Community</h4>
+                <a href="#" className="footer-link">Discord</a>
+                <a href="#" className="footer-link">TikTok</a>
+                <a href="#" className="footer-link">Reddit</a>
+                <a href="#" className="footer-link">X (Twitter)</a>
+                <a href="#" className="footer-link">YouTube</a>
+                <a href="#" className="footer-link">LinkedIn</a>
+              </div>
             </div>
           </div>
         </footer>
