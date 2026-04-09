@@ -5292,14 +5292,14 @@ body {
 /* AI Eyes */
 .voice-eyes {
   display: flex;
-  gap: 16px;
+  gap: 10px;
   align-items: center;
   justify-content: center;
 }
 
 .voice-eye {
-  width: 60px;
-  height: 130px;
+  width: 70px;
+  height: 110px;
   background: #01E0FF;
   border-radius: 45px;
   animation: eyeAppear 0.5s ease forwards, eyeBlink 4s ease-in-out infinite 0.5s;
@@ -5312,7 +5312,7 @@ body {
     opacity: 0;
   }
   to {
-    height: 130px;
+    height: 110px;
     opacity: 1;
   }
 }
@@ -5400,17 +5400,65 @@ body {
 /* Voice Controls */
 .voice-controls {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 20px 48px;
+  background: transparent;
+}
+
+.voice-attachments {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.voice-attachment-item {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.voice-attachment-item img,
+.voice-attachment-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.voice-attachment-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.voice-buttons {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 24px;
-  padding: 32px 20px 48px;
-  background: transparent;
 }
 
 .voice-control-btn {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 16px;
   border: none;
   background: rgba(255, 255, 255, 0.1);
   color: var(--white);
@@ -5432,11 +5480,11 @@ body {
 }
 
 .voice-record-btn {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   border: none;
-  background: #01E0FF;
+  background: #ffffff;
   color: #000000;
   display: flex;
   align-items: center;
@@ -5466,8 +5514,8 @@ body {
 }
 
 .voice-record-btn svg {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
 }
 
 /* CTA Section */
