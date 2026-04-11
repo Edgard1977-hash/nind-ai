@@ -5802,14 +5802,26 @@ body {
     -webkit-mask-composite: source-in;
   }
   
-  /* Залогиненная версия - сетка правильно позиционирована */
+  /* Залогиненная версия - КОПИРУЕМ ВСЕ СТИЛИ от десктопной сетки */
   .main-page-fixed .perspective-grid {
+    position: absolute;
     left: 50%;
     right: auto;
-    transform: translateX(-50%);
+    top: 280px;
     max-width: 1400px;
-    top: 200px;
     height: 600px;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeInGridDesktop 1.2s ease-out 0.3s forwards;
+    mask-image: 
+      linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-image: 
+      linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
   }
   
   /* Увеличиваем элементы хедера для залогиненной версии */
