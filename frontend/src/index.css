@@ -4488,6 +4488,12 @@ body {
   object-fit: cover;
 }
 
+.header-avatar-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--white);
+}
+
 .default-avatar-small {
   width: 24px;
   height: 24px;
