@@ -54,7 +54,12 @@ const UpgradeIcon = ({ className }) => (
   </svg>
 );
 
-// Person icon SVG (for avatar default)
+// Avatar/Start icon SVG  (for Start button)
+const AvatarStartIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" className={className} fill="currentColor">
+    <path d="M 293.05 533.83 C288.05,532.40 282.62,528.17 279.13,523.00 C277.29,520.26 272.78,508.72 267.62,493.50 C242.45,419.27 230.74,386.49 227.98,382.47 C224.76,377.79 220.67,374.87 213.89,372.42 C208.12,370.34 170.78,357.37 134.50,344.85 C97.57,332.11 87.43,328.30 83.03,325.52 C78.73,322.80 72.72,316.29 70.42,311.85 C68.23,307.61 67.47,297.64 68.93,292.24 C70.72,285.61 77.40,278.22 85.51,273.89 C89.89,271.56 115.87,262.43 155.00,249.48 C189.38,238.11 219.18,227.72 221.24,226.39 C223.30,225.07 226.09,222.30 227.45,220.24 C228.80,218.18 239.44,188.15 251.08,153.50 C262.72,118.85 273.29,88.43 274.57,85.89 C277.94,79.20 281.15,75.78 287.17,72.48 C291.74,69.98 293.57,69.56 300.00,69.58 C311.46,69.61 320.82,74.96 325.60,84.19 C327.05,87.00 347.78,147.63 364.97,199.35 C371.67,219.51 373.91,223.40 380.91,226.94 C382.88,227.94 412.17,237.85 446.00,248.97 C479.83,260.09 510.27,270.53 513.66,272.18 C531.32,280.79 538.09,297.67 529.98,312.88 C526.39,319.63 522.22,323.47 514.00,327.59 C511.09,329.06 489.98,336.67 467.10,344.52 C381.96,373.72 379.45,374.67 375.36,379.15 C371.18,383.75 369.09,389.14 351.99,439.50 C336.70,484.55 326.83,512.63 324.33,518.20 C318.47,531.27 305.93,537.53 293.05,533.83 ZM 460.03 226.25 C457.54,223.96 455.45,218.85 447.61,195.85 C442.42,180.64 437.67,167.25 437.06,166.11 C435.42,163.05 432.53,161.81 403.71,151.85 C389.30,146.87 376.07,141.72 374.33,140.40 C367.79,135.49 367.86,126.50 374.46,121.46 C376.48,119.92 388.75,115.29 406.00,109.55 C421.53,104.39 434.67,99.73 435.19,99.21 C436.37,98.03 441.78,83.17 449.89,58.83 C457.54,35.89 460.10,32.67 469.33,34.40 C475.62,35.58 477.18,38.55 487.44,68.92 C492.72,84.55 497.51,97.91 498.09,98.61 C498.67,99.31 512.18,104.23 528.11,109.54 C559.16,119.89 562.15,121.42 564.11,127.98 C565.68,133.22 563.06,138.65 557.50,141.67 C555.30,142.86 541.58,147.92 527.00,152.91 C507.88,159.46 499.92,162.65 498.42,164.35 C497.28,165.65 493.05,176.33 489.03,188.10 C478.20,219.75 476.19,224.70 473.30,226.98 C469.48,229.98 463.76,229.67 460.03,226.25 Z"/>
+  </svg>
+);
 const PersonIconAvatar = ({ className }) => (
   <svg viewBox="0 0 1024 1024" fill="currentColor" className={className}>
     <path d="M 472.50 907.92 C399.79,903.47 339.60,894.58 279.93,879.46 C199.83,859.17 171.51,841.57 164.58,807.79 C160.48,787.78 164.88,739.16 174.11,702.56 C193.23,626.76 238.62,581.38 324.50,552.17 C343.87,545.58 372.91,539.00 382.61,539.00 C386.12,539.00 388.26,539.88 393.73,543.58 C413.47,556.94 443.76,567.65 476.00,572.66 C490.33,574.89 528.58,575.18 543.00,573.16 C577.95,568.29 607.96,557.82 630.43,542.68 L 636.37 538.68 L 646.06 539.81 C665.43,542.08 703.65,553.48 727.57,564.12 C788.29,591.11 823.84,627.19 843.22,681.50 C856.66,719.16 864.59,779.85 859.54,806.52 C853.77,837.05 831.12,853.72 770.58,871.98 C708.99,890.55 632.18,903.33 554.29,907.97 C534.80,909.14 491.96,909.10 472.50,907.92 ZM 491.00 493.36 C422.58,484.88 365.71,437.02 344.05,369.72 C338.60,352.77 336.94,342.22 336.31,320.50 C335.48,291.89 338.48,271.23 346.61,249.61 C361.87,208.97 393.61,173.73 432.51,154.20 C474.35,133.20 527.65,130.25 571.51,146.49 C629.04,167.79 671.99,217.51 684.59,277.39 C688.07,293.95 688.98,322.12 686.57,339.27 C679.49,389.87 653.55,433.03 612.50,462.55 C601.94,470.14 579.28,481.64 566.50,485.89 C548.85,491.76 539.55,493.16 516.00,493.49 C504.17,493.66 492.92,493.60 491.00,493.36 Z"/>
@@ -724,22 +729,35 @@ export const MainPage = () => {
               <div className="bottom-panel-content">
                 {activeMainTab === 'Formats' ? (
                   <>
-                    <div className="formats-grid-logged">
-                      {FORMATS.slice(0, 8).map((format) => (
-                        <button 
-                          key={format.id}
-                          className="format-card-carousel-btn"
-                          onClick={() => handleSelectFormat(format)}
-                          data-testid={`create-format-${format.id}`}
-                        >
-                          <div 
-                            className="format-card-bg"
-                            style={{ backgroundColor: format.color }}
-                          />
-                          <div className="format-card-gradient" />
-                          <span className="format-card-name">{format.name}</span>
-                        </button>
-                      ))}
+                    {/* My Custom Formats Section */}
+                    <div className="formats-section-my">
+                      <h3 className="formats-section-label">My</h3>
+                      {/* Empty state for now */}
+                      <div className="my-formats-empty">
+                        <p className="no-formats-text">No custom formats</p>
+                      </div>
+                    </div>
+
+                    {/* All Formats Section */}
+                    <div className="formats-section-all">
+                      <h3 className="formats-section-label">All</h3>
+                      <div className="formats-grid-logged">
+                        {FORMATS.slice(0, 8).map((format) => (
+                          <button 
+                            key={format.id}
+                            className="format-card-carousel-btn"
+                            onClick={() => handleSelectFormat(format)}
+                            data-testid={`create-format-${format.id}`}
+                          >
+                            <div 
+                              className="format-card-bg"
+                              style={{ backgroundColor: format.color }}
+                            />
+                            <div className="format-card-gradient" />
+                            <span className="format-card-name">{format.name}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     
                     <button 
@@ -784,19 +802,16 @@ export const MainPage = () => {
                     ) : (
                       <div className="creations-empty-pattern">
                         <div className="creations-pattern-grid">
-                          {/* Left column */}
+                          {/* Two columns of squares only */}
                           <div className="pattern-column">
-                            <div className="pattern-item ratio-9-16" />
                             <div className="pattern-item ratio-1-1" />
-                            <div className="pattern-item ratio-16-9" />
-                            <div className="pattern-item ratio-9-16" />
+                            <div className="pattern-item ratio-1-1" />
+                            <div className="pattern-item ratio-1-1" />
                           </div>
-                          {/* Right column */}
                           <div className="pattern-column">
-                            <div className="pattern-item ratio-16-9" />
-                            <div className="pattern-item ratio-9-16" />
                             <div className="pattern-item ratio-1-1" />
-                            <div className="pattern-item ratio-16-9" />
+                            <div className="pattern-item ratio-1-1" />
+                            <div className="pattern-item ratio-1-1" />
                           </div>
                         </div>
                         <div className="creations-empty-fade" />
@@ -810,7 +825,8 @@ export const MainPage = () => {
                             }}
                             data-testid="start-create-btn"
                           >
-                            {t('startCreate')}
+                            <AvatarStartIcon className="start-btn-icon" />
+                            {t('start')}
                           </button>
                         </div>
                       </div>

@@ -3503,13 +3503,51 @@ body {
   background: var(--cyan);
   color: #000;
   border: none;
-  border-radius: 20px;
+  border-radius: 17px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.start-btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+
+/* Formats sections My/All */
+.formats-section-my,
+.formats-section-all {
+  margin-bottom: 24px;
+}
+
+.formats-section-label {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 12px 0;
+}
+
+.my-formats-empty {
+  padding: 32px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+}
+
+.no-formats-text {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
 
 .creations-start-btn:hover {
   opacity: 0.9;
@@ -5976,6 +6014,21 @@ body {
   
   .footer-card {
     padding: 64px 40px 48px;
+  }
+  
+  /* Bottom panel - поднимаем выше */
+  .bottom-panel {
+    margin-top: -60px;
+  }
+  
+  /* Creations empty pattern - больше квадратов на десктопе */
+  .creations-pattern-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  
+  .pattern-column {
+    display: contents;
   }
 }
 

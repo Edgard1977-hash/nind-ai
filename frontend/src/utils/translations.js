@@ -35,6 +35,7 @@ export const translations = {
     formats: "Formats",
     noVideosYet: "No videos yet",
     startCreate: "Start create",
+    start: "Start",
     seeAll: "See all",
     // Placeholder phrases
     placeholder1: "Cut my video and…",
