@@ -5651,8 +5651,7 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
   height: 450px;
   z-index: 1;
   pointer-events: none;
@@ -5709,4 +5708,179 @@ body {
 
 .footer-link:hover {
   color: var(--white);
+}
+
+
+/* ============================================ */
+/* АДАПТИВНОСТЬ ДЛЯ ПЛАНШЕТОВ И ДЕСКТОПОВ */
+/* ============================================ */
+
+/* Планшеты (768px и больше) */
+@media (min-width: 768px) {
+  /* Заголовок главной страницы */
+  .create-title {
+    font-size: 48px;
+  }
+  
+  .create-subtitle {
+    font-size: 18px;
+  }
+  
+  /* Поле ввода */
+  .input-outer {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  /* Секции */
+  .section-title {
+    font-size: 32px;
+  }
+  
+  /* CTA секция */
+  .cta-title {
+    font-size: 40px;
+  }
+  
+  .cta-subtitle {
+    font-size: 18px;
+  }
+  
+  .cta-get-started-btn {
+    padding: 16px 64px;
+    font-size: 18px;
+  }
+  
+  /* Футер */
+  .footer-columns {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Десктопы (1024px и больше) */
+@media (min-width: 1024px) {
+  /* Центрирование основного контента */
+  .create-center-section-landing {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  
+  /* Заголовок */
+  .create-title {
+    font-size: 64px;
+  }
+  
+  .create-subtitle {
+    font-size: 20px;
+  }
+  
+  /* Поле ввода */
+  .input-outer {
+    max-width: 800px;
+  }
+  
+  /* Секции с контентом */
+  .how-section,
+  .formats-section-new,
+  .discover-tools-section,
+  .cta-section {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  
+  /* Discover tools - сетка вместо скролла */
+  .discover-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    overflow-x: visible;
+  }
+  
+  .discover-tool-card {
+    width: 100%;
+  }
+  
+  /* Форматы - сетка */
+  .formats-carousel-wrapper {
+    overflow-x: visible;
+  }
+  
+  .formats-carousel-inner {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  
+  .format-card-carousel {
+    width: 100%;
+  }
+  
+  /* CTA секция */
+  .cta-title {
+    font-size: 56px;
+  }
+  
+  .cta-subtitle {
+    font-size: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* Футер */
+  .footer-columns {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 40px;
+  }
+  
+  .footer-card {
+    padding: 64px 40px 48px;
+  }
+}
+
+/* Большие десктопы (1440px и больше) */
+@media (min-width: 1440px) {
+  .create-center-section-landing,
+  .how-section,
+  .formats-section-new,
+  .discover-tools-section,
+  .cta-section {
+    max-width: 1400px;
+  }
+  
+  /* Заголовок */
+  .create-title {
+    font-size: 72px;
+  }
+  
+  /* Поле ввода */
+  .input-outer {
+    max-width: 900px;
+  }
+  
+  /* Discover tools - 3 колонки */
+  .discover-tools-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  
+  /* Форматы - 3 колонки */
+  .formats-carousel-inner {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  /* CTA */
+  .cta-title {
+    font-size: 64px;
+  }
+  
+  .cta-get-started-btn {
+    padding: 18px 72px;
+    font-size: 20px;
+  }
 }
