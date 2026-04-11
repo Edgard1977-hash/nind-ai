@@ -94,6 +94,11 @@ body {
   animation: fadeInGrid 1.2s ease-out 0.3s forwards;
 }
 
+/* Скрываем десктопную сетку на мобайле по умолчанию */
+.perspective-grid-desktop {
+  display: none;
+}
+
 @keyframes fadeInGrid {
   from {
     opacity: 0;
@@ -5759,13 +5764,33 @@ body {
 
 /* Десктопы (1024px и больше) */
 @media (min-width: 1024px) {
+  /* Скрываем мобильную сетку, показываем десктопную */
+  .perspective-grid-mobile {
+    display: none;
+  }
+  
+  .perspective-grid-desktop {
+    display: block;
+  }
+  
+  /* Убираем сетку на странице логина */
+  .auth-page .perspective-grid,
+  .auth-page .perspective-grid-mobile,
+  .auth-page .perspective-grid-desktop {
+    display: none;
+  }
+  
   /* Сетка под полем ввода - опускаем НИЖЕ поля, увеличиваем размер */
-  .perspective-grid {
+  .perspective-grid-desktop {
+    position: absolute;
     left: 50%;
     right: auto;
     top: 280px;
     max-width: 1400px;
     height: 600px;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
     animation: fadeInGridDesktop 1.2s ease-out 0.3s forwards;
     mask-image: 
       linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%),

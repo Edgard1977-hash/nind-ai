@@ -917,7 +917,24 @@ export const MainPage = () => {
       <div className="liquid-gradient-bg" />
       
       {/* Perspective Grid */}
-      <div className="perspective-grid">
+      <div className="perspective-grid perspective-grid-mobile">
+        <svg viewBox="0 0 400 300" preserveAspectRatio="none" className="grid-svg">
+          <line x1="0" y1="0" x2="0" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="80" y1="0" x2="80" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="160" y1="0" x2="160" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="240" y1="0" x2="240" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="320" y1="0" x2="320" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          <line x1="400" y1="0" x2="400" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
+          
+          <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none"/>
+          <path d="M0,75 Q200,65 400,75" stroke="rgba(255,255,255,0.07)" strokeWidth="1" fill="none"/>
+          <path d="M0,150 Q200,130 400,150" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none"/>
+          <path d="M0,225 Q200,195 400,225" stroke="rgba(255,255,255,0.09)" strokeWidth="1" fill="none"/>
+          <path d="M0,300 Q200,260 400,300" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none"/>
+        </svg>
+      </div>
+      
+      <div className="perspective-grid perspective-grid-desktop">
         <svg viewBox="0 0 400 300" preserveAspectRatio="none" className="grid-svg">
           <line x1="0" y1="0" x2="0" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
           <line x1="50" y1="0" x2="50" y2="300" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
