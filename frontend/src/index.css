@@ -1015,7 +1015,7 @@ body {
 /* Discover tools section */
 .discover-tools-section {
   margin: 0;
-  padding: 32px 0 0 0;
+  padding: 32px 0 80px 0;
   background: #000000;
 }
 
@@ -5520,7 +5520,7 @@ body {
 
 /* CTA Section */
 .cta-section {
-  padding: 100px 16px 80px;
+  padding: 120px 16px 120px;
   text-align: center;
   background: #000000;
 }
@@ -5610,11 +5610,11 @@ body {
 
 .cta-get-started-btn {
   margin-top: 24px;
-  padding: 14px 32px;
+  padding: 14px 52px;
   background: var(--white);
   color: #000000;
   border: none;
-  border-radius: 12px;
+  border-radius: 19px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -5649,11 +5649,12 @@ body {
 
 .footer-perspective-grid {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
   top: 50%;
-  transform: translateY(-50%);
-  height: 100%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 500px;
+  height: 400px;
   z-index: 1;
   pointer-events: none;
   mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
