@@ -5649,16 +5649,15 @@ body {
 
 .footer-perspective-grid {
   position: absolute;
-  left: 50%;
+  left: 0;
+  right: 0;
   top: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  max-width: 500px;
-  height: 400px;
+  transform: translateY(-50%);
+  height: 450px;
   z-index: 1;
   pointer-events: none;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 85%, transparent 100%);
 }
 
 .footer-perspective-grid .grid-svg {
