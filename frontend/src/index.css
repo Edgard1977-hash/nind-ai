@@ -5759,6 +5759,14 @@ body {
 
 /* Десктопы (1024px и больше) */
 @media (min-width: 1024px) {
+  /* Сетка под полем ввода - ограничиваем ширину чтобы не растягивалась */
+  .perspective-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
   /* Хедер - увеличиваем элементы */
   .logo-svg {
     height: 32px;
@@ -5873,6 +5881,11 @@ body {
 
 /* Большие десктопы (1440px и больше) */
 @media (min-width: 1440px) {
+  /* Сетка - еще больше ограничиваем */
+  .perspective-grid {
+    max-width: 1400px;
+  }
+  
   /* Хедер */
   .logo-svg {
     height: 36px;
