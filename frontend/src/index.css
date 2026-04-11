@@ -4397,6 +4397,7 @@ body {
 .upgrade-btn-icon {
   width: 19px;
   height: 19px;
+  margin-right: 8px;
 }
 
 .header-upgrade-btn:hover {
