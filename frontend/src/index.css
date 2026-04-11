@@ -3499,24 +3499,26 @@ body {
 /* Old creations overlay - removed background */
 
 .creations-start-btn {
-  padding: 10px 26px;
+  padding: 12px 28px;
   background: var(--white);
   color: #000;
   border: none;
-  border-radius: 15px;
+  border-radius: 18px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
 }
 
 .start-btn-icon {
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
 }
 
 
@@ -4629,7 +4631,9 @@ body {
   overflow: visible;
   min-height: 400px;
   width: 100%;
-  background: linear-gradient(to bottom, #000000 0%, #1D1E20 100%);
+  background: #1D1E20;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .creations-pattern-grid {
