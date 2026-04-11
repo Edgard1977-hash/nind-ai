@@ -5759,6 +5759,16 @@ body {
 
 /* Десктопы (1024px и больше) */
 @media (min-width: 1024px) {
+  /* Хедер - увеличиваем элементы */
+  .logo-svg {
+    height: 32px;
+  }
+  
+  .get-started-btn {
+    padding: 12px 28px;
+    font-size: 16px;
+  }
+  
   /* Центрирование основного контента */
   .create-center-section-landing {
     max-width: 1200px;
@@ -5793,7 +5803,7 @@ body {
     padding-right: 40px;
   }
   
-  /* Discover tools - сетка вместо скролла */
+  /* Discover tools - сетка вместо скролла + увеличиваем размеры */
   .discover-tools-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -5803,17 +5813,36 @@ body {
   
   .discover-tool-card {
     width: 100%;
+    padding: 28px;
   }
   
-  /* Форматы - сетка */
+  .discover-tool-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .discover-tool-icon svg {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .discover-tool-title {
+    font-size: 24px;
+  }
+  
+  .discover-tool-subtitle {
+    font-size: 16px;
+  }
+  
+  /* Форматы - сетка в один ряд (6 колонок) */
   .formats-carousel-wrapper {
     overflow-x: visible;
   }
   
   .formats-carousel-inner {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
   }
   
   .format-card-carousel {
@@ -5844,6 +5873,16 @@ body {
 
 /* Большие десктопы (1440px и больше) */
 @media (min-width: 1440px) {
+  /* Хедер */
+  .logo-svg {
+    height: 36px;
+  }
+  
+  .get-started-btn {
+    padding: 14px 32px;
+    font-size: 18px;
+  }
+  
   .create-center-section-landing,
   .how-section,
   .formats-section-new,
@@ -5862,16 +5901,38 @@ body {
     max-width: 900px;
   }
   
-  /* Discover tools - 3 колонки */
+  /* Discover tools */
   .discover-tools-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
   }
   
-  /* Форматы - 3 колонки */
+  .discover-tool-card {
+    padding: 32px;
+  }
+  
+  .discover-tool-icon {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .discover-tool-icon svg {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .discover-tool-title {
+    font-size: 26px;
+  }
+  
+  .discover-tool-subtitle {
+    font-size: 17px;
+  }
+  
+  /* Форматы - всё ещё 6 колонок */
   .formats-carousel-inner {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
   }
   
   /* CTA */
