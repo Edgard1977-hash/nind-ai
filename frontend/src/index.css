@@ -3499,11 +3499,11 @@ body {
 /* Old creations overlay - removed background */
 
 .creations-start-btn {
-  padding: 10px 24px;
-  background: var(--cyan);
+  padding: 8px 20px;
+  background: var(--white);
   color: #000;
   border: none;
-  border-radius: 17px;
+  border-radius: 12px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -3515,8 +3515,8 @@ body {
 }
 
 .start-btn-icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 
@@ -4628,7 +4628,7 @@ body {
   overflow: visible;
   min-height: 400px;
   width: 100%;
-  background: #1D1E20;
+  background: linear-gradient(to bottom, #000000 0%, #1D1E20 100%);
 }
 
 .creations-pattern-grid {
@@ -4636,7 +4636,7 @@ body {
   gap: 12px;
   width: 100%;
   box-sizing: border-box;
-  background: #1D1E20;
+  background: transparent;
 }
 
 .pattern-column {
@@ -4645,7 +4645,7 @@ body {
   flex-direction: column;
   gap: 12px;
   min-width: 0;
-  background: #1D1E20;
+  background: transparent;
 }
 
 .pattern-item {
@@ -4665,7 +4665,9 @@ body {
 }
 
 .pattern-item.ratio-1-1 {
-  height: 130px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: auto;
 }
 
 @keyframes shimmer {
@@ -4675,14 +4677,21 @@ body {
 }
 
 .creations-empty-fade {
-  display: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent 0%, #1D1E20 100%);
+  pointer-events: none;
 }
 
 .creations-empty-overlay {
   position: absolute;
-  bottom: 40px;
+  top: 50%;
   left: 0;
   right: 0;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4695,19 +4704,6 @@ body {
   font-weight: 600;
   color: var(--white);
   margin: 0;
-}
-
-.creations-start-btn {
-  padding: 14px 32px;
-  background: var(--cyan);
-  color: #000;
-  border: none;
-  border-radius: 50px;
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .creations-start-btn:hover {

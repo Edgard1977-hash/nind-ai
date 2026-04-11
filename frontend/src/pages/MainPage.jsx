@@ -816,7 +816,7 @@ export const MainPage = () => {
                         </div>
                         <div className="creations-empty-fade" />
                         <div className="creations-empty-overlay">
-                          <p className="creations-empty-text">{t('noVideosYet')}</p>
+                          <p className="creations-empty-text">{t('yourVideosWillBeHere')}</p>
                           <button 
                             className="creations-start-btn"
                             onClick={() => {

@@ -34,6 +34,7 @@ export const translations = {
     myCreations: "My creations",
     formats: "Formats",
     noVideosYet: "No videos yet",
+    yourVideosWillBeHere: "Your videos will be here",
     startCreate: "Start create",
     start: "Start",
     seeAll: "See all",
