@@ -3499,24 +3499,24 @@ body {
 /* Old creations overlay - removed background */
 
 .creations-start-btn {
-  padding: 8px 20px;
+  padding: 10px 26px;
   background: var(--white);
   color: #000;
   border: none;
-  border-radius: 12px;
+  border-radius: 15px;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .start-btn-icon {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
 }
 
 
@@ -4574,6 +4574,7 @@ body {
   border-radius: 28px 28px 0 0;
   margin-left: -20px;
   margin-right: -20px;
+  margin-top: -40px;
   padding: 20px 20px 40px;
   overflow: visible;
 }
@@ -4636,7 +4637,6 @@ body {
   gap: 12px;
   width: 100%;
   box-sizing: border-box;
-  background: transparent;
 }
 
 .pattern-column {
@@ -4645,7 +4645,6 @@ body {
   flex-direction: column;
   gap: 12px;
   min-width: 0;
-  background: transparent;
 }
 
 .pattern-item {
