@@ -5759,12 +5759,19 @@ body {
 
 /* Десктопы (1024px и больше) */
 @media (min-width: 1024px) {
-  /* Сетка под полем ввода - ограничиваем ширину чтобы не растягивалась */
+  /* Сетка под полем ввода - ограничиваем ширину и добавляем затемнение по краям */
   .perspective-grid {
-    max-width: 1200px;
-    margin: 0 auto;
     left: 50%;
     transform: translateX(-50%);
+    max-width: 1200px;
+    mask-image: 
+      linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 10%, black 85%, transparent 100%);
+    -webkit-mask-image: 
+      linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%),
+      linear-gradient(to bottom, transparent 0%, black 10%, black 85%, transparent 100%);
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
   }
   
   /* Хедер - увеличиваем элементы */
@@ -5881,7 +5888,7 @@ body {
 
 /* Большие десктопы (1440px и больше) */
 @media (min-width: 1440px) {
-  /* Сетка - еще больше ограничиваем */
+  /* Сетка - увеличиваем ширину */
   .perspective-grid {
     max-width: 1400px;
   }
