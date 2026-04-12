@@ -318,7 +318,8 @@ export const MainPage = () => {
     if ((activeMainTab === "Library" || activeMainTab === "Creations") && user) {
       fetchUserVideos();
     }
-  }, [activeMainTab, user]);
+    // eslint-disable-next-line
+  }, [activeMainTab]);
 
   // Animated placeholder typing effect
   useEffect(() => {
@@ -382,13 +383,15 @@ export const MainPage = () => {
   }, [user]);
 
   const fetchUserVideos = async () => {
-    if (!user?.user_id) return;
+    if (!user?.user_id && !user?.id) return;
     setIsLoadingVideos(true);
     try {
-      const response = await axios.get(`${API}/videos/user/${user.user_id}`);
+      const userId = user.user_id || user.id;
+      const response = await axios.get(`${API}/videos/user/${userId}`);
       setUserVideos(response.data.projects || []);
     } catch (error) {
       console.error("Failed to fetch videos:", error);
+      setUserVideos([]);
     } finally {
       setIsLoadingVideos(false);
     }
