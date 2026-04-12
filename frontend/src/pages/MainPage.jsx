@@ -313,9 +313,9 @@ export const MainPage = () => {
     };
   }, []);
 
-  // Fetch user videos when switching to Library tab
+  // Fetch user videos when switching to Library tab OR Creations tab
   useEffect(() => {
-    if (activeMainTab === "Library" && user) {
+    if ((activeMainTab === "Library" || activeMainTab === "Creations") && user) {
       fetchUserVideos();
     }
   }, [activeMainTab, user]);
@@ -542,7 +542,11 @@ export const MainPage = () => {
         requestData.product_images = uploadedUrls;
       }
       
-      const response = await axios.post(`${API}/video/generate`, requestData);
+      const response = await axios.post(`${API}/video/generate`, requestData, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
       
       
       // Add generating video to the list

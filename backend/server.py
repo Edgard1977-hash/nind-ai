@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, UploadFile, File, Request
+from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, UploadFile, File, Request, Depends
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -2352,8 +2352,21 @@ async def get_formats():
     }
 
 @api_router.post("/video/generate")
-async def generate_video(request: VideoGenerateRequest, background_tasks: BackgroundTasks):
+async def generate_video(request: VideoGenerateRequest, background_tasks: BackgroundTasks, req: Request):
     """Start video generation"""
+    # Try to get user from auth, otherwise use anonymous
+    user_id = None
+    try:
+        auth_header = req.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            # Decode token to get user_id
+            import jwt
+            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            user_id = payload.get("user_id")
+    except:
+        pass
+    
     project = VideoProject(
         prompt=request.prompt,
         format_id=request.format_id,
@@ -2363,7 +2376,8 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
         gameplay_type=request.gameplay_type,
         product_images=request.product_images,
         logo_url=request.logo_url,
-        brand_name=request.brand_name
+        brand_name=request.brand_name,
+        user_id=user_id
     )
     
     # Save to DB
