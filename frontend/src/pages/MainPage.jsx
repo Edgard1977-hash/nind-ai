@@ -401,18 +401,23 @@ export const MainPage = () => {
     
     if (!prompt.trim() && attachments.length === 0) return;
     
-    setIsGenerating(true);
+    const currentPrompt = prompt.trim();
+    const currentAttachments = [...attachments];
+    
+    // Clear input immediately to allow multiple submissions
+    setPrompt('');
+    setAttachments([]);
     
     try {
       const requestData = {
-        prompt: prompt.trim(),
+        prompt: currentPrompt,
         format_id: selectedFormat?.id || "auto",
         language: "auto"
       };
       
-      if (attachments.length > 0) {
+      if (currentAttachments.length > 0) {
         const uploadedUrls = [];
-        for (const att of attachments) {
+        for (const att of currentAttachments) {
           if (att.file && !att.uploadedUrl) {
             const formData = new FormData();
             formData.append("file", att.file);
@@ -425,7 +430,7 @@ export const MainPage = () => {
           }
         }
         
-        const videoAttachment = attachments.find(a => a.type === "video");
+        const videoAttachment = currentAttachments.find(a => a.type === "video");
         if (videoAttachment && uploadedUrls.length > 0) {
           const response = await axios.post(`${API}/device-mockup/create`, {
             video_url: uploadedUrls[0],
@@ -440,7 +445,7 @@ export const MainPage = () => {
           // Add generating video to the list
           const newVideo = {
             id: response.data.id,
-            title: prompt.trim(),
+            title: currentPrompt,
             status: 'generating',
             progress: 5,
             created_at: new Date().toISOString()
@@ -459,9 +464,6 @@ export const MainPage = () => {
           }, 100);
           
           toast.success("Создаём 3D анимацию...");
-          setPrompt('');
-          setAttachments([]);
-          setIsGenerating(false);
           
           // Poll for progress
           pollVideoProgress(response.data.id);
@@ -476,7 +478,7 @@ export const MainPage = () => {
       // Add generating video to the list
       const newVideo = {
         id: response.data.id,
-        title: prompt.trim(),
+        title: currentPrompt,
         status: 'generating',
         progress: 5,
         created_at: new Date().toISOString()
@@ -495,59 +497,89 @@ export const MainPage = () => {
       }, 100);
       
       toast.success("Генерация началась!");
-      setPrompt('');
-      setAttachments([]);
-      setIsGenerating(false);
       
       // Poll for progress
       pollVideoProgress(response.data.id);
     } catch (error) {
       console.error("Failed to start generation:", error);
       toast.error("Ошибка при запуске генерации");
-      setIsGenerating(false);
     }
   };
   
-  const pollVideoProgress = async (videoId) => {
-    let simulatedProgress = 0;
+  const pollVideoProgress = (videoId) => {
+    let currentProgress = 5;
+    let attempts = 0;
+    const maxAttempts = 150; // 150 * 2 seconds = 5 minutes max
     
     const pollInterval = setInterval(async () => {
+      attempts++;
+      
       try {
         const response = await axios.get(`${API}/video/${videoId}`);
         const videoData = response.data;
         
-        // Simulate progress if backend doesn't provide it
-        if (videoData.status === 'generating' || videoData.status === 'processing') {
-          simulatedProgress = Math.min(simulatedProgress + Math.random() * 15, 95);
-        } else if (videoData.status === 'completed') {
-          simulatedProgress = 100;
+        // Check if video is completed
+        if (videoData.status === 'completed') {
+          setUserVideos(prev => prev.map(v => 
+            v.id === videoId ? { 
+              ...v, 
+              ...videoData,
+              progress: 100
+            } : v
+          ));
+          clearInterval(pollInterval);
+          return;
         }
         
-        // Update video in the list
+        // Check if video failed
+        if (videoData.status === 'failed') {
+          setUserVideos(prev => prev.map(v => 
+            v.id === videoId ? { 
+              ...v, 
+              ...videoData,
+              progress: 0
+            } : v
+          ));
+          clearInterval(pollInterval);
+          return;
+        }
+        
+        // Simulate realistic progress
+        if (currentProgress < 95) {
+          // Increase progress gradually: faster at start, slower near end
+          const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
+          currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
+        }
+        
+        // Update video progress
         setUserVideos(prev => prev.map(v => 
           v.id === videoId ? { 
             ...v, 
             ...videoData,
-            progress: videoData.progress || Math.floor(simulatedProgress)
+            progress: Math.floor(currentProgress)
           } : v
         ));
         
-        // Stop polling when complete or failed
-        if (videoData.status === 'completed' || videoData.status === 'failed') {
-          clearInterval(pollInterval);
-        }
       } catch (error) {
         console.error('Failed to poll video progress:', error);
+        
         // Continue simulating even if API fails
-        if (simulatedProgress < 95) {
-          simulatedProgress = Math.min(simulatedProgress + Math.random() * 10, 95);
+        if (currentProgress < 95) {
+          const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
+          currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
+          
           setUserVideos(prev => prev.map(v => 
             v.id === videoId ? { 
               ...v, 
-              progress: Math.floor(simulatedProgress)
+              progress: Math.floor(currentProgress)
             } : v
           ));
         }
+      }
+      
+      // Stop after max attempts
+      if (attempts >= maxAttempts) {
+        clearInterval(pollInterval);
       }
     }, 2000); // Poll every 2 seconds
   };
