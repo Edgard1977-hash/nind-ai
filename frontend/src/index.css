@@ -4364,8 +4364,6 @@ body {
 
 /* ===== MAIN PAGE FIXED LAYOUT ===== */
 .main-page-fixed {
-  min-height: 100vh;
-  min-height: 100dvh;
   background: var(--bg);
   display: flex;
   flex-direction: column;
@@ -4624,7 +4622,6 @@ body {
 }
 
 .bottom-panel-content {
-  min-height: 200px;
   overflow: visible;
   background: #1D1E20;
 }
