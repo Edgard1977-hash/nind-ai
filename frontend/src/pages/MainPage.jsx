@@ -437,8 +437,34 @@ export const MainPage = () => {
             aspect_ratio: "9:16"
           });
           
+          // Add generating video to the list
+          const newVideo = {
+            id: response.data.id,
+            title: prompt.trim(),
+            status: 'generating',
+            progress: 0,
+            created_at: new Date().toISOString()
+          };
+          setUserVideos(prev => [newVideo, ...prev]);
+          
+          // Switch to My creations tab
+          setActiveMainTab('Creations');
+          
+          // Scroll to bottom panel
+          setTimeout(() => {
+            const bottomPanel = document.querySelector('.bottom-panel');
+            if (bottomPanel) {
+              bottomPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }, 100);
+          
           toast.success("Создаём 3D анимацию...");
-          navigate(`/video/${response.data.id}`);
+          setPrompt('');
+          setAttachments([]);
+          setIsGenerating(false);
+          
+          // Poll for progress
+          pollVideoProgress(response.data.id);
           return;
         }
         
@@ -446,13 +472,65 @@ export const MainPage = () => {
       }
       
       const response = await axios.post(`${API}/video/generate`, requestData);
+      
+      // Add generating video to the list
+      const newVideo = {
+        id: response.data.id,
+        title: prompt.trim(),
+        status: 'generating',
+        progress: 0,
+        created_at: new Date().toISOString()
+      };
+      setUserVideos(prev => [newVideo, ...prev]);
+      
+      // Switch to My creations tab
+      setActiveMainTab('Creations');
+      
+      // Scroll to bottom panel
+      setTimeout(() => {
+        const bottomPanel = document.querySelector('.bottom-panel');
+        if (bottomPanel) {
+          bottomPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+      
       toast.success("Генерация началась!");
-      navigate(`/video/${response.data.id}`);
+      setPrompt('');
+      setAttachments([]);
+      setIsGenerating(false);
+      
+      // Poll for progress
+      pollVideoProgress(response.data.id);
     } catch (error) {
       console.error("Failed to start generation:", error);
       toast.error("Ошибка при запуске генерации");
       setIsGenerating(false);
     }
+  };
+  
+  const pollVideoProgress = async (videoId) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await axios.get(`${API}/video/${videoId}`);
+        const videoData = response.data;
+        
+        // Update video in the list
+        setUserVideos(prev => prev.map(v => 
+          v.id === videoId ? { 
+            ...v, 
+            ...videoData,
+            progress: videoData.progress || 0
+          } : v
+        ));
+        
+        // Stop polling when complete or failed
+        if (videoData.status === 'completed' || videoData.status === 'failed') {
+          clearInterval(pollInterval);
+        }
+      } catch (error) {
+        console.error('Failed to poll video progress:', error);
+      }
+    }, 2000); // Poll every 2 seconds
   };
 
   const handleFileSelect = (e) => {
@@ -773,16 +851,21 @@ export const MainPage = () => {
                   <>
                     {isLoadingVideos ? (
                       <div className="library-loading">Loading...</div>
-                    ) : completedVideos.length > 0 ? (
+                    ) : userVideos.length > 0 ? (
                       <div className="creations-grid-real">
-                        {completedVideos.map((video) => (
+                        {userVideos.map((video) => (
                           <div 
                             key={video.id} 
-                            className="creation-card"
-                            onClick={() => navigate(`/video/${video.id}`)}
+                            className={`creation-card ${video.status === 'generating' ? 'generating' : ''}`}
+                            onClick={() => video.status === 'completed' && navigate(`/video/${video.id}`)}
                             data-testid={`library-video-${video.id}`}
                           >
-                            {video.poster_url ? (
+                            {video.status === 'generating' ? (
+                              <div className="creation-generating">
+                                <div className="generating-gradient"></div>
+                                <div className="generating-progress">{video.progress || 0}%</div>
+                              </div>
+                            ) : video.poster_url ? (
                               <img 
                                 src={`${BACKEND_URL}${video.poster_url}`} 
                                 alt={video.title || 'Video'}
