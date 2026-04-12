@@ -399,28 +399,32 @@ export const MainPage = () => {
     let attempts = 0;
     const maxAttempts = 150;
     
-    
     const pollInterval = setInterval(async () => {
       attempts++;
-      
-      // ALWAYS increment progress first
-      if (currentProgress < 95) {
-        const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
-        currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
-      }
       
       try {
         const response = await axios.get(`${API}/video/${videoId}`);
         const videoData = response.data;
         
-        // Update generating videos
-        setGeneratingVideos(prev => prev.map(v => 
-          v.id === videoId ? { 
-            ...v, 
-            progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress),
+        // Update generating videos - ONLY if progress increases
+        setGeneratingVideos(prev => prev.map(v => {
+          if (v.id !== videoId) return v;
+          
+          // Calculate new progress
+          if (currentProgress < 95) {
+            const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
+            currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
+          }
+          
+          const newProgress = videoData.status === 'completed' ? 100 : Math.floor(currentProgress);
+          
+          // ONLY update if progress increases
+          return {
+            ...v,
+            progress: Math.max(v.progress || 0, newProgress),
             status: videoData.status
-          } : v
-        ));
+          };
+        }));
         
         // Stop polling when complete
         if (videoData.status === 'completed' || videoData.status === 'failed') {
@@ -433,13 +437,20 @@ export const MainPage = () => {
         }
         
       } catch (error) {
-        // Update with simulated progress
-        setGeneratingVideos(prev => prev.map(v => 
-          v.id === videoId ? { 
-            ...v, 
-            progress: Math.floor(currentProgress)
-          } : v
-        ));
+        // Update with simulated progress - ONLY if increases
+        setGeneratingVideos(prev => prev.map(v => {
+          if (v.id !== videoId) return v;
+          
+          if (currentProgress < 95) {
+            const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
+            currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
+          }
+          
+          return {
+            ...v,
+            progress: Math.max(v.progress || 0, Math.floor(currentProgress))
+          };
+        }));
       }
       
       // Stop after max attempts
