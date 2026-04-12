@@ -393,6 +393,63 @@ export const MainPage = () => {
     }
   };
 
+  const pollVideoProgress = (videoId) => {
+    let currentProgress = 5;
+    let attempts = 0;
+    const maxAttempts = 150;
+    
+    console.log(`[Progress] Starting polling for video ${videoId}`);
+    
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      
+      // ALWAYS increment progress first
+      if (currentProgress < 95) {
+        const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
+        currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
+        console.log(`[Progress] Video ${videoId}: ${Math.floor(currentProgress)}%`);
+      }
+      
+      try {
+        const response = await axios.get(`${API}/video/${videoId}`);
+        const videoData = response.data;
+        
+        // Update video with new progress
+        setUserVideos(prev => [...prev.map(v => 
+          v.id === videoId ? { 
+            ...v, 
+            ...videoData,
+            progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress)
+          } : v
+        )]);
+        
+        // Stop polling when complete or failed
+        if (videoData.status === 'completed' || videoData.status === 'failed') {
+          console.log(`[Progress] Video ${videoId} finished with status: ${videoData.status}`);
+          clearInterval(pollInterval);
+          return;
+        }
+        
+      } catch (error) {
+        console.log(`[Progress] API error for ${videoId}, continuing with simulated progress`);
+        
+        // Update with simulated progress even when API fails
+        setUserVideos(prev => [...prev.map(v => 
+          v.id === videoId ? { 
+            ...v, 
+            progress: Math.floor(currentProgress)
+          } : v
+        )]);
+      }
+      
+      // Stop after max attempts
+      if (attempts >= maxAttempts) {
+        console.log(`[Progress] Max attempts reached for ${videoId}`);
+        clearInterval(pollInterval);
+      }
+    }, 2000);
+  };
+
   const handleSubmit = async () => {
     if (!user) {
       navigate('/auth');
@@ -504,63 +561,6 @@ export const MainPage = () => {
       console.error("Failed to start generation:", error);
       toast.error("Ошибка при запуске генерации");
     }
-  };
-  
-  const pollVideoProgress = (videoId) => {
-    let currentProgress = 5;
-    let attempts = 0;
-    const maxAttempts = 150;
-    
-    console.log(`[Progress] Starting polling for video ${videoId}`);
-    
-    const pollInterval = setInterval(async () => {
-      attempts++;
-      
-      // ALWAYS increment progress first
-      if (currentProgress < 95) {
-        const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
-        currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
-        console.log(`[Progress] Video ${videoId}: ${Math.floor(currentProgress)}%`);
-      }
-      
-      try {
-        const response = await axios.get(`${API}/video/${videoId}`);
-        const videoData = response.data;
-        
-        // Update video with new progress
-        setUserVideos(prev => prev.map(v => 
-          v.id === videoId ? { 
-            ...v, 
-            ...videoData,
-            progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress)
-          } : v
-        ));
-        
-        // Stop polling when complete or failed
-        if (videoData.status === 'completed' || videoData.status === 'failed') {
-          console.log(`[Progress] Video ${videoId} finished with status: ${videoData.status}`);
-          clearInterval(pollInterval);
-          return;
-        }
-        
-      } catch (error) {
-        console.log(`[Progress] API error for ${videoId}, continuing with simulated progress`);
-        
-        // Update with simulated progress even when API fails
-        setUserVideos(prev => prev.map(v => 
-          v.id === videoId ? { 
-            ...v, 
-            progress: Math.floor(currentProgress)
-          } : v
-        ));
-      }
-      
-      // Stop after max attempts
-      if (attempts >= maxAttempts) {
-        console.log(`[Progress] Max attempts reached for ${videoId}`);
-        clearInterval(pollInterval);
-      }
-    }, 2000);
   };
 
   const handleFileSelect = (e) => {
