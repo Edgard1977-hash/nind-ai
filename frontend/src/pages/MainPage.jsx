@@ -442,7 +442,7 @@ export const MainPage = () => {
             id: response.data.id,
             title: prompt.trim(),
             status: 'generating',
-            progress: 0,
+            progress: 5,
             created_at: new Date().toISOString()
           };
           setUserVideos(prev => [newVideo, ...prev]);
@@ -478,7 +478,7 @@ export const MainPage = () => {
         id: response.data.id,
         title: prompt.trim(),
         status: 'generating',
-        progress: 0,
+        progress: 5,
         created_at: new Date().toISOString()
       };
       setUserVideos(prev => [newVideo, ...prev]);
@@ -509,17 +509,26 @@ export const MainPage = () => {
   };
   
   const pollVideoProgress = async (videoId) => {
+    let simulatedProgress = 0;
+    
     const pollInterval = setInterval(async () => {
       try {
         const response = await axios.get(`${API}/video/${videoId}`);
         const videoData = response.data;
+        
+        // Simulate progress if backend doesn't provide it
+        if (videoData.status === 'generating' || videoData.status === 'processing') {
+          simulatedProgress = Math.min(simulatedProgress + Math.random() * 15, 95);
+        } else if (videoData.status === 'completed') {
+          simulatedProgress = 100;
+        }
         
         // Update video in the list
         setUserVideos(prev => prev.map(v => 
           v.id === videoId ? { 
             ...v, 
             ...videoData,
-            progress: videoData.progress || 0
+            progress: videoData.progress || Math.floor(simulatedProgress)
           } : v
         ));
         
@@ -529,6 +538,16 @@ export const MainPage = () => {
         }
       } catch (error) {
         console.error('Failed to poll video progress:', error);
+        // Continue simulating even if API fails
+        if (simulatedProgress < 95) {
+          simulatedProgress = Math.min(simulatedProgress + Math.random() * 10, 95);
+          setUserVideos(prev => prev.map(v => 
+            v.id === videoId ? { 
+              ...v, 
+              progress: Math.floor(simulatedProgress)
+            } : v
+          ));
+        }
       }
     }, 2000); // Poll every 2 seconds
   };
