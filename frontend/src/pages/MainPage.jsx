@@ -426,30 +426,28 @@ export const MainPage = () => {
   };
 
   const pollVideoProgress = (videoId) => {
-    let currentProgress = 0;
+    let currentProgress = 5;
     let attempts = 0;
     const maxAttempts = 150;
     
     const pollInterval = setInterval(async () => {
       attempts++;
       
+      // Increment progress smoothly
+      if (currentProgress < 100) {
+        const increment = currentProgress < 20 ? 3 : currentProgress < 50 ? 4 : currentProgress < 80 ? 3 : 2;
+        currentProgress = Math.min(currentProgress + increment, 100);
+      }
+      
       try {
         const response = await axios.get(`${API}/video/${videoId}`);
         const videoData = response.data;
         
-        // Update generating videos - ONLY if progress increases
         setGeneratingVideos(prev => prev.map(v => {
           if (v.id !== videoId) return v;
           
-          // Calculate new progress - 0 to 100
-          if (currentProgress < 100) {
-            const increment = currentProgress < 30 ? 10 : currentProgress < 60 ? 7 : currentProgress < 90 ? 4 : 2;
-            currentProgress = Math.min(currentProgress + increment + Math.random() * 5, 100);
-          }
+          const newProgress = videoData.status === 'completed' ? 100 : currentProgress;
           
-          const newProgress = videoData.status === 'completed' ? 100 : Math.floor(currentProgress);
-          
-          // ONLY update if progress increases
           return {
             ...v,
             progress: Math.max(v.progress || 0, newProgress),
@@ -457,7 +455,6 @@ export const MainPage = () => {
           };
         }));
         
-        // Stop polling when complete
         if (videoData.status === 'completed' || videoData.status === 'failed') {
           clearInterval(pollInterval);
           setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
@@ -468,28 +465,20 @@ export const MainPage = () => {
         }
         
       } catch (error) {
-        // Update with simulated progress - ONLY if increases
         setGeneratingVideos(prev => prev.map(v => {
           if (v.id !== videoId) return v;
-          
-          if (currentProgress < 100) {
-            const increment = currentProgress < 30 ? 10 : currentProgress < 60 ? 7 : currentProgress < 90 ? 4 : 2;
-            currentProgress = Math.min(currentProgress + increment + Math.random() * 5, 100);
-          }
-          
           return {
             ...v,
-            progress: Math.max(v.progress || 0, Math.floor(currentProgress))
+            progress: Math.max(v.progress || 0, currentProgress)
           };
         }));
       }
       
-      // Stop after max attempts
       if (attempts >= maxAttempts) {
         clearInterval(pollInterval);
         setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
       }
-    }, 2000);
+    }, 1500); // 1.5 seconds for smoother updates
   };
 
   const handleSubmit = async () => {
@@ -588,7 +577,7 @@ export const MainPage = () => {
         id: response.data.id,
         title: currentPrompt,
         status: 'generating',
-        progress: 0,
+        progress: 5,
         created_at: new Date().toISOString()
       };
       

@@ -2355,6 +2355,8 @@ async def get_formats():
 @api_router.post("/video/generate")
 async def generate_video(request: VideoGenerateRequest, background_tasks: BackgroundTasks):
     """Start video generation"""
+    print(f"[VIDEO/GENERATE] prompt={request.prompt}, user_id={request.user_id}")
+    
     project = VideoProject(
         prompt=request.prompt,
         format_id=request.format_id,
@@ -2372,7 +2374,8 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
     doc = project.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     doc['updated_at'] = doc['updated_at'].isoformat()
-    await db.video_projects.insert_one(doc)
+    result = await db.video_projects.insert_one(doc)
+    print(f"[VIDEO/GENERATE] Saved to DB: {result.inserted_id}")
     
     # Start background processing
     background_tasks.add_task(process_video_generation, project.id)
