@@ -409,7 +409,7 @@ export const MainPage = () => {
         if (video.status === 'generating' || video.status === 'processing') {
           const existingGenerating = generatingVideos.find(v => v.id === video.id);
           if (!existingGenerating) {
-            setGeneratingVideos(prev => [...prev, { ...video, progress: video.progress || 5 }]);
+            setGeneratingVideos(prev => [...prev, { ...video, progress: video.progress || 0 }]);
             pollVideoProgress(video.id);
           }
         }
@@ -426,7 +426,7 @@ export const MainPage = () => {
   };
 
   const pollVideoProgress = (videoId) => {
-    let currentProgress = 5;
+    let currentProgress = 0;
     let attempts = 0;
     const maxAttempts = 150;
     
@@ -441,10 +441,10 @@ export const MainPage = () => {
         setGeneratingVideos(prev => prev.map(v => {
           if (v.id !== videoId) return v;
           
-          // Calculate new progress
-          if (currentProgress < 95) {
-            const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
-            currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
+          // Calculate new progress - 0 to 100
+          if (currentProgress < 100) {
+            const increment = currentProgress < 30 ? 10 : currentProgress < 60 ? 7 : currentProgress < 90 ? 4 : 2;
+            currentProgress = Math.min(currentProgress + increment + Math.random() * 5, 100);
           }
           
           const newProgress = videoData.status === 'completed' ? 100 : Math.floor(currentProgress);
@@ -472,9 +472,9 @@ export const MainPage = () => {
         setGeneratingVideos(prev => prev.map(v => {
           if (v.id !== videoId) return v;
           
-          if (currentProgress < 95) {
-            const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
-            currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
+          if (currentProgress < 100) {
+            const increment = currentProgress < 30 ? 10 : currentProgress < 60 ? 7 : currentProgress < 90 ? 4 : 2;
+            currentProgress = Math.min(currentProgress + increment + Math.random() * 5, 100);
           }
           
           return {
@@ -549,7 +549,7 @@ export const MainPage = () => {
             id: response.data.id,
             title: currentPrompt,
             status: 'generating',
-            progress: 5,
+            progress: 0,
             created_at: new Date().toISOString()
           };
           setGeneratingVideos(prev => [newVideo, ...prev]);
@@ -588,7 +588,7 @@ export const MainPage = () => {
         id: response.data.id,
         title: currentPrompt,
         status: 'generating',
-        progress: 5,
+        progress: 0,
         created_at: new Date().toISOString()
       };
       
