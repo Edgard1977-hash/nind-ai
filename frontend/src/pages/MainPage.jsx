@@ -296,11 +296,6 @@ export const MainPage = () => {
       } catch (e) {
         localStorage.removeItem("slind_user");
       }
-      
-      // Fetch user videos on mount if user exists
-      if (savedUser) {
-        fetchUserVideos();
-      }
     }
     
     // Scroll listener for header animation (only for non-logged in)
@@ -403,7 +398,6 @@ export const MainPage = () => {
     let attempts = 0;
     const maxAttempts = 150;
     
-    console.log(`[Progress] Starting polling for video ${videoId}`);
     
     const pollInterval = setInterval(async () => {
       attempts++;
@@ -412,7 +406,6 @@ export const MainPage = () => {
       if (currentProgress < 95) {
         const increment = currentProgress < 30 ? 8 : currentProgress < 60 ? 5 : 3;
         currentProgress = Math.min(currentProgress + increment + Math.random() * 3, 95);
-        console.log(`[Progress] Video ${videoId}: ${Math.floor(currentProgress)}%`);
       }
       
       try {
@@ -422,54 +415,45 @@ export const MainPage = () => {
         // Exclude progress from videoData to avoid overwriting our simulated progress
         const { progress: _, ...videoDataWithoutProgress } = videoData;
         
-        // Update video with new progress
-        setUserVideos(prev => {
-          const updated = [...prev.map(v => 
-            v.id === videoId ? { 
-              ...v, 
-              ...videoDataWithoutProgress,
-              progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress)
-            } : v
-          )];
-          const updatedVideo = updated.find(v => v.id === videoId);
-          console.log(`[Progress] API Updated: ${videoId} -> ${updatedVideo?.progress}%`);
-          return updated;
-        });
+        // Update video with new progress AND timestamp to force re-render
+        setUserVideos(prev => [...prev.map(v => 
+          v.id === videoId ? { 
+            ...v, 
+            ...videoDataWithoutProgress,
+            progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress),
+            _updatedAt: Date.now()
+          } : v
+        )]);
         
         // Stop polling when complete or failed
         if (videoData.status === 'completed' || videoData.status === 'failed') {
-          console.log(`[Progress] Video ${videoId} finished with status: ${videoData.status}`);
           clearInterval(pollInterval);
           return;
         }
         
       } catch (error) {
-        console.log(`[Progress] API error for ${videoId}, continuing with simulated progress`);
         
         // Update with simulated progress even when API fails
         setUserVideos(prev => {
           const updated = [...prev.map(v => 
             v.id === videoId ? { 
               ...v, 
-              progress: Math.floor(currentProgress)
+              progress: Math.floor(currentProgress),
+              _updatedAt: Date.now()
             } : v
           )];
-          const updatedVideo = updated.find(v => v.id === videoId);
-          console.log(`[Progress] Updated UI: ${videoId} -> ${updatedVideo?.progress}%`);
           return updated;
         });
       }
       
       // Stop after max attempts
       if (attempts >= maxAttempts) {
-        console.log(`[Progress] Max attempts reached for ${videoId}`);
         clearInterval(pollInterval);
       }
     }, 2000);
   };
 
   const handleSubmit = async () => {
-    console.log('[handleSubmit] START');
     if (!user) {
       navigate('/auth');
       return;
@@ -480,7 +464,6 @@ export const MainPage = () => {
     const currentPrompt = prompt.trim();
     const currentAttachments = [...attachments];
     
-    console.log('[handleSubmit] Creating video, prompt:', currentPrompt);
     
     // Clear input immediately to allow multiple submissions
     setPrompt('');
@@ -553,7 +536,6 @@ export const MainPage = () => {
       
       const response = await axios.post(`${API}/video/generate`, requestData);
       
-      console.log('[handleSubmit] Got response:', response.data.id);
       
       // Add generating video to the list
       const newVideo = {
@@ -564,12 +546,9 @@ export const MainPage = () => {
         created_at: new Date().toISOString()
       };
       
-      console.log('[handleSubmit] Adding video to list:', newVideo);
       
       setUserVideos(prev => {
-        console.log('[setUserVideos] prev:', prev.length, 'adding:', newVideo.id);
         const updated = [newVideo, ...prev];
-        console.log('[setUserVideos] updated:', updated.length);
         return updated;
       });
       
