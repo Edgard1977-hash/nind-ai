@@ -296,6 +296,11 @@ export const MainPage = () => {
       } catch (e) {
         localStorage.removeItem("slind_user");
       }
+      
+      // Fetch user videos on mount if user exists
+      if (savedUser) {
+        fetchUserVideos();
+      }
     }
     
     // Scroll listener for header animation (only for non-logged in)
@@ -414,14 +419,22 @@ export const MainPage = () => {
         const response = await axios.get(`${API}/video/${videoId}`);
         const videoData = response.data;
         
+        // Exclude progress from videoData to avoid overwriting our simulated progress
+        const { progress: _, ...videoDataWithoutProgress } = videoData;
+        
         // Update video with new progress
-        setUserVideos(prev => [...prev.map(v => 
-          v.id === videoId ? { 
-            ...v, 
-            ...videoData,
-            progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress)
-          } : v
-        )]);
+        setUserVideos(prev => {
+          const updated = [...prev.map(v => 
+            v.id === videoId ? { 
+              ...v, 
+              ...videoDataWithoutProgress,
+              progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress)
+            } : v
+          )];
+          const updatedVideo = updated.find(v => v.id === videoId);
+          console.log(`[Progress] API Updated: ${videoId} -> ${updatedVideo?.progress}%`);
+          return updated;
+        });
         
         // Stop polling when complete or failed
         if (videoData.status === 'completed' || videoData.status === 'failed') {
@@ -434,12 +447,17 @@ export const MainPage = () => {
         console.log(`[Progress] API error for ${videoId}, continuing with simulated progress`);
         
         // Update with simulated progress even when API fails
-        setUserVideos(prev => [...prev.map(v => 
-          v.id === videoId ? { 
-            ...v, 
-            progress: Math.floor(currentProgress)
-          } : v
-        )]);
+        setUserVideos(prev => {
+          const updated = [...prev.map(v => 
+            v.id === videoId ? { 
+              ...v, 
+              progress: Math.floor(currentProgress)
+            } : v
+          )];
+          const updatedVideo = updated.find(v => v.id === videoId);
+          console.log(`[Progress] Updated UI: ${videoId} -> ${updatedVideo?.progress}%`);
+          return updated;
+        });
       }
       
       // Stop after max attempts
@@ -451,6 +469,7 @@ export const MainPage = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('[handleSubmit] START');
     if (!user) {
       navigate('/auth');
       return;
@@ -460,6 +479,8 @@ export const MainPage = () => {
     
     const currentPrompt = prompt.trim();
     const currentAttachments = [...attachments];
+    
+    console.log('[handleSubmit] Creating video, prompt:', currentPrompt);
     
     // Clear input immediately to allow multiple submissions
     setPrompt('');
@@ -532,6 +553,8 @@ export const MainPage = () => {
       
       const response = await axios.post(`${API}/video/generate`, requestData);
       
+      console.log('[handleSubmit] Got response:', response.data.id);
+      
       // Add generating video to the list
       const newVideo = {
         id: response.data.id,
@@ -540,7 +563,15 @@ export const MainPage = () => {
         progress: 5,
         created_at: new Date().toISOString()
       };
-      setUserVideos(prev => [newVideo, ...prev]);
+      
+      console.log('[handleSubmit] Adding video to list:', newVideo);
+      
+      setUserVideos(prev => {
+        console.log('[setUserVideos] prev:', prev.length, 'adding:', newVideo.id);
+        const updated = [newVideo, ...prev];
+        console.log('[setUserVideos] updated:', updated.length);
+        return updated;
+      });
       
       // Switch to My creations tab
       setActiveMainTab('Creations');
@@ -888,7 +919,7 @@ export const MainPage = () => {
                           >
                             {video.status === 'generating' ? (
                               <div className="creation-generating">
-                                <div className="generating-progress">{video.progress || 0}%</div>
+                                <div className="generating-progress">{Math.floor(video.progress) || 0}%</div>
                               </div>
                             ) : video.poster_url ? (
                               <img 
