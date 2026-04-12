@@ -520,12 +520,21 @@ export const MainPage = () => {
     
     if (!prompt.trim() && attachments.length === 0) return;
     
+    // Prevent duplicate submissions
+    if (isGenerating) {
+      console.log('[SUBMIT] Already generating, skipping...');
+      return;
+    }
+    
     const currentPrompt = prompt.trim();
     const currentAttachments = [...attachments];
     
     console.log(`[SUBMIT] Starting: "${currentPrompt}"`);
     
-    // Clear input immediately to allow multiple submissions
+    // Block further submissions
+    setIsGenerating(true);
+    
+    // Clear input immediately to allow typing next prompt
     setPrompt('');
     setAttachments([]);
     
