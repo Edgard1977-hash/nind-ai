@@ -293,7 +293,29 @@ export const MainPage = () => {
     const savedUser = localStorage.getItem("slind_user");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        // Fetch videos immediately after setting user
+        const fetchInitialVideos = async () => {
+          const userId = parsedUser.user_id || parsedUser.id;
+          if (!userId) return;
+          
+          console.log('[INIT] Fetching initial videos for', userId);
+          setIsLoadingVideos(true);
+          
+          try {
+            const response = await axios.get(`${API}/videos/user/${userId}`);
+            const videos = response.data.projects || [];
+            console.log('[INIT] Loaded', videos.length, 'videos');
+            setUserVideos(videos);
+          } catch (error) {
+            console.error('[INIT] Failed to fetch:', error);
+          } finally {
+            setIsLoadingVideos(false);
+          }
+        };
+        
+        setTimeout(fetchInitialVideos, 500);
       } catch (e) {
         localStorage.removeItem("slind_user");
       }
