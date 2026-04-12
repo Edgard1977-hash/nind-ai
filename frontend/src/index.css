@@ -4629,16 +4629,16 @@ body {
 .creations-empty-pattern {
   position: relative;
   overflow: visible;
-  min-height: 400px;
+  min-height: 450px;
   width: 100%;
   background: #1D1E20;
-  padding: 16px;
+  padding: 20px;
   box-sizing: border-box;
 }
 
 .creations-pattern-grid {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -4647,7 +4647,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -4660,17 +4660,18 @@ body {
 }
 
 .pattern-item.ratio-9-16 {
-  height: 180px;
+  height: 220px;
 }
 
 .pattern-item.ratio-16-9 {
-  height: 90px;
+  height: 110px;
 }
 
 .pattern-item.ratio-1-1 {
   aspect-ratio: 1 / 1;
   width: 100%;
   height: auto;
+  min-height: 150px;
 }
 
 @keyframes shimmer {
