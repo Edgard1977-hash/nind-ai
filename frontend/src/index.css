@@ -3499,7 +3499,7 @@ body {
 /* Old creations overlay - removed background */
 
 .creations-start-btn {
-  padding: 12px 20px;
+  padding: 12px 21px;
   background: var(--white);
   color: #000;
   border: none;
@@ -3512,7 +3512,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   line-height: 1;
 }
 
