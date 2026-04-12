@@ -138,6 +138,7 @@ export const MainPage = () => {
   const [showFormatsListPopup, setShowFormatsListPopup] = useState(false);
   const [generatePrompt, setGeneratePrompt] = useState(true);
   const [userVideos, setUserVideos] = useState([]);
+  const [generatingVideos, setGeneratingVideos] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   
   // Popup swipe state
@@ -412,43 +413,39 @@ export const MainPage = () => {
         const response = await axios.get(`${API}/video/${videoId}`);
         const videoData = response.data;
         
-        // Exclude progress from videoData to avoid overwriting our simulated progress
-        const { progress: _, ...videoDataWithoutProgress } = videoData;
-        
-        // Update video with new progress AND timestamp to force re-render
-        setUserVideos(prev => [...prev.map(v => 
+        // Update generating videos
+        setGeneratingVideos(prev => prev.map(v => 
           v.id === videoId ? { 
             ...v, 
-            ...videoDataWithoutProgress,
             progress: videoData.status === 'completed' ? 100 : Math.floor(currentProgress),
-            _updatedAt: Date.now()
+            status: videoData.status
           } : v
-        )]);
+        ));
         
-        // Stop polling when complete or failed
+        // Stop polling when complete
         if (videoData.status === 'completed' || videoData.status === 'failed') {
           clearInterval(pollInterval);
+          setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
+          if (videoData.status === 'completed') {
+            setUserVideos(prev => [videoData, ...prev]);
+          }
           return;
         }
         
       } catch (error) {
-        
-        // Update with simulated progress even when API fails
-        setUserVideos(prev => {
-          const updated = [...prev.map(v => 
-            v.id === videoId ? { 
-              ...v, 
-              progress: Math.floor(currentProgress),
-              _updatedAt: Date.now()
-            } : v
-          )];
-          return updated;
-        });
+        // Update with simulated progress
+        setGeneratingVideos(prev => prev.map(v => 
+          v.id === videoId ? { 
+            ...v, 
+            progress: Math.floor(currentProgress)
+          } : v
+        ));
       }
       
       // Stop after max attempts
       if (attempts >= maxAttempts) {
         clearInterval(pollInterval);
+        setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
       }
     }, 2000);
   };
@@ -511,7 +508,7 @@ export const MainPage = () => {
             progress: 5,
             created_at: new Date().toISOString()
           };
-          setUserVideos(prev => [newVideo, ...prev]);
+          setGeneratingVideos(prev => [newVideo, ...prev]);
           
           // Switch to My creations tab
           setActiveMainTab('Creations');
@@ -547,10 +544,7 @@ export const MainPage = () => {
       };
       
       
-      setUserVideos(prev => {
-        const updated = [newVideo, ...prev];
-        return updated;
-      });
+      setGeneratingVideos(prev => [newVideo, ...prev]);
       
       // Switch to My creations tab
       setActiveMainTab('Creations');
@@ -887,20 +881,27 @@ export const MainPage = () => {
                   <>
                     {isLoadingVideos ? (
                       <div className="library-loading">Loading...</div>
-                    ) : userVideos.length > 0 ? (
+                    ) : (generatingVideos.length > 0 || userVideos.length > 0) ? (
                       <div className="creations-grid-real">
+                        {generatingVideos.map((video) => (
+                          <div 
+                            key={video.id} 
+                            className="creation-card generating"
+                            data-testid={`library-video-${video.id}`}
+                          >
+                            <div className="creation-generating">
+                              <div className="generating-progress">{Math.floor(video.progress) || 0}%</div>
+                            </div>
+                          </div>
+                        ))}
                         {userVideos.map((video) => (
                           <div 
                             key={video.id} 
-                            className={`creation-card ${video.status === 'generating' ? 'generating' : ''}`}
-                            onClick={() => video.status === 'completed' && navigate(`/video/${video.id}`)}
+                            className="creation-card"
+                            onClick={() => navigate(`/video/${video.id}`)}
                             data-testid={`library-video-${video.id}`}
                           >
-                            {video.status === 'generating' ? (
-                              <div className="creation-generating">
-                                <div className="generating-progress">{Math.floor(video.progress) || 0}%</div>
-                              </div>
-                            ) : video.poster_url ? (
+                            {video.poster_url ? (
                               <img 
                                 src={`${BACKEND_URL}${video.poster_url}`} 
                                 alt={video.title || 'Video'}
