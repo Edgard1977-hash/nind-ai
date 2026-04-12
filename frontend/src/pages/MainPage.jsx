@@ -881,16 +881,6 @@ export const MainPage = () => {
                           >
                             {video.status === 'generating' ? (
                               <div className="creation-generating">
-                                <svg className="generating-gradient" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                  <rect
-                                    x="2.5"
-                                    y="2.5"
-                                    width="95"
-                                    height="95"
-                                    className="progress-stroke"
-                                    strokeDasharray={`${(video.progress || 0) * 3.8} 380`}
-                                  />
-                                </svg>
                                 <div className="generating-progress">{video.progress || 0}%</div>
                               </div>
                             ) : video.poster_url ? (
