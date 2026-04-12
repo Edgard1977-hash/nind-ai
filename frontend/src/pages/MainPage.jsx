@@ -387,17 +387,39 @@ export const MainPage = () => {
     setIsLoadingVideos(true);
     try {
       const userId = user.user_id || user.id;
-      const response = await axios.get(`${API}/videos/user/${userId}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await axios.get(`${API}/videos/user/${userId}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       const fetchedVideos = response.data.projects || [];
       
-      // Merge with existing userVideos (keep videos that are already in state)
+      // Merge with existing userVideos
       setUserVideos(prev => {
         const existingIds = new Set(prev.map(v => v.id));
         const newVideos = fetchedVideos.filter(v => !existingIds.has(v.id));
         return [...prev, ...newVideos];
       });
+      
+      // Resume polling for any generating videos
+      fetchedVideos.forEach(video => {
+        if (video.status === 'generating' || video.status === 'processing') {
+          const existingGenerating = generatingVideos.find(v => v.id === video.id);
+          if (!existingGenerating) {
+            setGeneratingVideos(prev => [...prev, { ...video, progress: video.progress || 5 }]);
+            pollVideoProgress(video.id);
+          }
+        }
+      });
     } catch (error) {
-      console.error("Failed to fetch videos:", error);
+      if (error.name === 'AbortError') {
+        console.error("Fetch videos timeout");
+      } else {
+        console.error("Failed to fetch videos:", error);
+      }
     } finally {
       setIsLoadingVideos(false);
     }
@@ -481,6 +503,7 @@ export const MainPage = () => {
     const currentPrompt = prompt.trim();
     const currentAttachments = [...attachments];
     
+    console.log(`[SUBMIT] Starting: "${currentPrompt}"`);
     
     // Clear input immediately to allow multiple submissions
     setPrompt('');
@@ -558,6 +581,7 @@ export const MainPage = () => {
         }
       });
       
+      console.log(`[SUBMIT] Response ID: ${response.data.id}`);
       
       // Add generating video to the list
       const newVideo = {
@@ -568,7 +592,7 @@ export const MainPage = () => {
         created_at: new Date().toISOString()
       };
       
-      
+      console.log(`[SUBMIT] Adding to generatingVideos`);
       setGeneratingVideos(prev => [newVideo, ...prev]);
       
       // Switch to My creations tab
