@@ -313,13 +313,13 @@ export const MainPage = () => {
     };
   }, []);
 
-  // Fetch user videos when switching to Library tab OR Creations tab
+  // Fetch user videos when switching to Library tab OR Creations tab OR when user logs in
   useEffect(() => {
     if ((activeMainTab === "Library" || activeMainTab === "Creations") && user) {
       fetchUserVideos();
     }
     // eslint-disable-next-line
-  }, [activeMainTab]);
+  }, [activeMainTab, user]);
 
   // Animated placeholder typing effect
   useEffect(() => {
@@ -390,6 +390,8 @@ export const MainPage = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
+      console.log(`[FETCH_VIDEOS] Fetching for user: ${userId}`);
+      
       const response = await axios.get(`${API}/videos/user/${userId}`, {
         signal: controller.signal
       });
@@ -397,12 +399,10 @@ export const MainPage = () => {
       
       const fetchedVideos = response.data.projects || [];
       
-      // Merge with existing userVideos
-      setUserVideos(prev => {
-        const existingIds = new Set(prev.map(v => v.id));
-        const newVideos = fetchedVideos.filter(v => !existingIds.has(v.id));
-        return [...prev, ...newVideos];
-      });
+      console.log(`[FETCH_VIDEOS] Received ${fetchedVideos.length} videos`);
+      
+      // Replace userVideos entirely with fresh data from server
+      setUserVideos(fetchedVideos);
       
       // Resume polling for any generating videos
       fetchedVideos.forEach(video => {
@@ -857,7 +857,10 @@ export const MainPage = () => {
                 />
                 <button 
                   className={`bottom-tab ${activeMainTab === 'Creations' ? 'active' : ''}`}
-                  onClick={() => setActiveMainTab('Creations')}
+                  onClick={() => {
+                    setActiveMainTab('Creations');
+                    if (user) fetchUserVideos();
+                  }}
                   data-testid="creations-tab"
                 >
                   {t('myCreations')}
