@@ -388,10 +388,16 @@ export const MainPage = () => {
     try {
       const userId = user.user_id || user.id;
       const response = await axios.get(`${API}/videos/user/${userId}`);
-      setUserVideos(response.data.projects || []);
+      const fetchedVideos = response.data.projects || [];
+      
+      // Merge with existing userVideos (keep videos that are already in state)
+      setUserVideos(prev => {
+        const existingIds = new Set(prev.map(v => v.id));
+        const newVideos = fetchedVideos.filter(v => !existingIds.has(v.id));
+        return [...prev, ...newVideos];
+      });
     } catch (error) {
       console.error("Failed to fetch videos:", error);
-      setUserVideos([]);
     } finally {
       setIsLoadingVideos(false);
     }
