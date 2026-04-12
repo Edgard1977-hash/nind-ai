@@ -4755,17 +4755,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: radial-gradient(
-    circle at 30% 30%,
-    #FF6B9D 0%,
-    #C85BFF 15%,
-    #7B61FF 30%,
-    #4D9EFF 50%,
-    #00D4FF 65%,
-    #4DFFAA 80%,
-    #BFFF5C 95%,
-    #FFE656 100%
-  );
+  background: #2A2B2D;
 }
 
 .generating-gradient {
@@ -4774,56 +4764,24 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(
-    ellipse at 35% 40%,
-    #FF6B9D 0%,
-    #C85BFF 10%,
-    #7B61FF 25%,
-    #4D9EFF 45%,
-    #00D4FF 60%,
-    #4DFFAA 75%,
-    #BFFF5C 90%,
-    #FFE656 100%
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 25%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.08) 75%,
+    transparent 100%
   );
-  background-size: 150% 150%;
-  background-position: 0% 0%;
-  animation: gradientShift 10s ease-in-out infinite;
-  filter: blur(30px) saturate(1.2);
-  opacity: 1;
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
-.generating-gradient::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.08;
-  mix-blend-mode: overlay;
-}
-
-@keyframes gradientShift {
+@keyframes shimmer {
   0% {
-    background-position: 0% 0%;
-    transform: scale(1) rotate(0deg);
-  }
-  25% {
-    background-position: 20% 20%;
-    transform: scale(1.05) rotate(5deg);
-  }
-  50% {
-    background-position: 40% 40%;
-    transform: scale(1) rotate(0deg);
-  }
-  75% {
-    background-position: 20% 60%;
-    transform: scale(1.05) rotate(-5deg);
+    background-position: -200% 0;
   }
   100% {
-    background-position: 0% 0%;
-    transform: scale(1) rotate(0deg);
+    background-position: 200% 0;
   }
 }
 
