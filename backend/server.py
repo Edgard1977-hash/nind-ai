@@ -131,6 +131,7 @@ class VideoGenerateRequest(BaseModel):
     product_images: Optional[List[str]] = None  # URLs to uploaded product images
     logo_url: Optional[str] = None  # URL to uploaded logo
     brand_name: Optional[str] = None  # Brand name for logo animation
+    user_id: Optional[str] = None  # User ID from frontend
 
 
 class MontageRequest(BaseModel):
@@ -2352,21 +2353,8 @@ async def get_formats():
     }
 
 @api_router.post("/video/generate")
-async def generate_video(request: VideoGenerateRequest, background_tasks: BackgroundTasks, req: Request):
+async def generate_video(request: VideoGenerateRequest, background_tasks: BackgroundTasks):
     """Start video generation"""
-    # Try to get user from auth, otherwise use anonymous
-    user_id = None
-    try:
-        auth_header = req.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            # Decode token to get user_id
-            import jwt
-            payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            user_id = payload.get("user_id")
-    except:
-        pass
-    
     project = VideoProject(
         prompt=request.prompt,
         format_id=request.format_id,
@@ -2377,7 +2365,7 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
         product_images=request.product_images,
         logo_url=request.logo_url,
         brand_name=request.brand_name,
-        user_id=user_id
+        user_id=request.user_id
     )
     
     # Save to DB

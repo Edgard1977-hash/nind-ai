@@ -481,7 +481,8 @@ export const MainPage = () => {
       const requestData = {
         prompt: currentPrompt,
         format_id: selectedFormat?.id || "auto",
-        language: "auto"
+        language: "auto",
+        user_id: user.id || user.user_id
       };
       
       if (currentAttachments.length > 0) {
