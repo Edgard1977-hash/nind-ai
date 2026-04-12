@@ -172,6 +172,7 @@ class VideoProject(BaseModel):
     prompt: str
     format_id: str
     language: str
+    user_id: Optional[str] = None  # User ID for filtering user's videos
     youtube_url: Optional[str] = None
     character_type: Optional[str] = None
     gameplay_type: Optional[str] = None
