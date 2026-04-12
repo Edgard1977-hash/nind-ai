@@ -132,7 +132,7 @@ export const MainPage = () => {
   const [headerScrolled, setHeaderScrolled] = useState(false);
   
   // New states for logged-in view
-  const [activeMainTab, setActiveMainTab] = useState("Formats");
+  const [activeMainTab, setActiveMainTab] = useState("Creations");
   const [selectedFormat, setSelectedFormat] = useState(null);
   const [showFormatPopup, setShowFormatPopup] = useState(false);
   const [showFormatsListPopup, setShowFormatsListPopup] = useState(false);
