@@ -3103,6 +3103,7 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         "id": project_id,
         "prompt": style_desc,
         "format_id": "device_mockup",
+        "user_id": current_user.get("user_id") or current_user.get("id"),
         "status": "processing",
         "progress": 10,
         "progress_message": "Создаём 3D анимацию...",
