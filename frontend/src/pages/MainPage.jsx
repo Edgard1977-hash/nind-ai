@@ -849,7 +849,7 @@ export const MainPage = () => {
                     onClick={() => fileInputRef.current?.click()}
                     data-testid="attach-button"
                   >
-                    <Plus className="w-6 h-6" />
+                    <PlusIconSolid className="w-6 h-6" />
                   </button>
 
                   <div className="input-bottom-right">
