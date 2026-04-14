@@ -561,7 +561,8 @@ export const MainPage = () => {
             bg_color: [15, 15, 20],
             animation_style: "camera",
             phone_position: "center",
-            aspect_ratio: "9:16"
+            aspect_ratio: "9:16",
+            user_id: user.user_id || user.id
           });
           
           // Add generating video to the list
