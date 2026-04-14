@@ -296,14 +296,6 @@ export const MainPage = () => {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
         
-        // Scroll to bottom panel to show My creations
-        setTimeout(() => {
-          const bottomPanel = document.querySelector('.bottom-panel');
-          if (bottomPanel) {
-            bottomPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 300);
-        
         // Fetch videos immediately after setting user
         const fetchInitialVideos = async () => {
           const userId = parsedUser.user_id || parsedUser.id;
