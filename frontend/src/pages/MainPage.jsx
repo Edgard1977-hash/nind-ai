@@ -849,12 +849,12 @@ export const MainPage = () => {
                     onClick={() => fileInputRef.current?.click()}
                     data-testid="attach-button"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-6 h-6" />
                   </button>
 
                   <div className="input-bottom-right">
                     <button className="input-icon-btn" data-testid="mic-button">
-                      <MicIcon className="w-5 h-5" />
+                      <MicIcon className="w-6 h-6" />
                     </button>
                     
                     <button 
@@ -957,7 +957,9 @@ export const MainPage = () => {
                   /* My Creations */
                   <>
                     {isLoadingVideos ? (
-                      <div className="library-loading">Loading...</div>
+                      <div className="library-loading">
+                        <div className="spinner"></div>
+                      </div>
                     ) : (generatingVideos.length > 0 || userVideos.length > 0) ? (
                       <div className="creations-grid-real">
                         {generatingVideos.map((video) => (
