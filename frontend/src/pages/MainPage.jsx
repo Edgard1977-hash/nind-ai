@@ -490,7 +490,19 @@ export const MainPage = () => {
           clearInterval(pollInterval);
           setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
           if (videoData.status === 'completed') {
-            setUserVideos(prev => [videoData, ...prev]);
+            // Add to userVideos with deduplication
+            setUserVideos(prev => {
+              const existingIndex = prev.findIndex(v => v.id === videoData.id);
+              if (existingIndex >= 0) {
+                // Update existing video
+                const updated = [...prev];
+                updated[existingIndex] = videoData;
+                return updated;
+              } else {
+                // Add new video
+                return [videoData, ...prev];
+              }
+            });
           }
           return;
         }
