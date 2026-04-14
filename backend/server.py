@@ -3064,6 +3064,7 @@ class DeviceMockupRequest(BaseModel):
     text: str = ""  # Text to show alongside phone (for phone_text style)
     phone_position: str = "center"  # "center", "left", "right" - position of phone
     aspect_ratio: str = "9:16"  # "16:9" (landscape) or "9:16" (portrait)
+    user_id: Optional[str] = None  # User ID for saving video to user account
 
 @api_router.post("/device-mockup/create")
 async def create_device_mockup(request: DeviceMockupRequest, background_tasks: BackgroundTasks):
