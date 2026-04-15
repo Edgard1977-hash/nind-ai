@@ -783,7 +783,7 @@ export const MainPage = () => {
           <div className="header-right-actions">
             <button 
               className="header-upgrade-btn"
-              onClick={() => {/* TODO: Upgrade flow */}}
+              onClick={() => navigate("/upgrade")}
               data-testid="upgrade-btn"
             >
               <UpgradeIcon className="upgrade-btn-icon" />
