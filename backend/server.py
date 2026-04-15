@@ -1385,6 +1385,7 @@ Note: The actual YouTube clip extraction will be handled separately."""
 async def generate_image(prompt: str) -> Optional[str]:
     """Generate image using Gemini Nano Banana"""
     from emergentintegrations.llm.chat import LlmChat, UserMessage
+    import base64
     
     try:
         api_key = os.getenv("EMERGENT_LLM_KEY")
@@ -1393,7 +1394,7 @@ async def generate_image(prompt: str) -> Optional[str]:
             session_id=f"img-{uuid.uuid4()}",
             system_message="You are a helpful AI assistant"
         )
-        chat.with_model("gemini", "gemini-3-pro-image-preview").with_params(modalities=["image", "text"])
+        chat.with_model("gemini", "gemini-3.1-flash-image-preview").with_params(modalities=["image", "text"])
         
         msg = UserMessage(text=f"Generate a professional, high-quality vertical image (9:16 aspect ratio) for video content: {prompt}")
         
@@ -1406,6 +1407,7 @@ async def generate_image(prompt: str) -> Optional[str]:
             image_bytes = base64.b64decode(images[0]['data'])
             with open(img_path, "wb") as f:
                 f.write(image_bytes)
+            logger.info(f"Generated AI image: {img_id}.png")
             return f"/api/uploads/{img_id}.png"
     except Exception as e:
         logger.error(f"Image generation error: {e}")
