@@ -6446,15 +6446,29 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: #3D3F43;
-  border-radius: 8px;
-  padding: 4px;
+  left: 0;
+  background: #0F0F10;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 100px;
+  gap: 4px;
   z-index: 10;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: dropdown-appear 0.2s ease-out;
+  transform-origin: top center;
+}
+
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .pricing-credits-dropdown-menu button {
