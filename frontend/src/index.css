@@ -6330,7 +6330,7 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .pricing-card-top {
@@ -6339,34 +6339,12 @@ body {
   flex-direction: column;
   gap: 20px;
   border-radius: 29px 29px 0 0;
-  background: #1D1E20;
-  position: relative;
-  z-index: 2;
-}
-
-.pricing-card-top::after {
-  content: '';
-  position: absolute;
-  bottom: -20px;
-  left: 0;
-  right: 0;
-  height: 20px;
-  background: 
-    radial-gradient(circle at top left, transparent 20px, #1D1E20 20px) top left,
-    radial-gradient(circle at top right, transparent 20px, #1D1E20 20px) top right;
-  background-size: 51% 100%;
-  background-repeat: no-repeat;
-  z-index: 2;
 }
 
 .pricing-card-bottom {
   padding: 28px;
-  padding-top: 48px;
   background: #121213;
   border-radius: 0 0 29px 29px;
-  margin-top: -20px;
-  position: relative;
-  z-index: 1;
 }
 
 .pricing-card-header {
