@@ -155,39 +155,42 @@ const UpgradePage = () => {
                 <span>{feature}</span>
               </li>
             ))}
+            
+            {/* AI Editing Tools as collapsible item in the list */}
+            <li>
+              <Check className="pricing-check-icon" />
+              <Collapsible open={aiOpen} onOpenChange={setAiOpen}>
+                <CollapsibleTrigger className="pricing-ai-trigger-inline">
+                  <span>AI Editing tools</span>
+                  <ChevronRight className={`pricing-ai-arrow-inline ${aiOpen ? 'rotate-90' : ''}`} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <ul className="pricing-ai-list-nested">
+                    {plan.aiTools.map((tool, idx) => (
+                      <li key={idx}>
+                        <span>{idx + 1}. {tool.name}</span>
+                        {tool.locked && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button className="pricing-lock-btn">
+                                  <Lock className="w-3 h-3" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{tool.tooltip}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
+            </li>
           </ul>
         </div>
-
-        {/* AI Editing Tools Collapsible */}
-        <Collapsible open={aiOpen} onOpenChange={setAiOpen}>
-          <CollapsibleTrigger className="pricing-ai-trigger">
-            <span>AI Editing tools</span>
-            <ChevronRight className={`pricing-ai-arrow ${aiOpen ? 'rotate-90' : ''}`} />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <ul className="pricing-ai-list">
-              {plan.aiTools.map((tool, idx) => (
-                <li key={idx}>
-                  <span>{idx + 1}. {tool.name}</span>
-                  {tool.locked && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="pricing-lock-btn">
-                            <Lock className="w-3 h-3" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{tool.tooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </CollapsibleContent>
-        </Collapsible>
       </div>
     );
   };
