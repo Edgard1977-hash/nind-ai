@@ -6216,11 +6216,10 @@ body {
 }
 
 
-
 /* ===== UPGRADE PAGE ===== */
 .upgrade-page {
   min-height: 100vh;
-  background: #000000;
+  background: #141414;
   color: var(--white);
   padding: 20px;
   overflow-x: hidden;
@@ -6230,32 +6229,76 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  margin-bottom: 40px;
-}
-
-.upgrade-header-logo {
-  cursor: pointer;
-}
-
-.upgrade-logo-svg {
-  height: 32px;
-  width: auto;
-  color: var(--white);
+  padding: 12px 0 20px;
+  margin-bottom: 20px;
 }
 
 .upgrade-close-btn {
-  background: transparent;
+  width: 44px;
+  height: 44px;
+  border-radius: 17px;
+  background: var(--panel-bg);
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: background 0.2s ease;
+  color: var(--white);
+  transition: opacity 0.2s ease;
 }
 
 .upgrade-close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  opacity: 0.8;
+}
+
+.upgrade-header-title {
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--white);
+  margin: 0;
+}
+
+.header-spacer {
+  width: 44px;
+}
+
+.upgrade-tabs-container {
+  display: flex;
+  position: relative;
+  background: #0F0F10;
+  border-radius: 28px;
+  padding: 4px;
+  margin: 0 0 32px;
+}
+
+.upgrade-tabs-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: #2A2B2D;
+  border-radius: 24px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.upgrade-tab {
+  flex: 1;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.upgrade-tab.active {
+  color: var(--white);
 }
 
 .upgrade-content {
@@ -6268,7 +6311,7 @@ body {
 
 .upgrade-title {
   font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 48px;
+  font-size: 38px;
   font-weight: 700;
   text-align: center;
   margin: 0 0 12px 0;
@@ -6277,11 +6320,11 @@ body {
 
 .upgrade-subtitle {
   font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 400;
   text-align: center;
   color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 40px 0;
+  margin: 0 0 32px 0;
 }
 
 .upgrade-billing-toggle {
@@ -6290,7 +6333,7 @@ body {
   background: #1A1B1D;
   border-radius: 28px;
   padding: 4px;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
 }
 
 .upgrade-toggle-btn {
@@ -6321,7 +6364,8 @@ body {
 
 .pricing-card {
   background: #1D1E20;
-  border-radius: 24px;
+  border-radius: 29px;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -6379,10 +6423,9 @@ body {
   position: relative;
 }
 
-.pricing-star-icon {
+.pricing-credits-icon {
   width: 18px;
   height: 18px;
-  color: #FFD700;
 }
 
 .pricing-credits-text {
@@ -6457,7 +6500,7 @@ body {
 
 .pricing-subscribe-btn {
   width: 100%;
-  padding: 14px 24px;
+  padding: 16px 24px;
   background: #E7E7E7;
   color: #000;
   border: 0.5px solid rgba(0, 0, 0, 0.1);
@@ -6466,15 +6509,12 @@ body {
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.pricing-subscribe-btn:hover {
-  opacity: 0.9;
+  transition: all 0.15s ease;
 }
 
 .pricing-subscribe-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
+  opacity: 0.85;
 }
 
 .pricing-features {
@@ -6576,7 +6616,7 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   .upgrade-title {
-    font-size: 36px;
+    font-size: 32px;
   }
   
   .upgrade-subtitle {
