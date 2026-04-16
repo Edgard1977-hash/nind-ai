@@ -6338,13 +6338,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border-radius: 29px 29px 20px 20px;
+  border-radius: 20px 20px 29px 29px;
 }
 
 .pricing-card-bottom {
   padding: 28px;
   background: #121213;
-  border-radius: 20px 20px 29px 29px;
+  border-radius: 29px 29px 20px 20px;
 }
 
 .pricing-card-header {
