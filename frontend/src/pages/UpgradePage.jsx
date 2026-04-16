@@ -95,33 +95,22 @@ const UpgradePage = () => {
 
     return (
       <div className="pricing-card">
-        <div className="pricing-card-header">
-          <h3 className="pricing-card-name">{plan.name}</h3>
-          <div className="pricing-card-price-row">
-            {originalPrice && isMonthly && (
-              <span className="pricing-original-price">€{originalPrice}</span>
-            )}
-            <div className="pricing-price">€{price}</div>
-            <span className="pricing-period">Per month</span>
+        <div className="pricing-card-top">
+          <div className="pricing-card-header">
+            <h3 className="pricing-card-name">{plan.name}</h3>
+            <div className="pricing-card-price-row">
+              {originalPrice && isMonthly && (
+                <span className="pricing-original-price">€{originalPrice}</span>
+              )}
+              <div className="pricing-price">€{price}</div>
+              <span className="pricing-period">Per month</span>
+            </div>
           </div>
-        </div>
 
-        {/* Credits Box */}
-        <div className="pricing-credits-box">
-          <CreditsIcon className="pricing-credits-icon" color="#FFD700" />
+          {/* Credits Box */}
+          <div className="pricing-credits-box">
+          <CreditsIcon className="pricing-credits-icon" color="#FFFFFF" />
           <span className="pricing-credits-text">{plan.credits} credits</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="pricing-help-btn">
-                  <HelpCircle className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Credits are used for video generation</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           
           {plan.hasCreditsDropdown && (
             <div className="pricing-credits-dropdown-wrapper">
@@ -140,13 +129,15 @@ const UpgradePage = () => {
               )}
             </div>
           )}
+          </div>
+
+          {/* Subscribe Button */}
+          <button className="pricing-subscribe-btn">Upgrade</button>
         </div>
 
-        {/* Subscribe Button */}
-        <button className="pricing-subscribe-btn">Upgrade</button>
-
-        {/* Features List */}
-        <div className="pricing-features">
+        <div className="pricing-card-bottom">
+          {/* Features List */}
+          <div className="pricing-features">
           <p className="pricing-features-title">Includes:</p>
           <ul className="pricing-features-list">
             {plan.features.map((feature, idx) => (
@@ -190,6 +181,7 @@ const UpgradePage = () => {
               </Collapsible>
             </li>
           </ul>
+          </div>
         </div>
       </div>
     );
