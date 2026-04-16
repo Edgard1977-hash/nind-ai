@@ -6445,8 +6445,8 @@ body {
 .pricing-credits-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 20px;
-  left: 20px;
+  right: 0;
+  left: 0;
   background: #0F0F10;
   border: 0.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 15px;
@@ -6476,12 +6476,15 @@ body {
   border: none;
   color: var(--white);
   padding: 10px 12px;
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pricing-credits-dropdown-menu button:hover {

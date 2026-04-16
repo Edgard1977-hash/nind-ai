@@ -122,9 +122,18 @@ const UpgradePage = () => {
               </button>
               {proCreditsOpen && (
                 <div className="pricing-credits-dropdown-menu">
-                  <button onClick={() => { setProCredits(3000); setProCreditsOpen(false); }}>3000</button>
-                  <button onClick={() => { setProCredits(6000); setProCreditsOpen(false); }}>6000</button>
-                  <button onClick={() => { setProCredits(9000); setProCreditsOpen(false); }}>9000</button>
+                  <button onClick={() => { setProCredits(3000); setProCreditsOpen(false); }}>
+                    <CreditsIcon className="pricing-credits-icon" color="#FFFFFF" />
+                    <span>3000 credits</span>
+                  </button>
+                  <button onClick={() => { setProCredits(6000); setProCreditsOpen(false); }}>
+                    <CreditsIcon className="pricing-credits-icon" color="#FFFFFF" />
+                    <span>6000 credits</span>
+                  </button>
+                  <button onClick={() => { setProCredits(9000); setProCreditsOpen(false); }}>
+                    <CreditsIcon className="pricing-credits-icon" color="#FFFFFF" />
+                    <span>9000 credits</span>
+                  </button>
                 </div>
               )}
             </div>
