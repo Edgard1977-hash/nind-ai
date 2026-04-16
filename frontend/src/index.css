@@ -6338,13 +6338,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border-radius: 29px 29px 12px 12px;
+  border-radius: 29px 29px 5px 5px;
 }
 
 .pricing-card-bottom {
   padding: 28px;
   background: #121213;
-  border-radius: 12px 12px 29px 29px;
+  border-radius: 5px 5px 29px 29px;
 }
 
 .pricing-card-header {
@@ -6428,7 +6428,7 @@ body {
 }
 
 .pricing-credits-dropdown-wrapper {
-  position: relative;
+  position: static;
 }
 
 .pricing-credits-dropdown-btn {
@@ -6445,8 +6445,8 @@ body {
 .pricing-credits-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
-  left: 0;
+  right: 20px;
+  left: 20px;
   background: #0F0F10;
   border: 0.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 15px;
