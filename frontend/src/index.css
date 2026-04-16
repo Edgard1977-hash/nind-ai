@@ -6338,12 +6338,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  border-radius: 29px 29px 20px 20px;
 }
 
 .pricing-card-bottom {
   padding: 28px;
   background: #121213;
-  border-radius: 0 0 29px 29px;
+  border-radius: 20px 20px 29px 29px;
 }
 
 .pricing-card-header {
@@ -6460,10 +6461,10 @@ body {
   background: transparent;
   border: none;
   color: var(--white);
-  padding: 8px 12px;
-  text-align: left;
+  padding: 10px 12px;
+  text-align: center;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   transition: background 0.2s ease;
@@ -6618,5 +6619,8 @@ body {
   
   .upgrade-pricing-cards {
     grid-template-columns: 1fr;
+  }
+}
+  grid-template-columns: 1fr;
   }
 }
