@@ -22,8 +22,7 @@ const CreditsIcon = ({ className, color = "currentColor" }) => (
 
 const UpgradePage = () => {
   const navigate = useNavigate();
-  const [billingCycle, setBillingCycle] = useState("monthly"); // "monthly" or "annually"
-  const [activeTab, setActiveTab] = useState("Plans"); // "Plans" or placeholder for future
+  const [billingCycle, setBillingCycle] = useState("monthly");
   const [starterAiOpen, setStarterAiOpen] = useState(false);
   const [plusAiOpen, setPlusAiOpen] = useState(false);
   const [proAiOpen, setProAiOpen] = useState(false);
@@ -200,50 +199,30 @@ const UpgradePage = () => {
         <button className="upgrade-close-btn" onClick={() => navigate("/")}>
           <X className="w-5 h-5" />
         </button>
-        
-        <h1 className="upgrade-header-title">Account</h1>
-        
-        <div className="header-spacer" />
       </header>
-
-      {/* Tabs (like in main page) */}
-      <div className="upgrade-tabs-container">
-        <div 
-          className="upgrade-tabs-indicator"
-          style={{
-            width: 'calc(50% - 4px)',
-            left: activeTab === 'Plans' ? '4px' : '50%',
-          }}
-        />
-        <button 
-          className={`upgrade-tab ${activeTab === 'Plans' ? 'active' : ''}`}
-          onClick={() => setActiveTab('Plans')}
-        >
-          Plans
-        </button>
-        <button 
-          className={`upgrade-tab ${activeTab === 'Usage' ? 'active' : ''}`}
-          onClick={() => setActiveTab('Usage')}
-        >
-          Usage
-        </button>
-      </div>
 
       {/* Main Content */}
       <div className="upgrade-content">
         <h2 className="upgrade-title">Pick your plan</h2>
         <p className="upgrade-subtitle">Create more, better and faster</p>
 
-        {/* Billing Toggle */}
-        <div className="upgrade-billing-toggle">
+        {/* Billing Tabs with animation */}
+        <div className="upgrade-billing-tabs">
+          <div 
+            className="upgrade-billing-indicator"
+            style={{
+              width: 'calc(50% - 4px)',
+              left: billingCycle === 'monthly' ? '4px' : '50%',
+            }}
+          />
           <button 
-            className={`upgrade-toggle-btn ${billingCycle === "monthly" ? "active" : ""}`}
+            className={`upgrade-billing-tab ${billingCycle === "monthly" ? "active" : ""}`}
             onClick={() => setBillingCycle("monthly")}
           >
             Monthly
           </button>
           <button 
-            className={`upgrade-toggle-btn ${billingCycle === "annually" ? "active" : ""}`}
+            className={`upgrade-billing-tab ${billingCycle === "annually" ? "active" : ""}`}
             onClick={() => setBillingCycle("annually")}
           >
             Annually

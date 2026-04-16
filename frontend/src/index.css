@@ -6227,7 +6227,7 @@ body {
 
 .upgrade-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 12px 0 20px;
   margin-bottom: 20px;
@@ -6249,56 +6249,6 @@ body {
 
 .upgrade-close-btn:hover {
   opacity: 0.8;
-}
-
-.upgrade-header-title {
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--white);
-  margin: 0;
-}
-
-.header-spacer {
-  width: 44px;
-}
-
-.upgrade-tabs-container {
-  display: flex;
-  position: relative;
-  background: #0F0F10;
-  border-radius: 28px;
-  padding: 4px;
-  margin: 0 0 32px;
-}
-
-.upgrade-tabs-indicator {
-  position: absolute;
-  top: 4px;
-  bottom: 4px;
-  background: #2A2B2D;
-  border-radius: 24px;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 0;
-}
-
-.upgrade-tab {
-  flex: 1;
-  padding: 12px 20px;
-  background: transparent;
-  border: none;
-  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  transition: color 0.3s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.upgrade-tab.active {
-  color: var(--white);
 }
 
 .upgrade-content {
@@ -6327,31 +6277,42 @@ body {
   margin: 0 0 32px 0;
 }
 
-.upgrade-billing-toggle {
+.upgrade-billing-tabs {
   display: flex;
-  gap: 4px;
-  background: #1A1B1D;
+  position: relative;
+  background: #0F0F10;
   border-radius: 28px;
   padding: 4px;
   margin-bottom: 40px;
 }
 
-.upgrade-toggle-btn {
-  padding: 12px 32px;
-  border: none;
+.upgrade-billing-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: #2A2B2D;
   border-radius: 24px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.upgrade-billing-tab {
+  flex: 1;
+  padding: 12px 32px;
+  background: transparent;
+  border: none;
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 15px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
   color: rgba(255, 255, 255, 0.5);
-  background: transparent;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
-.upgrade-toggle-btn.active {
+.upgrade-billing-tab.active {
   color: var(--white);
-  background: #2A2B2D;
 }
 
 .upgrade-pricing-cards {
