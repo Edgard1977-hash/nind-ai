@@ -6338,13 +6338,20 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  border-radius: 29px 29px 0 0;
+  border-radius: 29px 29px 24px 24px;
+  background: #1D1E20;
+  position: relative;
+  z-index: 2;
 }
 
 .pricing-card-bottom {
   padding: 28px;
+  padding-top: 48px;
   background: #121213;
   border-radius: 0 0 29px 29px;
+  margin-top: -20px;
+  position: relative;
+  z-index: 1;
 }
 
 .pricing-card-header {
