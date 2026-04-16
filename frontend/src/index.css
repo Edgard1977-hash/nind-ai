@@ -6339,7 +6339,7 @@ body {
   flex-direction: column;
   gap: 20px;
   border-radius: 29px 29px 24px 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   background: #1D1E20;
   position: relative;
   z-index: 2;
@@ -6350,7 +6350,7 @@ body {
   padding-top: 48px;
   background: #121213;
   border-radius: 0 0 29px 29px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   border-top: none;
   margin-top: -20px;
   position: relative;
