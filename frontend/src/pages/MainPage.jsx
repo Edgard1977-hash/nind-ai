@@ -163,7 +163,10 @@ export const MainPage = () => {
     if (!dateToUse) return '';
     
     const now = new Date();
-    const created = new Date(dateToUse);
+    // ВАЖНО: Если дата БЕЗ timezone (нет 'Z' или '+'), добавляем 'Z' для интерпретации как UTC
+    const dateStr = typeof dateToUse === 'string' ? dateToUse : dateToUse.toString();
+    const dateWithTz = (dateStr.endsWith('Z') || dateStr.includes('+')) ? dateStr : dateStr + 'Z';
+    const created = new Date(dateWithTz);
     
     // Check if date is valid
     if (isNaN(created.getTime())) {
