@@ -204,19 +204,6 @@ const AuthPage = () => {
               </button>
             </div>
 
-            {view === 'login' && (
-              <div className="auth-forgot-row">
-                <button 
-                  type="button"
-                  className="auth-link"
-                  onClick={() => toast.info("Функция восстановления пароля скоро будет доступна")}
-                  data-testid="forgot-password-btn"
-                >
-                  Lost password?
-                </button>
-              </div>
-            )}
-
             <button
               type="submit"
               className={`auth-submit-btn ${isFormValid ? 'active' : ''}`}
@@ -248,34 +235,56 @@ const AuthPage = () => {
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer - Lost password on left, Sign up/Log in on right */}
       {(view === 'login' || view === 'signup') && (
         <div className="auth-page-footer">
           {view === 'login' ? (
-            <p className="auth-switch-text">
-              No account?{' '}
+            <>
               <button 
-                className="auth-link"
-                onClick={switchToSignup}
-                data-testid="switch-to-signup"
+                type="button"
+                className="auth-link auth-link-gray"
+                onClick={() => toast.info("Функция восстановления пароля скоро будет доступна")}
+                data-testid="forgot-password-btn"
               >
-                Sign up
+                Lost password?
               </button>
-            </p>
+              <p className="auth-switch-text">
+                No account?{' '}
+                <button 
+                  className="auth-link auth-link-white"
+                  onClick={switchToSignup}
+                  data-testid="switch-to-signup"
+                >
+                  Sign up
+                </button>
+              </p>
+            </>
           ) : (
-            <p className="auth-switch-text">
-              Have account?{' '}
-              <button 
-                className="auth-link"
-                onClick={switchToLogin}
-                data-testid="switch-to-login"
-              >
-                Log in
-              </button>
-            </p>
+            <>
+              <div></div>
+              <p className="auth-switch-text">
+                Have account?{' '}
+                <button 
+                  className="auth-link auth-link-white"
+                  onClick={switchToLogin}
+                  data-testid="switch-to-login"
+                >
+                  Log in
+                </button>
+              </p>
+            </>
           )}
         </div>
       )}
+
+      {/* Privacy Policy text at bottom */}
+      <p className="auth-privacy-text">
+        By continuing, I acknowledge the{' '}
+        <a href="#" className="auth-privacy-link">Privacy Policy</a>
+        {' '}and agree to the{' '}
+        <a href="#" className="auth-privacy-link">Terms of Use</a>
+        . I also confirm that I am at least 18 years old
+      </p>
     </div>
   );
 };

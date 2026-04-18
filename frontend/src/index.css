@@ -2652,12 +2652,6 @@ body {
   color: var(--white);
 }
 
-.auth-forgot-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -4px;
-}
-
 .auth-link {
   background: none;
   border: none;
@@ -2674,9 +2668,17 @@ body {
   opacity: 0.8;
 }
 
+.auth-link-gray {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.auth-link-white {
+  color: var(--white);
+}
+
 .auth-submit-btn {
   width: 100%;
-  padding: 18px 24px;
+  padding: 20px 24px;
   border-radius: 50px;
   border: none;
   font-family: -apple-system, 'SF Pro Text', sans-serif;
@@ -2720,9 +2722,12 @@ body {
 
 /* Footer */
 .auth-page-footer {
-  margin-top: auto;
-  padding-top: 24px;
-  text-align: center;
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
 }
 
 .auth-switch-text {
@@ -2734,6 +2739,30 @@ body {
 
 .auth-switch-text .auth-link {
   font-size: 15px;
+}
+
+/* Privacy text at bottom */
+.auth-privacy-text {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  text-align: center;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.4);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.auth-privacy-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.auth-privacy-link:hover {
+  color: var(--white);
 }
 
 /* ===== PROFILE PAGE V2 ===== */
