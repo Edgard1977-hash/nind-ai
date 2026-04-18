@@ -2050,6 +2050,7 @@ async def process_video_generation(project_id: str):
                 "audio_url": audio_url,
                 "video_url": video_url,
                 "poster_url": poster_url,
+                "completed_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
@@ -3168,7 +3169,11 @@ async def process_device_mockup(
             
             await db.video_projects.update_one(
                 {"id": project_id},
-                {"$set": {"status": "completed", "video_url": video_url}},
+                {"$set": {
+                    "status": "completed", 
+                    "video_url": video_url,
+                    "completed_at": datetime.now(timezone.utc).isoformat()
+                }},
                 upsert=True
             )
             logger.info(f"Device mockup done: {video_url}")
@@ -3352,6 +3357,7 @@ async def process_montage(project_id: str, prompt: Optional[str] = None, text_ov
                 "progress": 100,
                 "progress_message": "Готово!",
                 "video_url": video_url,
+                "completed_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
@@ -3377,14 +3383,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
-,'),
     allow_methods=["*"],
     allow_headers=["*"],
 )
