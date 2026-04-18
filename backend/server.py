@@ -2304,18 +2304,26 @@ async def login_with_email(request: EmailAuthRequest):
     email = request.email.strip().lower()
     password = request.password
     
+    logger.info(f"[LOGIN] Attempting login for email: {email}")
+    
     # Find user
     user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user:
+        logger.warning(f"[LOGIN] User not found: {email}")
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    logger.info(f"[LOGIN] User found: {user.get('user_id')}, has_password_hash: {'password_hash' in user}")
     
     # Check if user has password (email auth)
     if "password_hash" not in user:
+        logger.warning(f"[LOGIN] User {email} has no password_hash")
         raise HTTPException(status_code=401, detail="This account uses Google login")
     
     # Verify password
     password_hash = hashlib.sha256(password.encode()).hexdigest()
+    logger.info(f"[LOGIN] Computed hash: {password_hash[:20]}..., Stored hash: {user['password_hash'][:20]}...")
     if user["password_hash"] != password_hash:
+        logger.warning(f"[LOGIN] Password mismatch for {email}")
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
     # Create new session
