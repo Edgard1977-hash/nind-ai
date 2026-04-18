@@ -141,9 +141,14 @@ const AuthPage = () => {
         
         {/* Title for login/signup */}
         {view !== 'initial' && (
-          <h1 className="auth-page-title" data-testid="auth-title">
-            {view === 'login' ? 'Log in' : 'Sign up'}
-          </h1>
+          <div className="auth-form-header">
+            <h1 className="auth-page-title" data-testid="auth-title">
+              {view === 'login' ? 'Log in' : 'Sign up'}
+            </h1>
+            <p className="auth-page-subtitle-form">
+              {view === 'login' ? 'to slind ai' : 'create an account'}
+            </p>
+          </div>
         )}
 
         {/* Initial view - social buttons */}
@@ -212,9 +217,56 @@ const AuthPage = () => {
             >
               {isLoading ? 'Loading...' : (view === 'login' ? 'Log in' : 'Sign up')}
             </button>
+
+            {/* Footer under button - Lost password on left, Sign up/Log in on right */}
+            <div className="auth-form-footer">
+              {view === 'login' ? (
+                <>
+                  <button 
+                    type="button"
+                    className="auth-link auth-link-gray"
+                    onClick={() => toast.info("Функция восстановления пароля скоро будет доступна")}
+                    data-testid="forgot-password-btn"
+                  >
+                    Lost password?
+                  </button>
+                  <p className="auth-switch-text">
+                    No account?{' '}
+                    <button 
+                      type="button"
+                      className="auth-link auth-link-white"
+                      onClick={switchToSignup}
+                      data-testid="switch-to-signup"
+                    >
+                      Sign up
+                    </button>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div></div>
+                  <p className="auth-switch-text">
+                    Have account?{' '}
+                    <button 
+                      type="button"
+                      className="auth-link auth-link-white"
+                      onClick={switchToLogin}
+                      data-testid="switch-to-login"
+                    >
+                      Log in
+                    </button>
+                  </p>
+                </>
+              )}
+            </div>
           </form>
         )}
       </div>
+
+      {/* Gradient overlay for initial view */}
+      {view === 'initial' && (
+        <div className="auth-gradient-overlay"></div>
+      )}
 
       {/* Grid background for initial view */}
       {view === 'initial' && (
@@ -232,48 +284,6 @@ const AuthPage = () => {
             <path d="M0,150 Q200,120 400,150" stroke="rgba(255,255,255,0.05)" strokeWidth="1" fill="none"/>
             <path d="M0,200 Q200,160 400,200" stroke="rgba(255,255,255,0.05)" strokeWidth="1" fill="none"/>
           </svg>
-        </div>
-      )}
-
-      {/* Footer - Lost password on left, Sign up/Log in on right */}
-      {(view === 'login' || view === 'signup') && (
-        <div className="auth-page-footer">
-          {view === 'login' ? (
-            <>
-              <button 
-                type="button"
-                className="auth-link auth-link-gray"
-                onClick={() => toast.info("Функция восстановления пароля скоро будет доступна")}
-                data-testid="forgot-password-btn"
-              >
-                Lost password?
-              </button>
-              <p className="auth-switch-text">
-                No account?{' '}
-                <button 
-                  className="auth-link auth-link-white"
-                  onClick={switchToSignup}
-                  data-testid="switch-to-signup"
-                >
-                  Sign up
-                </button>
-              </p>
-            </>
-          ) : (
-            <>
-              <div></div>
-              <p className="auth-switch-text">
-                Have account?{' '}
-                <button 
-                  className="auth-link auth-link-white"
-                  onClick={switchToLogin}
-                  data-testid="switch-to-login"
-                >
-                  Log in
-                </button>
-              </p>
-            </>
-          )}
         </div>
       )}
 
