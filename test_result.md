@@ -101,3 +101,98 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test video creation and persistence after page refresh"
+
+frontend:
+  - task: "User Authentication - Email Login"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/AuthPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Email login flow tested successfully. User can login with test@example.com / testpass123. Session persists after page refresh."
+
+  - task: "Video Creation Flow"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/MainPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Video creation flow works correctly. User can enter prompt 'Test video save check', click send button, and video appears in the list immediately with progress indicator (5%). Video count increased from 2 to 3 after creation."
+
+  - task: "Video Persistence After Page Refresh"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/MainPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ CRITICAL TEST PASSED: Video persists after page refresh (F5). Video count remained at 3 after refresh. The created_at timestamp is correctly preserved and fetched from backend. User remains logged in after refresh."
+
+  - task: "My Creations Tab - Video Display"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/MainPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "My Creations tab displays videos correctly. Videos show with poster images and progress indicators. Tab switching works properly."
+
+backend:
+  - task: "Video Generation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Video generation API endpoint /api/video/generate works correctly. Returns video ID immediately and starts background processing. Polling endpoint /api/video/{id} returns video status and progress."
+
+  - task: "User Videos Retrieval API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "User videos API endpoint /api/videos/user/{userId} works correctly. Returns all user videos including newly created ones. Videos persist in database and are correctly retrieved after page refresh."
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+  last_test_date: "2026-04-18"
+
+test_plan:
+  current_focus:
+    - "Video Creation Flow"
+    - "Video Persistence After Page Refresh"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+      message: "Completed comprehensive test of video creation and persistence. All critical flows are working correctly. Video creation, display, and persistence after page refresh all passed successfully. No issues found."
