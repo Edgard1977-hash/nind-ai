@@ -146,7 +146,7 @@ const AuthPage = () => {
               {view === 'login' ? 'Log in' : 'Sign up'}
             </h1>
             <p className="auth-page-subtitle-form">
-              {view === 'login' ? 'to slind ai' : 'create an account'}
+              {view === 'login' ? 'to nind ai' : 'create an account'}
             </p>
           </div>
         )}

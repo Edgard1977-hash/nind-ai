@@ -2526,10 +2526,10 @@ body {
 
 .auth-page-title {
   font-family: 'Indivisible', 'Inter', sans-serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--white);
-  margin: 0 0 40px;
+  margin: 0;
   text-align: center;
 }
 
@@ -2670,6 +2670,7 @@ body {
 
 .auth-link-gray {
   color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
 }
 
 .auth-link-white {
@@ -2737,6 +2738,9 @@ body {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .auth-form-header {
@@ -2746,9 +2750,9 @@ body {
 
 .auth-page-subtitle-form {
   font-family: -apple-system, 'SF Pro Text', sans-serif;
-  font-size: 16px;
+  font-size: 17px;
   color: rgba(255, 255, 255, 0.5);
-  margin: 8px 0 0 0;
+  margin: 4px 0 0 0;
 }
 
 /* Gradient overlay for initial view */
@@ -2766,12 +2770,14 @@ body {
 .auth-switch-text {
   font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', sans-serif;
   font-size: 15px;
+  font-weight: 500;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
 
 .auth-switch-text .auth-link {
   font-size: 15px;
+  font-weight: 500;
 }
 
 /* Privacy text at bottom */
@@ -2784,12 +2790,12 @@ body {
   font-family: -apple-system, 'SF Pro Text', sans-serif;
   font-size: 12px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.7);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .auth-privacy-link {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   transition: color 0.2s ease;
 }
