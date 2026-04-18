@@ -594,6 +594,7 @@ export const MainPage = () => {
           
           return {
             ...v,
+            ...videoData, // Обновляем ВСЕ данные с сервера (включая created_at)
             progress: Math.max(v.progress || 0, newProgress),
             status: videoData.status
           };
@@ -690,13 +691,12 @@ export const MainPage = () => {
             user_id: user.user_id || user.id
           });
           
-          // Add generating video to the list
+          // Add generating video to the list (БЕЗ created_at - будет взято с сервера)
           const newVideo = {
             id: response.data.id,
             title: currentPrompt,
             status: 'generating',
-            progress: 0,
-            created_at: new Date().toISOString()
+            progress: 0
           };
           setGeneratingVideos(prev => [newVideo, ...prev]);
           
@@ -729,13 +729,12 @@ export const MainPage = () => {
       
       console.log(`[SUBMIT] Response ID: ${response.data.id}`);
       
-      // Add generating video to the list
+      // Add generating video to the list (БЕЗ created_at - будет взято с сервера)
       const newVideo = {
         id: response.data.id,
         title: currentPrompt,
         status: 'generating',
-        progress: 5,
-        created_at: new Date().toISOString()
+        progress: 5
       };
       
       console.log(`[SUBMIT] Adding to generatingVideos`);
@@ -1122,7 +1121,9 @@ export const MainPage = () => {
                             
                             {/* Time ago - bottom left */}
                             <div className="creation-time-ago">
-                              {getTimeAgo(video.created_at, video.completed_at)}
+                              {video.status === 'generating' || video.status === 'processing' 
+                                ? '' 
+                                : getTimeAgo(video.created_at, video.completed_at)}
                             </div>
                             
                             {/* Menu button - bottom right */}

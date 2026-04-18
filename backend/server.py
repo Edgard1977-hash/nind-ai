@@ -2378,6 +2378,7 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
     doc = project.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     doc['updated_at'] = doc['updated_at'].isoformat()
+    logger.info(f"[VIDEO/GENERATE] Saving project {project.id} with created_at: {doc['created_at']}")
     result = await db.video_projects.insert_one(doc)
     print(f"[VIDEO/GENERATE] Saved to DB: {result.inserted_id}")
     
@@ -3103,6 +3104,9 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         style_desc += f" + text: {request.text[:20]}..."
     
     # Create initial project record in DB so polling works
+    current_time = datetime.now(timezone.utc).isoformat()
+    logger.info(f"[DEVICE_MOCKUP] Creating project {project_id} at time: {current_time}")
+    
     await db.video_projects.insert_one({
         "id": project_id,
         "prompt": style_desc,
@@ -3111,8 +3115,8 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         "status": "processing",
         "progress": 10,
         "progress_message": "Создаём 3D анимацию...",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat()
+        "created_at": current_time,
+        "updated_at": current_time
     })
     
     # Start background rendering
