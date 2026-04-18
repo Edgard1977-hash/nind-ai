@@ -165,10 +165,53 @@ export const MainPage = () => {
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
 
-    if (diffMin < 1) return 'Только что';
-    if (diffMin < 60) return `${diffMin}мин. назад`;
-    if (diffHour < 24) return `${diffHour}ч назад`;
-    return `${diffDay}дня назад`;
+    const lang = localStorage.getItem('appLanguage') || 'ru';
+    
+    const timeFormats = {
+      ru: {
+        justNow: 'Только что',
+        minAgo: (n) => `${n}мин. назад`,
+        hourAgo: (n) => `${n}ч назад`,
+        dayAgo: (n) => `${n}дня назад`,
+      },
+      en: {
+        justNow: 'Just now',
+        minAgo: (n) => `${n}m ago`,
+        hourAgo: (n) => `${n}h ago`,
+        dayAgo: (n) => `${n}d ago`,
+      },
+      de: {
+        justNow: 'Gerade eben',
+        minAgo: (n) => `vor ${n} Min`,
+        hourAgo: (n) => `vor ${n} Std`,
+        dayAgo: (n) => `vor ${n} T`,
+      },
+      es: {
+        justNow: 'Ahora mismo',
+        minAgo: (n) => `hace ${n} min`,
+        hourAgo: (n) => `hace ${n} h`,
+        dayAgo: (n) => `hace ${n} d`,
+      },
+      pt: {
+        justNow: 'Agora mesmo',
+        minAgo: (n) => `há ${n} min`,
+        hourAgo: (n) => `há ${n} h`,
+        dayAgo: (n) => `há ${n} d`,
+      },
+      fr: {
+        justNow: 'À l\'instant',
+        minAgo: (n) => `il y a ${n} min`,
+        hourAgo: (n) => `il y a ${n} h`,
+        dayAgo: (n) => `il y a ${n} j`,
+      },
+    };
+
+    const format = timeFormats[lang] || timeFormats['ru'];
+
+    if (diffMin < 1) return format.justNow;
+    if (diffMin < 60) return format.minAgo(diffMin);
+    if (diffHour < 24) return format.hourAgo(diffHour);
+    return format.dayAgo(diffDay);
   };
 
   // Handle video download
