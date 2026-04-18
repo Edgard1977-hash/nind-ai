@@ -173,14 +173,9 @@ export const MainPage = () => {
     const diffMin = Math.floor(diffSec / 60);
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
-    
-    console.log('[TIME_AGO] Created:', created.toISOString(), 'Now:', now.toISOString(), 'Diff minutes:', diffMin);
 
-    // Get language from localStorage or user preference
-    const storedLang = localStorage.getItem('appLanguage');
-    const lang = storedLang || user?.language || 'ru';
-    
-    console.log('[TIME_AGO] Language:', lang, 'storedLang:', storedLang, 'user.language:', user?.language);
+    // Get language - SAME KEY as ProfilePage uses!
+    const lang = localStorage.getItem('slind_language') || user?.language || 'ru';
     
     const timeFormats = {
       ru: {
