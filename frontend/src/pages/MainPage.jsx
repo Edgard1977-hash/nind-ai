@@ -157,8 +157,8 @@ export const MainPage = () => {
   
   // Helper function to calculate time ago
   const getTimeAgo = (createdAt, completedAt) => {
-    // Use completed_at if available (for recently finished videos), otherwise created_at
-    const dateToUse = completedAt || createdAt;
+    // ВСЕГДА используем created_at - время когда пользователь создал видео
+    const dateToUse = createdAt;
     
     if (!dateToUse) return '';
     
