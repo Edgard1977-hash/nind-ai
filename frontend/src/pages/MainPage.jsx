@@ -156,15 +156,18 @@ export const MainPage = () => {
   const popupStartY = useRef(0);
   
   // Helper function to calculate time ago
-  const getTimeAgo = (createdAt) => {
-    if (!createdAt) return '';
+  const getTimeAgo = (createdAt, completedAt) => {
+    // Use completed_at if available (for recently finished videos), otherwise created_at
+    const dateToUse = completedAt || createdAt;
+    
+    if (!dateToUse) return '';
     
     const now = new Date();
-    const created = new Date(createdAt);
+    const created = new Date(dateToUse);
     
     // Check if date is valid
     if (isNaN(created.getTime())) {
-      console.warn('[TIME_AGO] Invalid date:', createdAt);
+      console.warn('[TIME_AGO] Invalid date:', dateToUse);
       return '';
     }
     
@@ -1119,7 +1122,7 @@ export const MainPage = () => {
                             
                             {/* Time ago - bottom left */}
                             <div className="creation-time-ago">
-                              {getTimeAgo(video.created_at)}
+                              {getTimeAgo(video.created_at, video.completed_at)}
                             </div>
                             
                             {/* Menu button - bottom right */}

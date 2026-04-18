@@ -3110,7 +3110,8 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         "status": "processing",
         "progress": 10,
         "progress_message": "Создаём 3D анимацию...",
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
     })
     
     # Start background rendering
@@ -3376,6 +3377,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    client.close()
+,'),
     allow_methods=["*"],
     allow_headers=["*"],
 )
