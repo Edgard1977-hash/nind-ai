@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, ChevronLeft, Check, MoreVertical, Download, Edit2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import ProfilePage from "../components/custom/ProfilePage";
@@ -148,11 +148,68 @@ export const MainPage = () => {
   const [userVideos, setUserVideos] = useState([]);
   const [generatingVideos, setGeneratingVideos] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
   
   // Popup swipe state
   const [popupDragY, setPopupDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const popupStartY = useRef(0);
+  
+  // Helper function to calculate time ago
+  const getTimeAgo = (createdAt) => {
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffMs = now - created;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    if (diffMin < 1) return 'Только что';
+    if (diffMin < 60) return `${diffMin}мин. назад`;
+    if (diffHour < 24) return `${diffHour}ч назад`;
+    return `${diffDay}дня назад`;
+  };
+
+  // Handle video download
+  const handleDownload = async (video) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}${video.video_url}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `video-${video.id}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setOpenMenuId(null);
+      toast.success('Видео скачивается...');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Ошибка при скачивании');
+    }
+  };
+
+  // Handle video delete
+  const handleDelete = async (videoId) => {
+    try {
+      await axios.delete(`${API}/videos/${videoId}`);
+      setUserVideos(prev => prev.filter(v => v.id !== videoId));
+      setOpenMenuId(null);
+      toast.success('Видео удалено');
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Ошибка при удалении');
+    }
+  };
+
+  // Handle video edit (placeholder)
+  const handleEdit = (video) => {
+    setOpenMenuId(null);
+    toast.info('Функция редактирования скоро будет доступна');
+  };
 
   // Examples carousel state
   const [exampleIndex, setExampleIndex] = useState(0);
@@ -985,23 +1042,62 @@ export const MainPage = () => {
                           <div 
                             key={video.id} 
                             className="creation-card"
-                            onClick={() => navigate(`/video/${video.id}`)}
                             data-testid={`library-video-${video.id}`}
                           >
-                            {video.poster_url ? (
-                              <img 
-                                src={`${BACKEND_URL}${video.poster_url}`} 
-                                alt={video.title || 'Video'}
-                              />
-                            ) : video.video_url ? (
-                              <video 
-                                src={`${BACKEND_URL}${video.video_url}`}
-                                muted
-                                playsInline
-                              />
-                            ) : (
-                              <div className="creation-placeholder" />
-                            )}
+                            <div 
+                              className="creation-card-content"
+                              onClick={() => navigate(`/video/${video.id}`)}
+                            >
+                              {video.poster_url ? (
+                                <img 
+                                  src={`${BACKEND_URL}${video.poster_url}`} 
+                                  alt={video.title || 'Video'}
+                                />
+                              ) : video.video_url ? (
+                                <video 
+                                  src={`${BACKEND_URL}${video.video_url}`}
+                                  muted
+                                  playsInline
+                                />
+                              ) : (
+                                <div className="creation-placeholder" />
+                              )}
+                            </div>
+                            
+                            {/* Time ago - bottom left */}
+                            <div className="creation-time-ago">
+                              {getTimeAgo(video.created_at)}
+                            </div>
+                            
+                            {/* Menu button - bottom right */}
+                            <div className="creation-menu-wrapper">
+                              <button 
+                                className="creation-menu-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(openMenuId === video.id ? null : video.id);
+                                }}
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                              
+                              {openMenuId === video.id && (
+                                <div className="creation-menu-dropdown">
+                                  <button onClick={(e) => { e.stopPropagation(); handleDownload(video); }}>
+                                    <Download className="w-4 h-4" />
+                                    <span>Download</span>
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); handleEdit(video); }}>
+                                    <Edit2 className="w-4 h-4" />
+                                    <span>Edit</span>
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); handleDelete(video.id); }}>
+                                    <Trash2 className="w-4 h-4" />
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>

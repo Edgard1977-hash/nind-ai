@@ -4719,13 +4719,20 @@ body {
 }
 
 .creation-card {
-  border-radius: 16px;
+  border-radius: 19px;
   overflow: hidden;
   background: #2A2B2D;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   transition: transform 0.2s ease;
   position: relative;
   aspect-ratio: 1 / 1;
+}
+
+.creation-card-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
 .creation-card:hover {
@@ -4745,6 +4752,93 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.creation-time-ago {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.creation-menu-wrapper {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 4;
+}
+
+.creation-menu-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.creation-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.creation-menu-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: #0F0F10;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  animation: dropdown-appear 0.15s ease-out;
+}
+
+.creation-menu-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--white);
+  font-family: -apple-system, 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.creation-menu-dropdown button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.creation-menu-dropdown button:last-child {
+  color: #FF4444;
+}
+
+.creation-menu-dropdown button:last-child:hover {
+  background: rgba(255, 68, 68, 0.1);
 }
 
 .creation-generating {
