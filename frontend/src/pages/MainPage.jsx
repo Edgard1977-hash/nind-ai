@@ -157,15 +157,23 @@ export const MainPage = () => {
   
   // Helper function to calculate time ago
   const getTimeAgo = (createdAt) => {
+    if (!createdAt) return '';
+    
     const now = new Date();
     const created = new Date(createdAt);
+    
+    // Check if date is valid
+    if (isNaN(created.getTime())) return '';
+    
     const diffMs = now - created;
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
 
-    const lang = localStorage.getItem('appLanguage') || 'ru';
+    // Get language from localStorage or user preference
+    const storedLang = localStorage.getItem('appLanguage');
+    const lang = storedLang || user?.language || 'ru';
     
     const timeFormats = {
       ru: {
