@@ -163,17 +163,24 @@ export const MainPage = () => {
     const created = new Date(createdAt);
     
     // Check if date is valid
-    if (isNaN(created.getTime())) return '';
+    if (isNaN(created.getTime())) {
+      console.warn('[TIME_AGO] Invalid date:', createdAt);
+      return '';
+    }
     
     const diffMs = now - created;
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
+    
+    console.log('[TIME_AGO] Created:', created.toISOString(), 'Now:', now.toISOString(), 'Diff minutes:', diffMin);
 
     // Get language from localStorage or user preference
     const storedLang = localStorage.getItem('appLanguage');
     const lang = storedLang || user?.language || 'ru';
+    
+    console.log('[TIME_AGO] Language:', lang, 'storedLang:', storedLang, 'user.language:', user?.language);
     
     const timeFormats = {
       ru: {
