@@ -367,9 +367,12 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
             <span className="settings-menu-text">{t('helpSupport')}</span>
             <ChevronIcon className="settings-menu-arrow" />
           </button>
+        </div>
 
+        {/* Log Out Button */}
+        <div className="delete-account-card">
           <button 
-            className="settings-menu-item logout"
+            className="settings-menu-item logout-separate"
             onClick={() => setShowConfirmPopup('logout')}
             data-testid="logout-btn"
           >

@@ -3134,6 +3134,11 @@ body {
   color: #FF6B6B;
 }
 
+.settings-menu-item.logout-separate .settings-menu-icon,
+.settings-menu-item.logout-separate .settings-menu-text {
+  color: #FF4444;
+}
+
 .settings-menu-item.delete .settings-menu-icon,
 .settings-menu-item.delete .settings-menu-text {
   color: #FF4444;
@@ -4894,6 +4899,28 @@ body {
 
 .creation-card.generating {
   cursor: default;
+  position: relative;
+}
+
+.creation-card.generating::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #40E0D0, transparent);
+  animation: glow-pulse 2s ease-in-out infinite;
+  border-radius: 12px 12px 0 0;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .creation-card.generating:hover {
@@ -6961,14 +6988,14 @@ body {
 /* ===== CUSTOM TOAST / SONNER STYLES ===== */
 [data-sonner-toast] {
   background: #1D1E20 !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 50px !important;
+  border: none !important;
+  border-radius: 44px !important;
   color: #fff !important;
   padding: 14px 20px !important;
   font-family: -apple-system, 'SF Pro Text', sans-serif !important;
   font-size: 15px !important;
   font-weight: 500 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 [data-sonner-toast][data-type="success"] {
