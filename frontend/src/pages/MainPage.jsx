@@ -151,7 +151,7 @@ export const MainPage = () => {
   const [generatingVideos, setGeneratingVideos] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [menuPosition, setMenuPosition] = useState(null);
   const menuButtonRef = useRef(null);
   
   // Popup swipe state
@@ -239,6 +239,7 @@ export const MainPage = () => {
     const handleClickOutside = (e) => {
       if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
         setOpenMenuId(null);
+        setMenuPosition(null);
       }
     };
     
@@ -1153,18 +1154,27 @@ export const MainPage = () => {
                                   e.stopPropagation();
                                   if (openMenuId === video.id) {
                                     setOpenMenuId(null);
+                                    setMenuPosition(null);
                                   } else {
                                     const btn = e.currentTarget;
                                     const rect = btn.getBoundingClientRect();
-                                    const menuHeight = 130; // approximate height of menu
-                                    const top = rect.top - menuHeight - 8;
-                                    const left = rect.left + rect.width / 2;
+                                    const menuHeight = 130;
+                                    const menuWidth = 140;
                                     
-                                    setMenuPosition({
-                                      top: Math.max(10, top),
-                                      left: Math.min(Math.max(left, 80), window.innerWidth - 80)
+                                    // Calculate position to keep menu on screen
+                                    let top = rect.top - menuHeight - 8;
+                                    let left = rect.left + rect.width / 2;
+                                    
+                                    // Keep within screen bounds
+                                    top = Math.max(10, top);
+                                    left = Math.min(Math.max(left, menuWidth / 2 + 10), window.innerWidth - menuWidth / 2 - 10);
+                                    
+                                    // Set position first, then open menu
+                                    setMenuPosition({ top, left });
+                                    // Small delay to ensure position is set before menu renders
+                                    requestAnimationFrame(() => {
+                                      setOpenMenuId(video.id);
                                     });
-                                    setOpenMenuId(video.id);
                                   }
                                 }}
                               >
