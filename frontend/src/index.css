@@ -6807,8 +6807,6 @@ body {
   overflow-x: hidden;
   position: relative;
   padding-right: 4px;
-  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
 }
 
 .pricing-features-scroll::-webkit-scrollbar {
@@ -6850,6 +6848,14 @@ body {
   height: 16px;
   color: rgba(255, 255, 255, 0.9);
   flex-shrink: 0;
+}
+
+.pricing-features-list li.no-check {
+  padding-left: 24px;
+}
+
+.pricing-features-list li.no-check .pricing-check-icon {
+  display: none;
 }
 
 .pricing-ai-trigger-inline {

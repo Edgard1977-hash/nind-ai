@@ -104,7 +104,7 @@ const UpgradePage = () => {
           <div className="pricing-features-scroll">
             <ul className="pricing-features-list">
               {plan.features.map((feature, idx) => (
-                <li key={idx}>
+                <li key={idx} className={planKey === 'pro' && idx === 0 ? 'no-check' : ''}>
                   <Check className="pricing-check-icon" />
                   <span>{feature}</span>
                 </li>
