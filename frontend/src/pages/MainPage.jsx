@@ -151,8 +151,7 @@ export const MainPage = () => {
   const [generatingVideos, setGeneratingVideos] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [menuPosition, setMenuPosition] = useState(null);
-  const [menuVisible, setMenuVisible] = useState(false);
+  const menuPositionRef = useRef({ top: 0, left: 0 });
   const menuButtonRef = useRef(null);
   
   // Popup swipe state
@@ -240,8 +239,6 @@ export const MainPage = () => {
     const handleClickOutside = (e) => {
       if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
         setOpenMenuId(null);
-        setMenuPosition(null);
-        setMenuVisible(false);
       }
     };
     
@@ -1155,16 +1152,8 @@ export const MainPage = () => {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (openMenuId === video.id) {
-                                    setMenuVisible(false);
-                                    setTimeout(() => {
-                                      setOpenMenuId(null);
-                                      setMenuPosition(null);
-                                    }, 150);
-                                  } else {
-                                    // Закрыть предыдущее меню если открыто
-                                    setMenuVisible(false);
                                     setOpenMenuId(null);
-                                    
+                                  } else {
                                     const btn = e.currentTarget;
                                     const rect = btn.getBoundingClientRect();
                                     const menuHeight = 130;
@@ -1176,11 +1165,10 @@ export const MainPage = () => {
                                     top = Math.max(10, top);
                                     left = Math.min(Math.max(left, menuWidth / 2 + 10), window.innerWidth - menuWidth / 2 - 10);
                                     
-                                    // Установить позицию и ID одновременно, но видимость - после
-                                    setMenuPosition({ top, left });
+                                    // Store position in ref (doesn't cause re-render)
+                                    menuPositionRef.current = { top, left };
+                                    // Then set menu ID (single re-render with correct position)
                                     setOpenMenuId(video.id);
-                                    // Показать меню после следующего рендера
-                                    setTimeout(() => setMenuVisible(true), 0);
                                   }
                                 }}
                               >
@@ -1229,12 +1217,12 @@ export const MainPage = () => {
           </div>
 
         {/* Global dropdown menu (outside grid overflow) */}
-        {openMenuId && menuPosition && menuVisible && (
+        {openMenuId && (
           <div 
             className="creation-menu-dropdown"
             style={{
-              top: `${menuPosition.top}px`,
-              left: `${menuPosition.left}px`,
+              top: `${menuPositionRef.current.top}px`,
+              left: `${menuPositionRef.current.left}px`,
               transform: 'translateX(-50%)'
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1244,8 +1232,6 @@ export const MainPage = () => {
               const video = userVideos.find(v => v.id === openMenuId);
               if (video) handleDownload(video); 
               setOpenMenuId(null);
-              setMenuPosition(null);
-              setMenuVisible(false);
             }}>
               <Download className="w-4 h-4" />
               <span>Download</span>
@@ -1255,8 +1241,6 @@ export const MainPage = () => {
               const video = userVideos.find(v => v.id === openMenuId);
               if (video) handleEdit(video); 
               setOpenMenuId(null);
-              setMenuPosition(null);
-              setMenuVisible(false);
             }}>
               <Edit2 className="w-4 h-4" />
               <span>Edit</span>
@@ -1265,8 +1249,6 @@ export const MainPage = () => {
               e.stopPropagation(); 
               handleDelete(openMenuId); 
               setOpenMenuId(null);
-              setMenuPosition(null);
-              setMenuVisible(false);
             }}>
               <Trash2 className="w-4 h-4" />
               <span>Delete</span>
