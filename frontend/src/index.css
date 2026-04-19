@@ -2941,8 +2941,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
+  position: relative;
+}
+
+.profile-v2-avatar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 12px var(--bg-main);
+  pointer-events: none;
+  z-index: 2;
 }
 
 .profile-v2-avatar img {
@@ -2952,10 +2966,12 @@ body {
 }
 
 .default-avatar-icon {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   color: var(--white);
-  margin-top: 6px;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .profile-v2-user-info {
