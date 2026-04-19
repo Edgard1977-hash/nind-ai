@@ -234,6 +234,18 @@ export const MainPage = () => {
     return format.dayAgo(diffDay);
   };
 
+  // Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
+        setOpenMenuId(null);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
+
   // Handle video download
   const handleDownload = async (video) => {
     try {
@@ -869,18 +881,6 @@ export const MainPage = () => {
     );
   }
 
-  // Close menu on click outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
-        setOpenMenuId(null);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [openMenuId]);
-
   const completedVideos = userVideos.filter(v => v.status === 'completed');
 
   // ============ LOGGED IN VIEW ============
@@ -1148,7 +1148,6 @@ export const MainPage = () => {
                             {/* Menu button - bottom right */}
                             <div className="creation-menu-wrapper">
                               <button 
-                                ref={openMenuId === video.id ? menuButtonRef : null}
                                 className="creation-menu-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1157,9 +1156,13 @@ export const MainPage = () => {
                                   } else {
                                     const btn = e.currentTarget;
                                     const rect = btn.getBoundingClientRect();
+                                    const menuHeight = 130; // approximate height of menu
+                                    const top = rect.top - menuHeight - 8;
+                                    const left = rect.left + rect.width / 2;
+                                    
                                     setMenuPosition({
-                                      top: rect.top - 8,
-                                      left: rect.left + rect.width / 2
+                                      top: Math.max(10, top),
+                                      left: Math.min(Math.max(left, 80), window.innerWidth - 80)
                                     });
                                     setOpenMenuId(video.id);
                                   }
@@ -1214,10 +1217,11 @@ export const MainPage = () => {
           <div 
             className="creation-menu-dropdown"
             style={{
-              top: `${Math.max(10, menuPosition.top - 140)}px`,
+              top: `${menuPosition.top}px`,
               left: `${menuPosition.left}px`,
               transform: 'translateX(-50%)'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <button onClick={(e) => { 
               e.stopPropagation(); 
