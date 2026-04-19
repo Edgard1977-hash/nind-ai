@@ -6999,8 +6999,6 @@ body {
   opacity: 0 !important;
   transform: translateY(-100%) !important;
 }
-nt;
-}
 
 /* Swipe animation */
 [data-sonner-toast][data-swiping="true"] {
