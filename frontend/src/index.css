@@ -3682,9 +3682,10 @@ body {
 }
 
 .default-avatar-icon-large {
-  width: 56px;
-  height: 56px;
+  width: 75px;
+  height: 75px;
   color: var(--white);
+  margin-top: 8px;
 }
 
 .avatar-edit-btn-v2 {
@@ -4010,9 +4011,10 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 500px;
   background: var(--panel-bg);
   border: 2px solid transparent;
-  border-radius: 23px;
+  border-radius: 27px;
   overflow: hidden;
 }
 
@@ -4064,7 +4066,7 @@ body {
 
 .profile-save-btn {
   width: 100%;
-  max-width: 450px;
+  max-width: 500px;
   padding: 20px 24px;
   background: #38393B;
   color: rgba(255, 255, 255, 0.5);

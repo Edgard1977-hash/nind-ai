@@ -293,7 +293,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
           </div>
           
           <div className="profile-v2-user-info">
-            <h2 className="profile-v2-username">{userName}</h2>
+            <h2 className="profile-v2-username">{user?.name || userName}</h2>
             <p className="profile-v2-plan">{getPlanLabel(userPlan)}</p>
           </div>
           
