@@ -2941,22 +2941,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: visible;
+  overflow: hidden;
   flex-shrink: 0;
   position: relative;
-}
-
-.profile-v2-avatar::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 20px;
-  background: var(--bg-main);
-  border-radius: 0 0 50% 50% / 0 0 100% 100%;
-  pointer-events: none;
-  z-index: 2;
 }
 
 .profile-v2-avatar img {
@@ -4660,7 +4647,7 @@ body {
   border-radius: 50%;
   border: none;
   background: #1D1E20;
-  overflow: visible;
+  overflow: hidden;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -4672,19 +4659,6 @@ body {
   padding: 0;
   transition: opacity 0.2s ease;
   position: relative;
-}
-
-.header-avatar-btn::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 14px;
-  background: var(--bg-main);
-  border-radius: 0 0 50% 50% / 0 0 100% 100%;
-  pointer-events: none;
-  z-index: 2;
 }
 
 .header-avatar-btn img {
