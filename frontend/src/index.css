@@ -4876,6 +4876,18 @@ body {
   position: relative;
 }
 
+.creation-card-content::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .creation-card:hover {
   transform: scale(0.98);
 }
