@@ -23,16 +23,11 @@ const UpgradePage = () => {
       credits: 500,
       features: [
         "Full AI editor access",
-        "Watermark removal",
-        "Auto editing (cuts, highlights, subtitles)",
-        "AI Animated visuals",
-        "AI Speech & Dubbing",
-        "AI Script generation",
-        "AI Sound design",
-        "1080p export",
-        "10 custom templates",
-        "Fast generating",
-        "Parallel generation (up to 3 videos)"
+        "AI cuts & captions",
+        "AI script, speech & dubbing",
+        "AI visuals & sound",
+        "5 Custom templates",
+        "Fast export (1080p, parallel 3 videos)"
       ]
     },
     pro: {
@@ -41,11 +36,9 @@ const UpgradePage = () => {
       annualPrice: 59,
       credits: proCredits,
       features: [
-        "Everything in Starter plan, plus:",
+        "Everything in Starter, plus:",
+        "Priority export (4K, parallel 8 videos)",
         "Unlimited custom templates",
-        "Parallel generation (up to 8 videos)",
-        "Ultra-fast generation",
-        "4K export",
         "Team workspace"
       ],
       hasCreditsDropdown: true
