@@ -2937,7 +2937,7 @@ body {
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: #1D1E20;
+  background: #3D3F43;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3997,7 +3997,7 @@ body {
 
 .profile-edit-field {
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
   margin-bottom: 24px;
 }
 
@@ -4030,7 +4030,8 @@ body {
 }
 
 .profile-input-divider-horizontal {
-  width: 100%;
+  width: calc(100% - 32px);
+  margin: 0 16px;
   height: 1px;
   background: rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
@@ -4059,7 +4060,7 @@ body {
 
 .profile-save-btn {
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
   padding: 20px 24px;
   background: #38393B;
   color: rgba(255, 255, 255, 0.5);
@@ -4660,8 +4661,8 @@ body {
 }
 
 .header-avatar-icon {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   color: var(--white);
 }
 

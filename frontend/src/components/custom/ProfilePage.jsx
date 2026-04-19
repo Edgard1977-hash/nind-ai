@@ -164,7 +164,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
   };
 
   const handleSaveProfile = async () => {
-    if (!editUsername.trim()) return;
+    if (!editUsername.trim() || !editName.trim()) return;
     
     const isAvailable = await checkUsernameAvailability(editUsername.trim());
     if (!isAvailable) return;
@@ -173,10 +173,14 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
     try {
       await axios.put(`${API}/users/${user.user_id}`, {
         username: editUsername.trim(),
-        name: editUsername.trim()
+        name: editName.trim()
       });
       
-      const updatedUser = { ...user, username: editUsername.trim(), name: editUsername.trim() };
+      const updatedUser = { 
+        ...user, 
+        username: editUsername.trim(), 
+        name: editName.trim() 
+      };
       localStorage.setItem("slind_user", JSON.stringify(updatedUser));
       if (onUpdateUser) onUpdateUser(updatedUser);
       
@@ -564,9 +568,9 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
           </div>
 
           <button 
-            className={`profile-save-btn ${editUsername.trim() !== userName && !usernameError ? 'active' : ''}`}
+            className={`profile-save-btn ${(editUsername.trim() !== userName || editName.trim() !== (user?.name || '')) && !usernameError ? 'active' : ''}`}
             onClick={handleSaveProfile}
-            disabled={isSaving || editUsername.trim() === userName || !!usernameError || isCheckingUsername}
+            disabled={isSaving || (editUsername.trim() === userName && editName.trim() === (user?.name || '')) || !!usernameError || isCheckingUsername}
             data-testid="profile-save-btn"
           >
             {isSaving ? t('saving') : isCheckingUsername ? t('checking') : t('save')}
