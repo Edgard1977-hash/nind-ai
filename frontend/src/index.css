@@ -4900,7 +4900,7 @@ body {
   bottom: 10px;
   left: 10px;
   font-family: -apple-system, 'SF Pro Text', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.95);
   z-index: 3;
@@ -4917,7 +4917,7 @@ body {
 .creation-menu-btn {
   width: 32px;
   height: 32px;
-  background: rgba(100, 100, 100, 0.6);
+  background: rgba(60, 60, 60, 0.7);
   backdrop-filter: blur(8px);
   border: none;
   border-radius: 11px;
@@ -4930,7 +4930,7 @@ body {
 }
 
 .creation-menu-btn:hover {
-  background: rgba(100, 100, 100, 0.8);
+  background: rgba(60, 60, 60, 0.9);
 }
 
 .creation-menu-dropdown {
@@ -6988,6 +6988,18 @@ body {
 
 [data-sonner-toast] [data-close-button]:hover {
   color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Swipe animation */
+[data-sonner-toast][data-swiping="true"] {
+  transform: translateY(var(--swipe-amount)) !important;
+}
+
+[data-sonner-toast][data-removed="true"] {
+  opacity: 0 !important;
+  transform: translateY(-100%) !important;
+}
+nt;
 }
 
 /* Swipe animation */
