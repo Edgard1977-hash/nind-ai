@@ -2953,8 +2953,8 @@ body {
 }
 
 .default-avatar-icon {
-  width: 60px;
-  height: 60px;
+  width: 51px;
+  height: 51px;
   color: var(--white);
   margin-top: 12px;
   position: relative;
@@ -4646,7 +4646,7 @@ body {
   height: 42px;
   border-radius: 50%;
   border: none;
-  background: #1D1E20;
+  background: #2A2B2D;
   overflow: hidden;
   cursor: pointer;
   display: flex;
@@ -4668,8 +4668,8 @@ body {
 }
 
 .header-avatar-icon {
-  width: 32px;
-  height: 32px;
+  width: 31.5px;
+  height: 31.5px;
   color: var(--white);
   margin-top: 6px;
   position: relative;
