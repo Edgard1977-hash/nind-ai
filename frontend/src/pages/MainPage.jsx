@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, ChevronLeft, Check, MoreVertical, Download, Edit2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -151,8 +150,7 @@ export const MainPage = () => {
   const [userVideos, setUserVideos] = useState([]);
   const [generatingVideos, setGeneratingVideos] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const menuPositionRef = useRef({ top: 0, left: 0 });
+  const [openMenu, setOpenMenu] = useState(null); // { id, top, left }
   const menuButtonRef = useRef(null);
   
   // Popup swipe state
@@ -238,15 +236,14 @@ export const MainPage = () => {
   // Close menu on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
-        setOpenMenuId(null);
-        menuPositionRef.current = { top: 0, left: 0 };
+      if (openMenu && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
+        setOpenMenu(null);
       }
     };
     
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [openMenuId]);
+  }, [openMenu]);
 
   // Handle video download
   const handleDownload = async (video) => {
@@ -1153,9 +1150,8 @@ export const MainPage = () => {
                                 className="creation-menu-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (openMenuId === video.id) {
-                                    setOpenMenuId(null);
-                                    menuPositionRef.current = { top: 0, left: 0 };
+                                  if (openMenu?.id === video.id) {
+                                    setOpenMenu(null);
                                   } else {
                                     const btn = e.currentTarget;
                                     const rect = btn.getBoundingClientRect();
@@ -1168,10 +1164,7 @@ export const MainPage = () => {
                                     top = Math.max(10, top);
                                     left = Math.min(Math.max(left, menuWidth / 2 + 10), window.innerWidth - menuWidth / 2 - 10);
                                     
-                                    // First set position in ref
-                                    menuPositionRef.current = { top, left };
-                                    // Then trigger render by setting openMenuId
-                                    setOpenMenuId(video.id);
+                                    setOpenMenu({ id: video.id, top, left });
                                   }
                                 }}
                               >
@@ -1220,41 +1213,38 @@ export const MainPage = () => {
           </div>
 
         {/* Global dropdown menu (outside grid overflow) */}
-        {openMenuId && menuPositionRef.current.top > 0 && (
+        {openMenu && (
           <div 
             className="creation-menu-dropdown"
             style={{
-              top: `${menuPositionRef.current.top}px`,
-              left: `${menuPositionRef.current.left}px`,
+              top: `${openMenu.top}px`,
+              left: `${openMenu.left}px`,
               transform: 'translateX(-50%)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <button onClick={(e) => { 
               e.stopPropagation(); 
-              const video = userVideos.find(v => v.id === openMenuId);
+              const video = userVideos.find(v => v.id === openMenu.id);
               if (video) handleDownload(video); 
-              setOpenMenuId(null);
-              menuPositionRef.current = { top: 0, left: 0 };
+              setOpenMenu(null);
             }}>
               <Download className="w-4 h-4" />
               <span>Download</span>
             </button>
             <button onClick={(e) => { 
               e.stopPropagation(); 
-              const video = userVideos.find(v => v.id === openMenuId);
+              const video = userVideos.find(v => v.id === openMenu.id);
               if (video) handleEdit(video); 
-              setOpenMenuId(null);
-              menuPositionRef.current = { top: 0, left: 0 };
+              setOpenMenu(null);
             }}>
               <Edit2 className="w-4 h-4" />
               <span>Edit</span>
             </button>
             <button onClick={(e) => { 
               e.stopPropagation(); 
-              handleDelete(openMenuId); 
-              setOpenMenuId(null);
-              menuPositionRef.current = { top: 0, left: 0 };
+              handleDelete(openMenu.id); 
+              setOpenMenu(null);
             }}>
               <Trash2 className="w-4 h-4" />
               <span>Delete</span>
