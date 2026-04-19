@@ -1,17 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronDown, HelpCircle, Check, ChevronRight, Lock } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { X, ChevronDown, Check } from "lucide-react";
 
 // Credits icon (exact same as in Profile page)
 const CreditsIcon = ({ className, color = "currentColor" }) => (
@@ -23,62 +12,42 @@ const CreditsIcon = ({ className, color = "currentColor" }) => (
 const UpgradePage = () => {
   const navigate = useNavigate();
   const [billingCycle, setBillingCycle] = useState("monthly");
-  const [starterAiOpen, setStarterAiOpen] = useState(false);
-  const [plusAiOpen, setPlusAiOpen] = useState(false);
-  const [proAiOpen, setProAiOpen] = useState(false);
   const [proCredits, setProCredits] = useState(3000);
   const [proCreditsOpen, setProCreditsOpen] = useState(false);
-
-  const aiTools = [
-    { name: "AI Speech", locked: false },
-    { name: "AI Sound design", locked: false },
-    { name: "AI Translation", locked: true, tooltip: "Available in Plus and Pro" },
-    { name: "AI Cut", locked: false },
-    { name: "AI Script", locked: true, tooltip: "Available in Plus and Pro" },
-    { name: "AI Color grading", locked: false },
-    { name: "AI Subtitles", locked: false },
-  ];
 
   const plans = {
     starter: {
       name: "Starter",
-      monthlyPrice: 9,
-      annualPrice: 7,
-      credits: 200,
-      features: [
-        "Watermark removal",
-        "5 Custom templates",
-        "Parallel generation: up to 2 videos",
-        "Standard generation"
-      ],
-      aiTools: aiTools
-    },
-    plus: {
-      name: "Plus",
-      monthlyPrice: 12,
-      monthlyOriginal: 20,
-      annualPrice: 12,
+      monthlyPrice: 20,
+      annualPrice: 16,
       credits: 500,
       features: [
+        "Full AI editor access",
         "Watermark removal",
-        "30 Custom templates",
-        "Parallel generation: up to 3 videos",
-        "Fast generation"
-      ],
-      aiTools: aiTools.map(tool => ({ ...tool, locked: false }))
+        "Auto editing (cuts, highlights, subtitles)",
+        "AI Animated visuals",
+        "AI Speech & Dubbing",
+        "AI Script generation",
+        "AI Sound design",
+        "1080p export",
+        "10 custom templates",
+        "Fast generating",
+        "Parallel generation (up to 3 videos)"
+      ]
     },
     pro: {
-      name: "Pro",
+      name: "Creator",
       monthlyPrice: 69,
       annualPrice: 59,
       credits: proCredits,
       features: [
-        "Watermark removal",
+        "Everything in Starter plan, plus:",
         "Unlimited custom templates",
-        "Parallel generation: up to 8 videos",
-        "Ultra-fast generation"
+        "Parallel generation (up to 8 videos)",
+        "Ultra-fast generation",
+        "4K export",
+        "Team workspace"
       ],
-      aiTools: aiTools.map(tool => ({ ...tool, locked: false })),
       hasCreditsDropdown: true
     }
   };
@@ -86,12 +55,6 @@ const UpgradePage = () => {
   const PricingCard = ({ plan, planKey }) => {
     const isMonthly = billingCycle === "monthly";
     const price = isMonthly ? plan.monthlyPrice : plan.annualPrice;
-    const originalPrice = plan.monthlyOriginal;
-    
-    const aiOpen = planKey === "starter" ? starterAiOpen : 
-                   planKey === "plus" ? plusAiOpen : proAiOpen;
-    const setAiOpen = planKey === "starter" ? setStarterAiOpen : 
-                      planKey === "plus" ? setPlusAiOpen : setProAiOpen;
 
     return (
       <div className="pricing-card">
@@ -99,9 +62,6 @@ const UpgradePage = () => {
           <div className="pricing-card-header">
             <h3 className="pricing-card-name">{plan.name}</h3>
             <div className="pricing-card-price-row">
-              {originalPrice && isMonthly && (
-                <span className="pricing-original-price">€{originalPrice}</span>
-              )}
               <div className="pricing-price">€{price}</div>
               <span className="pricing-period">Per month</span>
             </div>
@@ -145,51 +105,19 @@ const UpgradePage = () => {
         </div>
 
         <div className="pricing-card-bottom">
-          {/* Features List */}
+          {/* Features List with scrollable container */}
           <div className="pricing-features">
           <p className="pricing-features-title">Includes:</p>
-          <ul className="pricing-features-list">
-            {plan.features.map((feature, idx) => (
-              <li key={idx}>
-                <Check className="pricing-check-icon" />
-                <span>{feature}</span>
-              </li>
-            ))}
-            
-            {/* AI Editing Tools as collapsible item in the list */}
-            <li>
-              <Check className="pricing-check-icon" />
-              <Collapsible open={aiOpen} onOpenChange={setAiOpen}>
-                <CollapsibleTrigger className="pricing-ai-trigger-inline">
-                  <span>AI Editing tools</span>
-                  <ChevronRight className={`pricing-ai-arrow-inline ${aiOpen ? 'rotate-90' : ''}`} />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <ul className="pricing-ai-list-nested">
-                    {plan.aiTools.map((tool, idx) => (
-                      <li key={idx}>
-                        <span>{idx + 1}. {tool.name}</span>
-                        {tool.locked && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button className="pricing-lock-btn">
-                                  <Lock className="w-3 h-3" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{tool.tooltip}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </CollapsibleContent>
-              </Collapsible>
-            </li>
-          </ul>
+          <div className="pricing-features-scroll">
+            <ul className="pricing-features-list">
+              {plan.features.map((feature, idx) => (
+                <li key={idx}>
+                  <Check className="pricing-check-icon" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           </div>
         </div>
       </div>
@@ -236,7 +164,6 @@ const UpgradePage = () => {
         {/* Pricing Cards */}
         <div className="upgrade-pricing-cards">
           <PricingCard plan={plans.starter} planKey="starter" />
-          <PricingCard plan={plans.plus} planKey="plus" />
           <PricingCard plan={plans.pro} planKey="pro" />
         </div>
       </div>

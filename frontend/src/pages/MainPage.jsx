@@ -151,6 +151,8 @@ export const MainPage = () => {
   const [generatingVideos, setGeneratingVideos] = useState([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const menuButtonRef = useRef(null);
   
   // Popup swipe state
   const [popupDragY, setPopupDragY] = useState(0);
@@ -1134,31 +1136,25 @@ export const MainPage = () => {
                             {/* Menu button - bottom right */}
                             <div className="creation-menu-wrapper">
                               <button 
+                                ref={openMenuId === video.id ? menuButtonRef : null}
                                 className="creation-menu-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setOpenMenuId(openMenuId === video.id ? null : video.id);
+                                  if (openMenuId === video.id) {
+                                    setOpenMenuId(null);
+                                  } else {
+                                    const btn = e.currentTarget;
+                                    const rect = btn.getBoundingClientRect();
+                                    setMenuPosition({
+                                      top: rect.top - 8,
+                                      left: rect.left + rect.width / 2
+                                    });
+                                    setOpenMenuId(video.id);
+                                  }
                                 }}
                               >
                                 <MoreVertical className="w-4 h-4" />
                               </button>
-                              
-                              {openMenuId === video.id && (
-                                <div className="creation-menu-dropdown">
-                                  <button onClick={(e) => { e.stopPropagation(); handleDownload(video); }}>
-                                    <Download className="w-4 h-4" />
-                                    <span>Download</span>
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); handleEdit(video); }}>
-                                    <Edit2 className="w-4 h-4" />
-                                    <span>Edit</span>
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); handleDelete(video.id); }}>
-                                    <Trash2 className="w-4 h-4" />
-                                    <span>Delete</span>
-                                  </button>
-                                </div>
-                              )}
                             </div>
                           </div>
                         ))}
@@ -1200,6 +1196,45 @@ export const MainPage = () => {
               </div>
             </div>
           </div>
+
+        {/* Global dropdown menu (outside grid overflow) */}
+        {openMenuId && (
+          <div 
+            className="creation-menu-dropdown"
+            style={{
+              top: `${menuPosition.top}px`,
+              left: `${menuPosition.left}px`,
+              transform: 'translate(-50%, -100%)'
+            }}
+          >
+            <button onClick={(e) => { 
+              e.stopPropagation(); 
+              const video = userVideos.find(v => v.id === openMenuId);
+              if (video) handleDownload(video); 
+              setOpenMenuId(null);
+            }}>
+              <Download className="w-4 h-4" />
+              <span>Download</span>
+            </button>
+            <button onClick={(e) => { 
+              e.stopPropagation(); 
+              const video = userVideos.find(v => v.id === openMenuId);
+              if (video) handleEdit(video); 
+              setOpenMenuId(null);
+            }}>
+              <Edit2 className="w-4 h-4" />
+              <span>Edit</span>
+            </button>
+            <button onClick={(e) => { 
+              e.stopPropagation(); 
+              handleDelete(openMenuId); 
+              setOpenMenuId(null);
+            }}>
+              <Trash2 className="w-4 h-4" />
+              <span>Delete</span>
+            </button>
+          </div>
+        )}
 
         {/* Format Detail Popup */}
         {showFormatPopup && selectedFormat && (

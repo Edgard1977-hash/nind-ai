@@ -4876,6 +4876,18 @@ body {
   position: relative;
 }
 
+.creation-card-content::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .creation-card:hover {
   transform: scale(0.98);
 }
@@ -4899,10 +4911,6 @@ body {
   position: absolute;
   bottom: 10px;
   left: 10px;
-  padding: 4px 8px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  border-radius: 6px;
   font-family: -apple-system, 'SF Pro Text', sans-serif;
   font-size: 11px;
   font-weight: 500;
@@ -4921,7 +4929,7 @@ body {
 .creation-menu-btn {
   width: 32px;
   height: 32px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(140, 140, 140, 0.5);
   backdrop-filter: blur(8px);
   border: none;
   border-radius: 8px;
@@ -4934,13 +4942,11 @@ body {
 }
 
 .creation-menu-btn:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(140, 140, 140, 0.7);
 }
 
 .creation-menu-dropdown {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  right: 0;
+  position: fixed;
   background: #0F0F10;
   border: 0.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -4951,6 +4957,7 @@ body {
   min-width: 140px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   animation: dropdown-appear 0.15s ease-out;
+  z-index: 1000;
 }
 
 .creation-menu-dropdown button {
@@ -6458,6 +6465,29 @@ body {
   color: var(--white);
   padding: 20px;
   overflow-x: hidden;
+  animation: upgrade-page-appear 0.25s ease-out;
+}
+
+@keyframes upgrade-page-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.upgrade-page.closing {
+  animation: upgrade-page-fade 0.2s ease-out forwards;
+}
+
+@keyframes upgrade-page-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .upgrade-header {
@@ -6781,6 +6811,33 @@ body {
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
+}
+
+.pricing-features-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  padding-right: 4px;
+  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}
+
+.pricing-features-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.pricing-features-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pricing-features-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.pricing-features-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .pricing-features-list {
