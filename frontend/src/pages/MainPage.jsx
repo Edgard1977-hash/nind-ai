@@ -869,6 +869,18 @@ export const MainPage = () => {
     );
   }
 
+  // Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
+        setOpenMenuId(null);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
+
   const completedVideos = userVideos.filter(v => v.status === 'completed');
 
   // ============ LOGGED IN VIEW ============
@@ -1202,9 +1214,9 @@ export const MainPage = () => {
           <div 
             className="creation-menu-dropdown"
             style={{
-              top: `${menuPosition.top}px`,
+              top: `${Math.max(10, menuPosition.top - 140)}px`,
               left: `${menuPosition.left}px`,
-              transform: 'translate(-50%, -100%)'
+              transform: 'translateX(-50%)'
             }}
           >
             <button onClick={(e) => { 
