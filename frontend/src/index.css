@@ -2949,12 +2949,12 @@ body {
 .profile-v2-avatar::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 12px var(--bg-main);
+  border: 2px solid var(--bg-main);
   pointer-events: none;
   z-index: 2;
 }
@@ -4678,9 +4678,12 @@ body {
 }
 
 .header-avatar-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   color: var(--white);
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .default-avatar-small {
