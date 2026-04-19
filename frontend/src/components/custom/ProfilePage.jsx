@@ -75,6 +75,7 @@ const showSuccessToast = (message) => {
 
 export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang, onLanguageChange }) => {
   const [activeView, setActiveView] = useState('main');
+  const [editName, setEditName] = useState(user?.name || '');
   const [editUsername, setEditUsername] = useState(user?.username || user?.name || '');
   const [isSaving, setIsSaving] = useState(false);
   const [usernameError, setUsernameError] = useState('');
@@ -271,6 +272,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         <button 
           className="profile-v2-user-card"
           onClick={() => {
+            setEditName(user?.name || '');
             setEditUsername(userName);
             setActiveView('profile-edit');
           }}
@@ -533,21 +535,16 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
 
         <div className="profile-edit-form">
           <div className="profile-edit-field">
-            <label className="profile-edit-label">{t('username')}</label>
-            <div className="profile-edit-input-dual">
+            <div className="profile-edit-input-vertical">
               <input
                 type="text"
-                value={editUsername}
-                onChange={(e) => {
-                  setEditUsername(e.target.value);
-                  setUsernameError('');
-                }}
-                onBlur={() => editUsername.length >= 3 && checkUsernameAvailability(editUsername)}
-                className={`profile-edit-input-left ${usernameError ? 'error' : ''}`}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="profile-edit-input-top"
                 placeholder="Name"
                 data-testid="profile-name-input"
               />
-              <div className="profile-input-divider"></div>
+              <div className="profile-input-divider-horizontal"></div>
               <input
                 type="text"
                 value={editUsername}
@@ -556,7 +553,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
                   setUsernameError('');
                 }}
                 onBlur={() => editUsername.length >= 3 && checkUsernameAvailability(editUsername)}
-                className={`profile-edit-input-right ${usernameError ? 'error' : ''}`}
+                className="profile-edit-input-bottom"
                 placeholder="Username"
                 data-testid="profile-username-input"
               />
