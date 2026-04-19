@@ -239,11 +239,9 @@ export const MainPage = () => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
+        setOpenMenuId(null);
+        setMenuPosition(null);
         setMenuVisible(false);
-        setTimeout(() => {
-          setOpenMenuId(null);
-          setMenuPosition(null);
-        }, 150);
       }
     };
     
@@ -1231,16 +1229,13 @@ export const MainPage = () => {
           </div>
 
         {/* Global dropdown menu (outside grid overflow) */}
-        {openMenuId && menuPosition && (
+        {openMenuId && menuPosition && menuVisible && (
           <div 
             className="creation-menu-dropdown"
             style={{
               top: `${menuPosition.top}px`,
               left: `${menuPosition.left}px`,
-              transform: 'translateX(-50%)',
-              opacity: menuVisible ? 1 : 0,
-              pointerEvents: menuVisible ? 'auto' : 'none',
-              transition: 'opacity 0.15s ease-out'
+              transform: 'translateX(-50%)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1248,11 +1243,9 @@ export const MainPage = () => {
               e.stopPropagation(); 
               const video = userVideos.find(v => v.id === openMenuId);
               if (video) handleDownload(video); 
+              setOpenMenuId(null);
+              setMenuPosition(null);
               setMenuVisible(false);
-              setTimeout(() => {
-                setOpenMenuId(null);
-                setMenuPosition(null);
-              }, 150);
             }}>
               <Download className="w-4 h-4" />
               <span>Download</span>
@@ -1261,11 +1254,9 @@ export const MainPage = () => {
               e.stopPropagation(); 
               const video = userVideos.find(v => v.id === openMenuId);
               if (video) handleEdit(video); 
+              setOpenMenuId(null);
+              setMenuPosition(null);
               setMenuVisible(false);
-              setTimeout(() => {
-                setOpenMenuId(null);
-                setMenuPosition(null);
-              }, 150);
             }}>
               <Edit2 className="w-4 h-4" />
               <span>Edit</span>
@@ -1273,11 +1264,9 @@ export const MainPage = () => {
             <button onClick={(e) => { 
               e.stopPropagation(); 
               handleDelete(openMenuId); 
+              setOpenMenuId(null);
+              setMenuPosition(null);
               setMenuVisible(false);
-              setTimeout(() => {
-                setOpenMenuId(null);
-                setMenuPosition(null);
-              }, 150);
             }}>
               <Trash2 className="w-4 h-4" />
               <span>Delete</span>
