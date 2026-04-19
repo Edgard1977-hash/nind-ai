@@ -23,10 +23,10 @@ const UpgradeIcon = ({ className, color = "currentColor" }) => (
   </svg>
 );
 
-// Person icon SVG
+// Person icon SVG (новая иконка от пользователя)
 const PersonIcon = ({ className }) => (
-  <svg viewBox="0 0 1024 1024" fill="currentColor" className={className}>
-    <path d="M 472.50 907.92 C399.79,903.47 339.60,894.58 279.93,879.46 C199.83,859.17 171.51,841.57 164.58,807.79 C160.48,787.78 164.88,739.16 174.11,702.56 C193.23,626.76 238.62,581.38 324.50,552.17 C343.87,545.58 372.91,539.00 382.61,539.00 C386.12,539.00 388.26,539.88 393.73,543.58 C413.47,556.94 443.76,567.65 476.00,572.66 C490.33,574.89 528.58,575.18 543.00,573.16 C577.95,568.29 607.96,557.82 630.43,542.68 L 636.37 538.68 L 646.06 539.81 C665.43,542.08 703.65,553.48 727.57,564.12 C788.29,591.11 823.84,627.19 843.22,681.50 C856.66,719.16 864.59,779.85 859.54,806.52 C853.77,837.05 831.12,853.72 770.58,871.98 C708.99,890.55 632.18,903.33 554.29,907.97 C534.80,909.14 491.96,909.10 472.50,907.92 ZM 491.00 493.36 C422.58,484.88 365.71,437.02 344.05,369.72 C338.60,352.77 336.94,342.22 336.31,320.50 C335.48,291.89 338.48,271.23 346.61,249.61 C361.87,208.97 393.61,173.73 432.51,154.20 C474.35,133.20 527.65,130.25 571.51,146.49 C629.04,167.79 671.99,217.51 684.59,277.39 C688.07,293.95 688.98,322.12 686.57,339.27 C679.49,389.87 653.55,433.03 612.50,462.55 C601.94,470.14 579.28,481.64 566.50,485.89 C548.85,491.76 539.55,493.16 516.00,493.49 C504.17,493.66 492.92,493.60 491.00,493.36 Z"/>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 888 888" fill="currentColor" className={className}>
+    <path d="M 408.00 821.99 C333.66,816.86 258.54,798.90 211.37,774.97 C193.63,765.98 180.78,756.97 169.46,745.59 C161.21,737.31 158.58,733.87 154.75,726.43 C152.19,721.44 149.06,713.79 147.80,709.43 C145.67,702.07 145.51,699.73 145.59,677.00 C145.67,654.99 145.95,650.99 148.36,637.65 C164.47,548.60 208.81,482.47 288.44,428.75 C295.57,423.94 302.06,420.00 302.85,420.00 C303.63,420.00 309.05,423.53 314.89,427.85 C330.98,439.76 336.71,443.39 349.64,449.85 C369.90,459.98 384.60,465.13 404.00,468.89 C447.72,477.38 490.75,472.54 531.97,454.51 C548.28,447.38 562.00,439.24 582.35,424.64 C591.56,418.03 588.53,417.25 609.01,431.58 C649.97,460.25 678.03,487.64 698.28,518.72 C723.73,557.77 737.44,592.58 745.66,639.00 C748.12,652.89 748.41,656.94 748.45,678.00 C748.50,703.33 747.98,706.94 742.30,720.50 C731.79,745.60 702.13,768.34 656.50,786.29 C611.62,803.95 563.65,814.71 503.50,820.61 C485.67,822.36 425.90,823.22 408.00,821.99 ZM 433.22 433.94 C399.55,431.30 367.17,419.31 339.85,399.35 C325.07,388.54 305.64,367.26 295.19,350.40 C260.08,293.80 255.74,225.67 283.52,167.24 C309.25,113.10 359.69,75.46 418.50,66.50 C431.43,64.53 458.49,64.50 472.09,66.44 C514.14,72.44 555.13,94.49 582.80,126.00 C616.25,164.10 633.23,217.04 627.98,266.86 C623.01,314.04 600.51,358.30 565.98,388.82 C529.58,420.98 480.55,437.65 433.22,433.94 Z"/>
   </svg>
 );
 
@@ -534,18 +534,33 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         <div className="profile-edit-form">
           <div className="profile-edit-field">
             <label className="profile-edit-label">{t('username')}</label>
-            <input
-              type="text"
-              value={editUsername}
-              onChange={(e) => {
-                setEditUsername(e.target.value);
-                setUsernameError('');
-              }}
-              onBlur={() => editUsername.length >= 3 && checkUsernameAvailability(editUsername)}
-              className={`profile-edit-input ${usernameError ? 'error' : ''}`}
-              placeholder={t('username')}
-              data-testid="profile-username-input"
-            />
+            <div className="profile-edit-input-dual">
+              <input
+                type="text"
+                value={editUsername}
+                onChange={(e) => {
+                  setEditUsername(e.target.value);
+                  setUsernameError('');
+                }}
+                onBlur={() => editUsername.length >= 3 && checkUsernameAvailability(editUsername)}
+                className={`profile-edit-input-left ${usernameError ? 'error' : ''}`}
+                placeholder="Name"
+                data-testid="profile-name-input"
+              />
+              <div className="profile-input-divider"></div>
+              <input
+                type="text"
+                value={editUsername}
+                onChange={(e) => {
+                  setEditUsername(e.target.value);
+                  setUsernameError('');
+                }}
+                onBlur={() => editUsername.length >= 3 && checkUsernameAvailability(editUsername)}
+                className={`profile-edit-input-right ${usernameError ? 'error' : ''}`}
+                placeholder="Username"
+                data-testid="profile-username-input"
+              />
+            </div>
             {usernameError && (
               <p className="username-error">{usernameError}</p>
             )}
