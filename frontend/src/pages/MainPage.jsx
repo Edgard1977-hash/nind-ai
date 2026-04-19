@@ -1107,7 +1107,30 @@ export const MainPage = () => {
                             data-testid={`library-video-${video.id}`}
                           >
                             <div className="creation-generating">
-                              <div className="generating-progress">{Math.floor(video.progress) || 0}%</div>
+                              {/* Percentage above progress bar */}
+                              <div className="generating-percentage">{Math.floor(video.progress) || 0}%</div>
+                              
+                              {/* Progress bar container */}
+                              <div className="generating-progress-container">
+                                {/* Progress fill */}
+                                <div 
+                                  className="generating-progress-fill"
+                                  style={{ width: `${video.progress || 0}%` }}
+                                />
+                                
+                                {/* Stop button */}
+                                <button 
+                                  className="generating-stop-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // TODO: Stop generation
+                                    console.log('Stop generation:', video.id);
+                                  }}
+                                  title="Stop generation"
+                                >
+                                  <div className="stop-icon" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
