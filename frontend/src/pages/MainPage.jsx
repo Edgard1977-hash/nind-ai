@@ -239,6 +239,7 @@ export const MainPage = () => {
     const handleClickOutside = (e) => {
       if (openMenuId && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
         setOpenMenuId(null);
+        menuPositionRef.current = { top: 0, left: 0 };
       }
     };
     
@@ -1153,6 +1154,7 @@ export const MainPage = () => {
                                   e.stopPropagation();
                                   if (openMenuId === video.id) {
                                     setOpenMenuId(null);
+                                    menuPositionRef.current = { top: 0, left: 0 };
                                   } else {
                                     const btn = e.currentTarget;
                                     const rect = btn.getBoundingClientRect();
@@ -1165,9 +1167,9 @@ export const MainPage = () => {
                                     top = Math.max(10, top);
                                     left = Math.min(Math.max(left, menuWidth / 2 + 10), window.innerWidth - menuWidth / 2 - 10);
                                     
-                                    // Store position in ref (doesn't cause re-render)
+                                    // First set position in ref
                                     menuPositionRef.current = { top, left };
-                                    // Then set menu ID (single re-render with correct position)
+                                    // Then trigger render by setting openMenuId
                                     setOpenMenuId(video.id);
                                   }
                                 }}
@@ -1217,7 +1219,7 @@ export const MainPage = () => {
           </div>
 
         {/* Global dropdown menu (outside grid overflow) */}
-        {openMenuId && (
+        {openMenuId && menuPositionRef.current.top > 0 && (
           <div 
             className="creation-menu-dropdown"
             style={{
@@ -1232,6 +1234,7 @@ export const MainPage = () => {
               const video = userVideos.find(v => v.id === openMenuId);
               if (video) handleDownload(video); 
               setOpenMenuId(null);
+              menuPositionRef.current = { top: 0, left: 0 };
             }}>
               <Download className="w-4 h-4" />
               <span>Download</span>
@@ -1241,6 +1244,7 @@ export const MainPage = () => {
               const video = userVideos.find(v => v.id === openMenuId);
               if (video) handleEdit(video); 
               setOpenMenuId(null);
+              menuPositionRef.current = { top: 0, left: 0 };
             }}>
               <Edit2 className="w-4 h-4" />
               <span>Edit</span>
@@ -1249,6 +1253,7 @@ export const MainPage = () => {
               e.stopPropagation(); 
               handleDelete(openMenuId); 
               setOpenMenuId(null);
+              menuPositionRef.current = { top: 0, left: 0 };
             }}>
               <Trash2 className="w-4 h-4" />
               <span>Delete</span>
