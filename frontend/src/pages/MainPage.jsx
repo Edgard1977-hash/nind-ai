@@ -1941,14 +1941,3 @@ export const MainPage = () => {
 };
 
 export default MainPage;
-sName="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default MainPage;
