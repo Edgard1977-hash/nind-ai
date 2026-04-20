@@ -207,13 +207,13 @@ const UpgradePage = () => {
                   <ChevronRight className={`faq-arrow ${openFaqId === item.id ? 'open' : ''}`} />
                 </button>
                 
-                {openFaqId === item.id && (
+                <div className="faq-answer-wrapper">
                   <div className="faq-answer">
                     {item.answer.split('\n').map((line, idx) => (
                       <p key={idx}>{line}</p>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>

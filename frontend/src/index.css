@@ -6628,9 +6628,9 @@ body {
 
 .faq-item {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
+  border-radius: 26px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .faq-item.open {
@@ -6646,11 +6646,6 @@ body {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.faq-question-btn:hover {
-  background: rgba(255, 255, 255, 0.03);
 }
 
 .faq-question-text {
@@ -6665,7 +6660,7 @@ body {
   width: 20px;
   height: 20px;
   color: rgba(255, 255, 255, 0.6);
-  transition: transform 0.3s ease;
+  transition: transform 0.4s ease;
   flex-shrink: 0;
 }
 
@@ -6673,9 +6668,18 @@ body {
   transform: rotate(90deg);
 }
 
+.faq-answer-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease;
+}
+
+.faq-item.open .faq-answer-wrapper {
+  max-height: 500px;
+}
+
 .faq-answer {
   padding: 0 24px 20px 24px;
-  animation: faq-expand 0.3s ease-out;
 }
 
 .faq-answer p {
