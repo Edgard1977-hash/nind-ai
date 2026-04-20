@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronDown, Check } from "lucide-react";
+import { X, ChevronDown, Check, ChevronRight } from "lucide-react";
 
 // Credits icon (exact same as in Profile page)
 const CreditsIcon = ({ className, color = "currentColor" }) => (
@@ -14,6 +14,35 @@ const UpgradePage = () => {
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [proCredits, setProCredits] = useState(3000);
   const [proCreditsOpen, setProCreditsOpen] = useState(false);
+  const [openFaqId, setOpenFaqId] = useState(null);
+
+  const faqItems = [
+    {
+      id: 1,
+      question: "How do credits work?",
+      answer: "With a subscription, credits are issued once per month (for each billing period).\nAt the end of each period, any unused credits expire.\n\nAdditional top-up credits are not tied to the subscription and are valid for 1 year from the date of purchase."
+    },
+    {
+      id: 2,
+      question: "How many videos can I edit (create) with AI?",
+      answer: "The number of videos depends on your available credits.\n\nOn average, 10 credits = 1 fully edited or created video.\nPlans include from 500 credits (~50 videos) to 9000 credits (~900 videos), and you can also purchase additional credits."
+    },
+    {
+      id: 3,
+      question: "Which subscription plan includes priority support?",
+      answer: "All plans include priority support. We aim to provide fast and high-quality help to every user."
+    },
+    {
+      id: 4,
+      question: "What are custom templates and how do they work?",
+      answer: "You can create your own custom templates for videos.\nThey help speed up and automate your workflow by letting you reuse the same setup instead of writing long prompts for similar videos.\nThis is especially useful for marketing and other repetitive content tasks."
+    },
+    {
+      id: 5,
+      question: "Can I change my subscription after purchase?",
+      answer: "Yes. You can upgrade your plan at any time, and the change takes effect immediately. Any unused value difference is credited to your account.\n\nIf you downgrade, the change will take effect at the end of your current billing period, and your current plan stays active until then."
+    }
+  ];
 
   const plans = {
     starter: {
@@ -158,6 +187,36 @@ const UpgradePage = () => {
         <div className="upgrade-pricing-cards">
           <PricingCard plan={plans.starter} planKey="starter" />
           <PricingCard plan={plans.pro} planKey="pro" />
+        </div>
+
+        {/* FAQ Section */}
+        <div className="upgrade-faq-section">
+          <h2 className="upgrade-faq-title">Frequently Asked Questions</h2>
+          
+          <div className="upgrade-faq-list">
+            {faqItems.map((item) => (
+              <div 
+                key={item.id}
+                className={`faq-item ${openFaqId === item.id ? 'open' : ''}`}
+              >
+                <button 
+                  className="faq-question-btn"
+                  onClick={() => setOpenFaqId(openFaqId === item.id ? null : item.id)}
+                >
+                  <span className="faq-question-text">{item.question}</span>
+                  <ChevronRight className={`faq-arrow ${openFaqId === item.id ? 'open' : ''}`} />
+                </button>
+                
+                {openFaqId === item.id && (
+                  <div className="faq-answer">
+                    {item.answer.split('\n').map((line, idx) => (
+                      <p key={idx}>{line}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
