@@ -1100,43 +1100,9 @@ export const MainPage = () => {
                       </div>
                     ) : (generatingVideos.length > 0 || userVideos.length > 0) ? (
                       <div className="creations-grid-real">
-                        {generatingVideos.map((video) => {
-                          const progress = Math.min(Math.floor(video.progress || 0), 99);
-                          return (
-                          <div 
-                            key={video.id} 
-                            className="creation-card generating"
-                            data-testid={`library-video-${video.id}`}
-                          >
-                            <div className="creation-generating">
-                              {/* Percentage above progress bar */}
-                              <div className="generating-percentage">{progress}%</div>
-                              
-                              {/* Progress bar container */}
-                              <div className="generating-progress-container">
-                                {/* Progress fill */}
-                                <div 
-                                  className="generating-progress-fill"
-                                  style={{ width: `${progress}%` }}
-                                />
-                                
-                                {/* Stop button */}
-                                <button 
-                                  className="generating-stop-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // TODO: Stop generation
-                                    console.log('Stop generation:', video.id);
-                                  }}
-                                  title="Stop generation"
-                                >
-                                  <div className="stop-icon" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                          );
-                        })}
+                        {generatingVideos.map((video) => (
+                          <SmoothProgressCard key={video.id} video={video} />
+                        ))}
                         {userVideos.map((video) => (
                           <div 
                             key={video.id} 
