@@ -5860,13 +5860,19 @@ body {
 }
 
 .voice-assistant-bottom {
-  padding: 28px 24px 28px;
+  padding: 56px 24px 28px;
   position: relative;
   z-index: 3;
   background: #000000;
-  border-top-left-radius: 32px;
-  border-top-right-radius: 32px;
-  box-shadow: 0 -20px 40px -20px rgba(0, 0, 0, 0.6);
+  --voice-corner: 36px;
+  -webkit-mask:
+    radial-gradient(var(--voice-corner) at var(--voice-corner) 0, transparent 98%, #000 100%) top left / 50% calc(var(--voice-corner) + 1px) no-repeat,
+    radial-gradient(var(--voice-corner) at calc(100% - var(--voice-corner)) 0, transparent 98%, #000 100%) top right / 50% calc(var(--voice-corner) + 1px) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--voice-corner)) no-repeat;
+          mask:
+    radial-gradient(var(--voice-corner) at var(--voice-corner) 0, transparent 98%, #000 100%) top left / 50% calc(var(--voice-corner) + 1px) no-repeat,
+    radial-gradient(var(--voice-corner) at calc(100% - var(--voice-corner)) 0, transparent 98%, #000 100%) top right / 50% calc(var(--voice-corner) + 1px) no-repeat,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--voice-corner)) no-repeat;
 }
 
 .voice-attachments-row {
@@ -6015,9 +6021,8 @@ body {
   }
 
   .voice-assistant-bottom {
-    padding: 18px 14px max(18px, env(safe-area-inset-bottom));
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
+    padding: 42px 14px max(18px, env(safe-area-inset-bottom));
+    --voice-corner: 28px;
   }
 
   .voice-input-container {
