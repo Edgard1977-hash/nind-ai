@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Plus, ArrowUp, ArrowLeft, X } from 'lucide-react';
+import { Plus, ArrowUp, ArrowLeft, X, Mic, Square, Loader2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -10,11 +10,20 @@ const API = `${BACKEND_URL}/api`;
 const VoiceAssistantPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const canvasRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const analyserRef = useRef(null);
+  const rafRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const streamRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
   const [user, setUser] = useState(null);
   const [prompt, setPrompt] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAISpeaking, setIsAISpeaking] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('slind_user');
@@ -27,6 +36,108 @@ const VoiceAssistantPage = () => {
     }
   }, []);
 
+  // --- Waveform drawing ---
+  const drawWaveform = useCallback(() => {
+    const canvas = canvasRef.current;
+    const analyser = analyserRef.current;
+    if (!canvas || !analyser) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const render = () => {
+      rafRef.current = requestAnimationFrame(render);
+      analyser.getByteTimeDomainData(dataArray);
+
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Bar-style visualizer for a cleaner look
+      const bars = 42;
+      const step = Math.floor(bufferLength / bars);
+      const barWidth = (w / bars) * 0.55;
+      const gap = (w / bars) * 0.45;
+
+      for (let i = 0; i < bars; i++) {
+        // Sample center of each bucket
+        const v = (dataArray[i * step] - 128) / 128; // -1..1
+        const amp = Math.min(1, Math.abs(v) * 2.2);
+        const barH = Math.max(3, amp * h * 0.9);
+        const x = i * (barWidth + gap) + gap / 2;
+        const y = (h - barH) / 2;
+
+        ctx.fillStyle = '#0096FE';
+        ctx.beginPath();
+        const r = Math.min(barWidth / 2, 4);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + barWidth - r, y);
+        ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + r);
+        ctx.lineTo(x + barWidth, y + barH - r);
+        ctx.quadraticCurveTo(x + barWidth, y + barH, x + barWidth - r, y + barH);
+        ctx.lineTo(x + r, y + barH);
+        ctx.quadraticCurveTo(x, y + barH, x, y + barH - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.fill();
+      }
+    };
+    render();
+  }, []);
+
+  const drawIdleWaveform = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+    ctx.clearRect(0, 0, w, h);
+    const bars = 42;
+    const barWidth = (w / bars) * 0.55;
+    const gap = (w / bars) * 0.45;
+    ctx.fillStyle = 'rgba(0, 150, 254, 0.28)';
+    for (let i = 0; i < bars; i++) {
+      const x = i * (barWidth + gap) + gap / 2;
+      const barH = 3;
+      const y = (h - barH) / 2;
+      const r = Math.min(barWidth / 2, 1.5);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + barWidth - r, y);
+      ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + r);
+      ctx.lineTo(x + barWidth, y + barH - r);
+      ctx.quadraticCurveTo(x + barWidth, y + barH, x + barWidth - r, y + barH);
+      ctx.lineTo(x + r, y + barH);
+      ctx.quadraticCurveTo(x, y + barH, x, y + barH - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.fill();
+    }
+  }, []);
+
+  useEffect(() => {
+    drawIdleWaveform();
+    const onResize = () => {
+      if (!isRecording) drawIdleWaveform();
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [drawIdleWaveform, isRecording]);
+
+  // --- File attachments ---
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files || []);
     files.forEach((file) => {
@@ -48,18 +159,18 @@ const VoiceAssistantPage = () => {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const handleSend = async () => {
+  // --- Submit flow (text + attachments) ---
+  const submitPrompt = async (textOverride) => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    if ((!prompt.trim() && attachments.length === 0) || isSubmitting) return;
-
-    const currentPrompt = prompt.trim();
+    const currentPrompt = (textOverride ?? prompt).trim();
     const currentAttachments = [...attachments];
+    if (!currentPrompt && currentAttachments.length === 0) return;
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
-    setIsAISpeaking(true);
     setPrompt('');
     setAttachments([]);
 
@@ -83,7 +194,6 @@ const VoiceAssistantPage = () => {
             uploadedUrls.push(uploadRes.data.url);
           }
         }
-
         const videoAttachment = currentAttachments.find((a) => a.type === 'video');
         if (videoAttachment && uploadedUrls.length > 0) {
           const response = await axios.post(`${API}/device-mockup/create`, {
@@ -100,7 +210,6 @@ const VoiceAssistantPage = () => {
           navigate(`/video/${response.data.id}`);
           return;
         }
-
         requestData.product_images = uploadedUrls;
       }
 
@@ -112,10 +221,124 @@ const VoiceAssistantPage = () => {
     } catch (err) {
       console.error('Voice assistant submit failed:', err);
       toast.error('Ошибка при запуске генерации');
-      setIsAISpeaking(false);
       setIsSubmitting(false);
     }
   };
+
+  // --- Recording ---
+  const startRecording = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (isRecording || isTranscribing || isSubmitting) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioCtx();
+      audioCtxRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+      const recorder = new MediaRecorder(stream, { mimeType: mime });
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (ev) => {
+        if (ev.data && ev.data.size > 0) audioChunksRef.current.push(ev.data);
+      };
+      recorder.onstop = async () => {
+        // Stop visualizer
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((t) => t.stop());
+          streamRef.current = null;
+        }
+        if (audioCtxRef.current) {
+          try { await audioCtxRef.current.close(); } catch (err) { /* noop */ }
+          audioCtxRef.current = null;
+        }
+        analyserRef.current = null;
+        drawIdleWaveform();
+
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (!blob.size) {
+          toast.error('Пустая запись');
+          return;
+        }
+        await transcribeAndSubmit(blob);
+      };
+
+      recorder.start();
+      setIsRecording(true);
+      drawWaveform();
+    } catch (err) {
+      console.error('Mic access failed:', err);
+      toast.error('Нет доступа к микрофону');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  };
+
+  const transcribeAndSubmit = async (blob) => {
+    setIsTranscribing(true);
+    try {
+      const lang = localStorage.getItem('slind_language') || 'ru';
+      const formData = new FormData();
+      formData.append('file', blob, 'voice.webm');
+      formData.append('language', lang);
+
+      const res = await axios.post(`${API}/voice/transcribe`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const text = (res.data?.text || '').trim();
+      setIsTranscribing(false);
+
+      if (!text) {
+        toast.error('Не удалось распознать речь');
+        return;
+      }
+      toast.success(`Распознано: "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
+      await submitPrompt(text);
+    } catch (err) {
+      console.error('Transcribe failed:', err);
+      setIsTranscribing(false);
+      toast.error('Ошибка транскрипции');
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try { mediaRecorderRef.current.stop(); } catch (e) { /* noop */ }
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+      if (audioCtxRef.current) {
+        try { audioCtxRef.current.close(); } catch (e) { /* noop */ }
+      }
+    };
+  }, []);
+
+  const busy = isSubmitting || isTranscribing;
 
   return (
     <div className="voice-assistant-page" data-testid="voice-assistant-page">
@@ -129,12 +352,24 @@ const VoiceAssistantPage = () => {
       </button>
 
       <div className="voice-assistant-main">
-        <div
-          className={`voice-eyes ${isAISpeaking ? 'speaking' : ''}`}
-          data-testid="voice-eyes"
-        >
-          <div className="voice-eye left"></div>
-          <div className="voice-eye right"></div>
+        <div className="voice-assistant-center">
+          <div
+            className={`voice-eyes ${isRecording ? 'listening' : ''} ${isTranscribing ? 'speaking' : ''}`}
+            data-testid="voice-eyes"
+          >
+            <div className="voice-eye left"></div>
+            <div className="voice-eye right"></div>
+          </div>
+
+          <div className="voice-waveform" data-testid="voice-waveform">
+            <canvas ref={canvasRef} className="voice-waveform-canvas" />
+          </div>
+
+          <div className="voice-status-label" data-testid="voice-status-label">
+            {isRecording && 'Слушаю...'}
+            {isTranscribing && 'Распознаю речь...'}
+            {isSubmitting && !isTranscribing && 'Отправляю запрос...'}
+          </div>
         </div>
       </div>
 
@@ -183,25 +418,44 @@ const VoiceAssistantPage = () => {
             <input
               type="text"
               className="voice-input-field"
-              placeholder="Ask anything"
+              placeholder={isRecording ? 'Запись...' : 'Ask anything'}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSend();
+                if (e.key === 'Enter') submitPrompt();
               }}
-              disabled={isSubmitting}
+              disabled={busy || isRecording}
               data-testid="voice-input-field"
             />
-            <button
-              className="voice-send-btn"
-              onClick={handleSend}
-              disabled={(!prompt.trim() && attachments.length === 0) || isSubmitting}
-              data-testid="voice-send-btn"
-              aria-label="Send"
-              type="button"
-            >
-              <ArrowUp className="w-5 h-5" />
-            </button>
+            {prompt.trim() || attachments.length > 0 ? (
+              <button
+                className="voice-send-btn"
+                onClick={() => submitPrompt()}
+                disabled={busy}
+                data-testid="voice-send-btn"
+                aria-label="Send"
+                type="button"
+              >
+                <ArrowUp className="w-5 h-5" />
+              </button>
+            ) : (
+              <button
+                className={`voice-mic-btn ${isRecording ? 'recording' : ''}`}
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={busy}
+                data-testid="voice-mic-btn"
+                aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                type="button"
+              >
+                {busy ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : isRecording ? (
+                  <Square className="w-5 h-5" />
+                ) : (
+                  <Mic className="w-5 h-5" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

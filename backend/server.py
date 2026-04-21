@@ -2606,6 +2606,55 @@ async def delete_video(video_id: str):
     return {"success": True}
 
 
+@api_router.post("/voice/transcribe")
+async def transcribe_voice(file: UploadFile = File(...), language: Optional[str] = None):
+    """Transcribe voice recording to text via OpenAI Whisper (Emergent LLM Key)"""
+    from emergentintegrations.llm.openai import OpenAISpeechToText
+    import tempfile
+
+    emergent_key = os.environ.get("EMERGENT_LLM_KEY")
+    if not emergent_key:
+        raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
+
+    # Persist upload to a temp file with correct extension so Whisper accepts it
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty audio file")
+
+    suffix = ".webm"
+    if file.filename:
+        for ext in (".webm", ".mp3", ".mp4", ".m4a", ".wav", ".mpeg", ".mpga"):
+            if file.filename.lower().endswith(ext):
+                suffix = ext
+                break
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+    try:
+        tmp.write(content)
+        tmp.flush()
+        tmp.close()
+
+        stt = OpenAISpeechToText(api_key=emergent_key)
+        with open(tmp.name, "rb") as audio_file:
+            kwargs = {"file": audio_file, "model": "whisper-1", "response_format": "json"}
+            if language:
+                kwargs["language"] = language
+            response = await stt.transcribe(**kwargs)
+
+        text = getattr(response, "text", "") or ""
+        return {"text": text.strip()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.exception("Whisper transcription failed")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except Exception:
+            pass
+
+
 class UpdateUserRequest(BaseModel):
     name: Optional[str] = None
     username: Optional[str] = None

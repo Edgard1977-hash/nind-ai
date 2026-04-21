@@ -73,6 +73,14 @@ AI-powered content generation platform (video, motion design, logos, promo video
 
 ## Changelog
 
+### 2026-02-21 (session 2, part 2)
+- **Voice Assistant — полноценная интеграция Whisper**
+  - Backend: `POST /api/voice/transcribe` принимает audio (webm/wav/mp3/m4a) → `OpenAISpeechToText` (whisper-1) через EMERGENT_LLM_KEY → возвращает `{text}`. Проверено curl.
+  - Frontend: `VoiceAssistantPage` теперь пишет с микрофона через `MediaRecorder`, показывает живую **waveform**-визуализацию (Canvas + AnalyserNode) под глазами, автоматически транскрибирует запись и шлёт результат в `POST /api/video/generate`.
+  - Когда поле ввода пустое — справа показывается **mic-кнопка** (белая → красная с пульсом при записи). Когда есть текст/вложения — классический send (стрелка).
+  - Статус-лейбл под волной: «Слушаю...», «Распознаю речь...», «Отправляю запрос...».
+  - Очистка MediaStream/AudioContext на unmount и после записи.
+
 ### 2026-02-21 (session 2)
 - **P1 выполнено: 3-точечное меню на карточках видео (Download / Edit / Delete)**
   - Frontend: исправлены опечатки `setOpenMenuId` → `setOpenMenu` в `handleDownload/Delete/Edit`
