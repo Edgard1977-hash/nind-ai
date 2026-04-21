@@ -14,8 +14,8 @@
 
 :root {
   --bg-main: #141414;
-  --cyan: #0097FF;
-  --cyan-glow: rgba(0, 151, 255, 0.4);
+  --cyan: #0096FE;
+  --cyan-glow: rgba(0, 150, 254, 0.4);
   --white: #FFFFFF;
   --gray-light: rgba(255, 255, 255, 0.7);
   --gray-medium: rgba(255, 255, 255, 0.5);
@@ -2249,7 +2249,7 @@ body {
   border-radius: var(--radius-btn);
   font-size: 16px;
   font-weight: 600;
-  color: #000;
+  color: var(--white);
   cursor: pointer;
   transition: transform 0.2s ease;
 }
@@ -3075,7 +3075,7 @@ body {
 
 .get-more-upgrade-btn {
   background: var(--cyan);
-  color: #000;
+  color: var(--white);
   border: none;
   padding: 12px 24px;
   border-radius: 43px;
