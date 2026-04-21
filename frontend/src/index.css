@@ -5816,7 +5816,7 @@ body {
 .voice-assistant-page {
   min-height: 100vh;
   min-height: 100dvh;
-  background: #141414;
+  background: #000000;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -5857,22 +5857,16 @@ body {
   padding: 24px;
   position: relative;
   z-index: 2;
+  background: #141414;
+  border-bottom-left-radius: 36px;
+  border-bottom-right-radius: 36px;
 }
 
 .voice-assistant-bottom {
-  padding: 56px 24px 28px;
+  padding: 28px 24px 28px;
   position: relative;
   z-index: 3;
   background: #000000;
-  --voice-corner: 36px;
-  -webkit-mask:
-    radial-gradient(var(--voice-corner) at var(--voice-corner) 0, transparent 98%, #000 100%) top left / 50% calc(var(--voice-corner) + 1px) no-repeat,
-    radial-gradient(var(--voice-corner) at calc(100% - var(--voice-corner)) 0, transparent 98%, #000 100%) top right / 50% calc(var(--voice-corner) + 1px) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--voice-corner)) no-repeat;
-          mask:
-    radial-gradient(var(--voice-corner) at var(--voice-corner) 0, transparent 98%, #000 100%) top left / 50% calc(var(--voice-corner) + 1px) no-repeat,
-    radial-gradient(var(--voice-corner) at calc(100% - var(--voice-corner)) 0, transparent 98%, #000 100%) top right / 50% calc(var(--voice-corner) + 1px) no-repeat,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--voice-corner)) no-repeat;
 }
 
 .voice-attachments-row {
@@ -6021,8 +6015,12 @@ body {
   }
 
   .voice-assistant-bottom {
-    padding: 42px 14px max(18px, env(safe-area-inset-bottom));
-    --voice-corner: 28px;
+    padding: 18px 14px max(18px, env(safe-area-inset-bottom));
+  }
+
+  .voice-assistant-main {
+    border-bottom-left-radius: 28px;
+    border-bottom-right-radius: 28px;
   }
 
   .voice-input-container {
