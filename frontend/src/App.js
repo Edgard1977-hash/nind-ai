@@ -8,6 +8,7 @@ import FormatsPage from "@/pages/FormatsPage";
 import AuthPage from "@/pages/AuthPage";
 import AuthCallback from "@/components/custom/AuthCallback";
 import UpgradePage from "@/pages/UpgradePage";
+import VoiceAssistantPage from "@/pages/VoiceAssistantPage";
 
 // Check for session_id in URL before rendering normal routes
 function AppRouter() {
@@ -28,6 +29,7 @@ function AppRouter() {
       <Route path="/video/:id" element={<VideoPage />} />
       <Route path="/formats" element={<FormatsPage />} />
       <Route path="/upgrade" element={<UpgradePage />} />
+      <Route path="/voice" element={<VoiceAssistantPage />} />
     </Routes>
   );
 }

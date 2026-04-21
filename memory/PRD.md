@@ -73,6 +73,15 @@ AI-powered content generation platform (video, motion design, logos, promo video
 
 ## Changelog
 
+### 2026-02-21
+- Added dedicated Voice Assistant page at `/voice` (VoiceAssistantPage.jsx)
+  - AI eyes with appear/blink/listen/speak animations (68x112 px)
+  - Smooth black gradient fade at bottom of page
+  - Input row: `#212121` plus button (left), `#212121` input field, white send arrow button inside input
+  - Back button (top-left) to return to `/`
+- Wired mic button (both anonymous & logged-in variants) in MainPage.jsx to navigate('/voice')
+- Fixed broken CSS where `.voice-assistant-page` rules were injected inside an unclosed `.voice-status p` selector
+
 ### 2025-03-18
 - Fixed video generation from MainPage (was TODO, now implemented)
 - Added loading state to submit button

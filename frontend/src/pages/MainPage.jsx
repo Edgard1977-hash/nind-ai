@@ -1039,7 +1039,7 @@ export const MainPage = () => {
                   </button>
 
                   <div className="input-bottom-right">
-                    <button className="input-icon-btn" data-testid="mic-button">
+                    <button className="input-icon-btn" onClick={() => navigate('/voice')} data-testid="mic-button">
                       <MicIcon className="w-6 h-6" />
                     </button>
                     
@@ -1522,7 +1522,7 @@ export const MainPage = () => {
               <div className="input-bottom-right">
                 <button 
                   className="input-icon-btn" 
-                  onClick={() => setShowVoiceAssistant(true)}
+                  onClick={() => navigate('/voice')}
                   data-testid="mic-button"
                 >
                   <MicIcon className="w-5 h-5" />
