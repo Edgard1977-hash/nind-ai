@@ -5730,21 +5730,21 @@ body {
 }
 
 .voice-eye {
-  width: 95.5px;
-  height: 201.5px;
+  width: 140px;
+  height: 290px;
   background: #0096FE;
-  border-radius: 60px;
+  border-radius: 80px;
   animation: eyeAppear 0.5s ease forwards, eyeBlink 4s ease-in-out infinite 0.5s;
   transform-origin: center;
 }
 
 @keyframes eyeAppear {
   from {
-    height: 28px;
+    height: 40px;
     opacity: 0;
   }
   to {
-    height: 201.5px;
+    height: 290px;
     opacity: 1;
   }
 }
