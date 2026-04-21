@@ -5724,7 +5724,7 @@ body {
 /* AI Eyes */
 .voice-eyes {
   display: flex;
-  gap: 12px;
+  gap: 9px;
   align-items: center;
   justify-content: center;
 }
@@ -5854,7 +5854,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 24px 24px 120px;
   position: relative;
   z-index: 2;
   background: #141414;
@@ -6012,6 +6012,10 @@ body {
 
   .voice-assistant-main {
     padding: 16px;
+  }
+
+  .voice-assistant-main {
+    padding: 16px 16px 100px;
   }
 
   .voice-assistant-bottom {
