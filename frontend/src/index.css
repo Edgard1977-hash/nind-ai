@@ -5724,27 +5724,27 @@ body {
 /* AI Eyes */
 .voice-eyes {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   align-items: center;
   justify-content: center;
 }
 
 .voice-eye {
-  width: 68px;
-  height: 112px;
+  width: 80px;
+  height: 168px;
   background: #0096FE;
-  border-radius: 45px;
+  border-radius: 50px;
   animation: eyeAppear 0.5s ease forwards, eyeBlink 4s ease-in-out infinite 0.5s;
   transform-origin: center;
 }
 
 @keyframes eyeAppear {
   from {
-    height: 20px;
+    height: 24px;
     opacity: 0;
   }
   to {
-    height: 112px;
+    height: 168px;
     opacity: 1;
   }
 }
