@@ -5724,27 +5724,27 @@ body {
 /* AI Eyes */
 .voice-eyes {
   display: flex;
-  gap: 6px;
+  gap: 12px;
   align-items: center;
   justify-content: center;
 }
 
 .voice-eye {
-  width: 230px;
-  height: 478px;
+  width: 170px;
+  height: 350px;
   background: #0096FE;
-  border-radius: 130px;
+  border-radius: 95px;
   animation: eyeAppear 0.5s ease forwards, eyeBlink 4s ease-in-out infinite 0.5s;
   transform-origin: center;
 }
 
 @keyframes eyeAppear {
   from {
-    height: 60px;
+    height: 45px;
     opacity: 0;
   }
   to {
-    height: 478px;
+    height: 350px;
     opacity: 1;
   }
 }
@@ -6045,9 +6045,9 @@ body {
   }
 
   .voice-eye {
-    width: 140px !important;
-    height: 290px !important;
-    border-radius: 80px !important;
+    width: 105px !important;
+    height: 215px !important;
+    border-radius: 60px !important;
     animation: eyeBlink 4s ease-in-out infinite 0.5s !important;
   }
 }
@@ -6059,9 +6059,9 @@ body {
   }
 
   .voice-eye {
-    width: 118px !important;
-    height: 246px !important;
-    border-radius: 70px !important;
+    width: 88px !important;
+    height: 182px !important;
+    border-radius: 50px !important;
     animation: eyeBlink 4s ease-in-out infinite 0.5s !important;
   }
 }
