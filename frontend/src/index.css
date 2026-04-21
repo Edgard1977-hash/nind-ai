@@ -5860,9 +5860,13 @@ body {
 }
 
 .voice-assistant-bottom {
-  padding: 20px 24px 28px;
+  padding: 28px 24px 28px;
   position: relative;
   z-index: 3;
+  background: #000000;
+  border-top-left-radius: 32px;
+  border-top-right-radius: 32px;
+  box-shadow: 0 -20px 40px -20px rgba(0, 0, 0, 0.6);
 }
 
 .voice-attachments-row {
@@ -6011,7 +6015,9 @@ body {
   }
 
   .voice-assistant-bottom {
-    padding: 14px 14px max(18px, env(safe-area-inset-bottom));
+    padding: 18px 14px max(18px, env(safe-area-inset-bottom));
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
   }
 
   .voice-input-container {
