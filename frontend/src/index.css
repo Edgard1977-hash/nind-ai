@@ -5023,9 +5023,30 @@ body {
   font-family: -apple-system, 'SF Pro Text', sans-serif;
   font-size: 32px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 1) 25%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 1) 75%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerText 2.5s ease-in-out infinite;
   margin-bottom: 15px;
   z-index: 2;
+}
+
+@keyframes shimmerText {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .generating-progress-container {
@@ -5043,9 +5064,9 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #276AFF 0%, #1E55CC 100%);
+  background: linear-gradient(90deg, #0F7DFF 0%, #0A5FCC 100%);
   border-radius: 45px;
-  transition: width 0.5s ease;
+  transition: width 0.8s linear;
 }
 
 .generating-stop-btn {
