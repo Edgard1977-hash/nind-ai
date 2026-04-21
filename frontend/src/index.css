@@ -6045,8 +6045,10 @@ body {
   }
 
   .voice-eye {
-    width: 56px !important;
-    height: 92px !important;
+    width: 140px !important;
+    height: 290px !important;
+    border-radius: 80px !important;
+    animation: eyeBlink 4s ease-in-out infinite 0.5s !important;
   }
 }
 
@@ -6057,8 +6059,10 @@ body {
   }
 
   .voice-eye {
-    width: 48px !important;
-    height: 80px !important;
+    width: 118px !important;
+    height: 246px !important;
+    border-radius: 70px !important;
+    animation: eyeBlink 4s ease-in-out infinite 0.5s !important;
   }
 }
 
