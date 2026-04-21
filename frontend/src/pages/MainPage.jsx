@@ -123,6 +123,54 @@ const EXAMPLE_VIDEOS = [
   { id: 5, title: "Tutorial Video", subtitle: "Step-by-step guide", color: "#3A4A3A" },
 ];
 
+// Smooth progress component
+const SmoothProgressCard = ({ video }) => {
+  const [displayProgress, setDisplayProgress] = useState(0);
+  const targetProgress = Math.min(Math.floor(video.progress || 0), 99);
+
+  useEffect(() => {
+    if (displayProgress < targetProgress) {
+      const diff = targetProgress - displayProgress;
+      const increment = Math.max(1, Math.ceil(diff / 20));
+      const timer = setTimeout(() => {
+        setDisplayProgress(prev => Math.min(prev + increment, targetProgress));
+      }, 50);
+      return () => clearTimeout(timer);
+    } else if (displayProgress > targetProgress) {
+      setDisplayProgress(targetProgress);
+    }
+  }, [displayProgress, targetProgress]);
+
+  return (
+    <div 
+      className="creation-card generating"
+      data-testid={`library-video-${video.id}`}
+    >
+      <div className="creation-generating">
+        <div className="generating-percentage">{displayProgress}%</div>
+        
+        <div className="generating-progress-container">
+          <div 
+            className="generating-progress-fill"
+            style={{ width: `${displayProgress}%` }}
+          />
+          
+          <button 
+            className="generating-stop-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log('Stop generation:', video.id);
+            }}
+            title="Stop generation"
+          >
+            <div className="stop-icon" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const MainPage = () => {
   const navigate = useNavigate();
   const textareaRef = useRef(null);
