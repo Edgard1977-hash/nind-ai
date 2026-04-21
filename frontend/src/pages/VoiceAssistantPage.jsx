@@ -24,8 +24,14 @@ const VoiceAssistantPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
 
   useEffect(() => {
+    try {
+      setIsInIframe(window.self !== window.top);
+    } catch {
+      setIsInIframe(true);
+    }
     const saved = localStorage.getItem('slind_user');
     if (saved) {
       try {
@@ -233,6 +239,13 @@ const VoiceAssistantPage = () => {
     }
     if (isRecording || isTranscribing || isSubmitting) return;
 
+    // Iframe preview blocks microphone → open page in a new tab where mic works
+    if (isInIframe) {
+      toast.info('Открываю страницу в новой вкладке для доступа к микрофону...');
+      window.open(window.location.href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       toast.error('Ваш браузер не поддерживает запись. Откройте на HTTPS в новой вкладке.');
       return;
@@ -386,7 +399,9 @@ const VoiceAssistantPage = () => {
             {isTranscribing && 'Распознаю речь...'}
             {isSubmitting && !isTranscribing && 'Отправляю запрос...'}
             {!isRecording && !isTranscribing && !isSubmitting && (
-              <>Нажмите <Mic className="w-3.5 h-3.5 inline-block -mt-0.5" /> чтобы говорить</>
+              isInIframe
+                ? 'Откройте страницу в отдельной вкладке для работы микрофона'
+                : <>Нажмите <Mic className="w-3.5 h-3.5 inline-block -mt-0.5" /> чтобы говорить</>
             )}
           </div>
         </div>
