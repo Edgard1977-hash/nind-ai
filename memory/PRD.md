@@ -73,6 +73,15 @@ AI-powered content generation platform (video, motion design, logos, promo video
 
 ## Changelog
 
+### 2026-02-21 (session 2)
+- **P1 выполнено: 3-точечное меню на карточках видео (Download / Edit / Delete)**
+  - Frontend: исправлены опечатки `setOpenMenuId` → `setOpenMenu` в `handleDownload/Delete/Edit`
+  - `handleEdit` реализован через `window.prompt` + `PATCH /api/videos/{id}` (переименование)
+  - `handleDownload` теперь корректно обрабатывает абсолютные URL
+  - `handleDelete` очищает и `userVideos`, и `generatingVideos`
+  - Backend: новые endpoints `DELETE /api/videos/{id}` и `PATCH /api/videos/{id}` с UpdateVideoRequest
+- Voice Assistant Page: глаза 108×210 (десктоп), увеличены поле ввода (64px) и кнопка-плюс (64×64)
+
 ### 2026-02-21
 - Added dedicated Voice Assistant page at `/voice` (VoiceAssistantPage.jsx)
   - AI eyes with appear/blink/listen/speak animations (68x112 px)

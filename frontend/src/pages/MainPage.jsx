@@ -296,7 +296,8 @@ export const MainPage = () => {
   // Handle video download
   const handleDownload = async (video) => {
     try {
-      const response = await fetch(`${BACKEND_URL}${video.video_url}`);
+      const videoUrl = video.video_url?.startsWith('http') ? video.video_url : `${BACKEND_URL}${video.video_url}`;
+      const response = await fetch(videoUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -306,7 +307,7 @@ export const MainPage = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      setOpenMenuId(null);
+      setOpenMenu(null);
       toast.success('Видео скачивается...');
     } catch (error) {
       console.error('Download error:', error);
@@ -319,7 +320,8 @@ export const MainPage = () => {
     try {
       await axios.delete(`${API}/videos/${videoId}`);
       setUserVideos(prev => prev.filter(v => v.id !== videoId));
-      setOpenMenuId(null);
+      setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
+      setOpenMenu(null);
       toast.success('Видео удалено');
     } catch (error) {
       console.error('Delete error:', error);
@@ -327,10 +329,23 @@ export const MainPage = () => {
     }
   };
 
-  // Handle video edit (placeholder)
-  const handleEdit = (video) => {
-    setOpenMenuId(null);
-    toast.info('Функция редактирования скоро будет доступна');
+  // Handle video edit — rename prompt/title
+  const handleEdit = async (video) => {
+    setOpenMenu(null);
+    const currentTitle = video.prompt || video.title || '';
+    const newTitle = window.prompt('Новое название видео:', currentTitle);
+    if (newTitle === null) return;
+    const trimmed = newTitle.trim();
+    if (!trimmed || trimmed === currentTitle) return;
+    try {
+      await axios.patch(`${API}/videos/${video.id}`, { prompt: trimmed });
+      setUserVideos(prev => prev.map(v => v.id === video.id ? { ...v, prompt: trimmed } : v));
+      setGeneratingVideos(prev => prev.map(v => v.id === video.id ? { ...v, prompt: trimmed, title: trimmed } : v));
+      toast.success('Название обновлено');
+    } catch (error) {
+      console.error('Edit error:', error);
+      toast.error('Ошибка при обновлении');
+    }
   };
 
   // Examples carousel state

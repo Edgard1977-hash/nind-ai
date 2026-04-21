@@ -2571,6 +2571,41 @@ async def get_user_videos(user_id: str):
     return {"projects": projects}
 
 
+class UpdateVideoRequest(BaseModel):
+    prompt: Optional[str] = None
+    title: Optional[str] = None
+
+
+@api_router.patch("/videos/{video_id}")
+async def update_video(video_id: str, request: UpdateVideoRequest):
+    """Rename/update a video project"""
+    update_data = {}
+    if request.prompt is not None:
+        update_data["prompt"] = request.prompt.strip()
+    if request.title is not None:
+        update_data["title"] = request.title.strip()
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    result = await db.video_projects.update_one(
+        {"id": video_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return {"success": True, "updated": update_data}
+
+
+@api_router.delete("/videos/{video_id}")
+async def delete_video(video_id: str):
+    """Delete a video project"""
+    result = await db.video_projects.delete_one({"id": video_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return {"success": True}
+
+
 class UpdateUserRequest(BaseModel):
     name: Optional[str] = None
     username: Optional[str] = None
