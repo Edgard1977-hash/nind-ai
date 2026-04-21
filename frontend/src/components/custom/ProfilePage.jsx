@@ -61,7 +61,7 @@ const getProgressColor = (percentage) => {
   if (percentage === 0) return '#3A3B3F';
   if (percentage < 15) return '#FF4444';
   if (percentage < 30) return '#FFD700';
-  return '#0096FE';
+  return '#FFFFFF';
 };
 
 // Show success toast
@@ -321,7 +321,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         {/* Get More Card */}
         <div className="get-more-card">
           <div className="get-more-left">
-            <UpgradeIcon className="get-more-icon" color="#0096FE" />
+            <UpgradeIcon className="get-more-icon" color="#FFFFFF" />
             <span className="get-more-text">{t('getMore')}</span>
           </div>
           <button 
