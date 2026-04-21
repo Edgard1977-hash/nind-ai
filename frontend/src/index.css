@@ -14,8 +14,8 @@
 
 :root {
   --bg-main: #141414;
-  --cyan: #01E0FD;
-  --cyan-glow: rgba(1, 224, 253, 0.4);
+  --cyan: #0097FF;
+  --cyan-glow: rgba(0, 151, 255, 0.4);
   --white: #FFFFFF;
   --gray-light: rgba(255, 255, 255, 0.7);
   --gray-medium: rgba(255, 255, 255, 0.5);
@@ -2112,7 +2112,7 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--cyan) 0%, #0099cc 100%);
+  background: linear-gradient(135deg, var(--cyan) 0%, #0070CC 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3961,7 +3961,7 @@ body {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00D4FF 0%, #0066FF 100%);
+  background: linear-gradient(135deg, var(--cyan) 0%, #0066FF 100%);
   display: flex;
   align-items: center;
   justify-content: center;
