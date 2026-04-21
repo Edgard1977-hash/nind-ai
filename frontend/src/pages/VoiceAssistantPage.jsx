@@ -233,6 +233,11 @@ const VoiceAssistantPage = () => {
     }
     if (isRecording || isTranscribing || isSubmitting) return;
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error('Ваш браузер не поддерживает запись. Откройте на HTTPS в новой вкладке.');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -284,7 +289,18 @@ const VoiceAssistantPage = () => {
       drawWaveform();
     } catch (err) {
       console.error('Mic access failed:', err);
-      toast.error('Нет доступа к микрофону');
+      const name = err?.name || '';
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        toast.error('Доступ к микрофону запрещён. Разрешите его в настройках браузера.');
+      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        toast.error('Микрофон не найден');
+      } else if (name === 'NotReadableError') {
+        toast.error('Микрофон уже занят другим приложением');
+      } else if (name === 'SecurityError') {
+        toast.error('Запись возможна только на HTTPS. Откройте страницу в отдельной вкладке.');
+      } else {
+        toast.error('Не удалось получить доступ к микрофону');
+      }
     }
   };
 
@@ -369,6 +385,9 @@ const VoiceAssistantPage = () => {
             {isRecording && 'Слушаю...'}
             {isTranscribing && 'Распознаю речь...'}
             {isSubmitting && !isTranscribing && 'Отправляю запрос...'}
+            {!isRecording && !isTranscribing && !isSubmitting && (
+              <>Нажмите <Mic className="w-3.5 h-3.5 inline-block -mt-0.5" /> чтобы говорить</>
+            )}
           </div>
         </div>
       </div>
