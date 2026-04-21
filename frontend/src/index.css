@@ -5920,8 +5920,8 @@ body {
 }
 
 .voice-plus-btn {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   background: #212121;
   border: none;
   border-radius: 50%;
@@ -5932,6 +5932,11 @@ body {
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease;
   flex-shrink: 0;
+}
+
+.voice-plus-btn svg {
+  width: 26px;
+  height: 26px;
 }
 
 .voice-plus-btn:hover {
@@ -5951,14 +5956,14 @@ body {
 
 .voice-input-field {
   width: 100%;
-  height: 48px;
+  height: 64px;
   background: #212121;
   border: none;
-  border-radius: 24px;
-  padding: 0 56px 0 20px;
+  border-radius: 32px;
+  padding: 0 72px 0 26px;
   color: #ffffff;
   font-family: -apple-system, 'SF Pro Text', sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   outline: none;
 }
 
@@ -5972,11 +5977,11 @@ body {
 
 .voice-send-btn {
   position: absolute;
-  right: 5px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 38px;
-  height: 38px;
+  width: 52px;
+  height: 52px;
   background: #ffffff;
   border: none;
   border-radius: 50%;
@@ -5986,6 +5991,11 @@ body {
   color: #000;
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.voice-send-btn svg {
+  width: 22px;
+  height: 22px;
 }
 
 .voice-send-btn:hover:not(:disabled) {
@@ -6032,20 +6042,30 @@ body {
   }
 
   .voice-plus-btn {
-    width: 44px;
-    height: 44px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .voice-plus-btn svg {
+    width: 24px;
+    height: 24px;
   }
 
   .voice-input-field {
-    height: 44px;
+    height: 56px;
     font-size: 16px; /* prevents iOS zoom */
-    padding: 0 52px 0 16px;
-    border-radius: 22px;
+    padding: 0 64px 0 22px;
+    border-radius: 28px;
   }
 
   .voice-send-btn {
-    width: 34px;
-    height: 34px;
+    width: 46px;
+    height: 46px;
+  }
+
+  .voice-send-btn svg {
+    width: 20px;
+    height: 20px;
   }
 
   .voice-eye {
@@ -6058,8 +6078,8 @@ body {
 
 @media (max-width: 380px) {
   .voice-plus-btn {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 52px;
   }
 
   .voice-eye {
