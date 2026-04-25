@@ -2455,7 +2455,9 @@ async def render_professional_video(
             font_size = content.get("font_size", 160)
             weight = content.get("weight", "bold")
             by_char = content.get("by_char", True)
-            bg = draw_text_blur_in(bg, text, vis, color, font_size, weight, by_char)
+            # Use full scene_progress (0..1 across the whole scene), capped slightly
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_blur_in(bg, text, mp, color, font_size, weight, by_char)
 
         # === MOTION 2: CHAR FADE + SLIDE (with optional gradient emphasis) ===
         elif scene_type == "motion_char_fade":
@@ -2466,7 +2468,8 @@ async def render_professional_video(
             weight = content.get("weight", "bold")
             emphasis_word = content.get("emphasis_word")
             use_gradient = content.get("use_gradient", True)
-            bg = draw_text_char_fade_slide(bg, text, vis, color, font_size, weight, emphasis_word, use_gradient)
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_char_fade_slide(bg, text, mp, color, font_size, weight, emphasis_word, use_gradient)
 
         # === MOTION 3: APPLE SCALE + SLIDE-LEFT ===
         elif scene_type == "motion_apple_scale":
@@ -2475,7 +2478,8 @@ async def render_professional_video(
             color = tuple(content.get("color", [255, 255, 255]))
             font_size = content.get("font_size", 150)
             weight = content.get("weight", "bold")
-            bg = draw_text_apple_scale_slide(bg, text, vis, color, font_size, weight)
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_apple_scale_slide(bg, text, mp, color, font_size, weight)
 
         # === MOTION 4: WORD SLIDE-LEFT WITH SHADOW ===
         elif scene_type == "motion_word_slide":
@@ -2485,7 +2489,8 @@ async def render_professional_video(
             font_size = content.get("font_size", 130)
             weight = content.get("weight", "bold")
             shadow = content.get("shadow", True)
-            bg = draw_text_word_slide_left(bg, text, vis, color, font_size, weight, shadow)
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_word_slide_left(bg, text, mp, color, font_size, weight, shadow)
 
         # === MOTION 5: FADE + SCALE-UP + DRAW UNDERLINE ===
         elif scene_type == "motion_fade_underline":
@@ -2497,7 +2502,8 @@ async def render_professional_video(
             emphasis_words = content.get("emphasis_words") or content.get("emphasis_word")
             if isinstance(emphasis_words, str):
                 emphasis_words = [emphasis_words]
-            bg = draw_text_fade_scale_up_underline(bg, text, vis, color, font_size, weight, emphasis_words)
+            mp = min(1.0, scene_progress * 1.3)
+            bg = draw_text_fade_scale_up_underline(bg, text, mp, color, font_size, weight, emphasis_words)
         
         # === CALCOM TEXT (with emphasis word) ===
         elif scene_type == "calcom_text":
