@@ -429,9 +429,22 @@ async def generate_universal_script(prompt: str, language: str, logo_path: str =
     Cal.com style animations with emphasis words.
     """
     from emergentintegrations.llm.chat import LlmChat, UserMessage
-    
+    import re
+
     api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
+
+    # Extract literal quoted text the user wants on screen, if any.
+    # Supports: "..."  '...'  «...»  „...“  ‘...’
+    quoted_match = re.search(
+        r'["“„«‟]([^"”«»“„‟]+)["”»‟“]'  # double quotes & guillemets
+        r"|'([^']+)'"                    # single quotes
+        r"|‘([^’]+)’",                   # curly single
+        prompt,
+    )
+    literal_text = ""
+    if quoted_match:
+        literal_text = next((g for g in quoted_match.groups() if g), "").strip()
     
     try:
         chat = LlmChat(
@@ -441,106 +454,147 @@ async def generate_universal_script(prompt: str, language: str, logo_path: str =
         )
         chat.with_model("openai", "gpt-5.2")
         
-        system_prompt = f"""Create video animation script based on user request.
+        system_prompt = f"""Create a video animation script. Return ONLY valid JSON.
 
-USER PROMPT: {prompt}
+USER REQUEST (verbatim, in their exact words):
+\"\"\"{prompt}\"\"\"
+
+{"USER PROVIDED EXACT TEXT TO DISPLAY: «" + literal_text + "» — every text scene MUST contain ONLY characters from this exact string (you may split it into clauses across scenes, but never invent new words)." if literal_text else ""}
+
 {"BRAND NAME: " + brand_name if brand_name else ""}
 {"HAS LOGO: yes" if logo_path else ""}
 
-AVAILABLE SCENE TYPES (Cal.com style):
+CRITICAL RULES:
+- The "text" field of every scene MUST contain ONLY words from the USER REQUEST above (split into short clauses).
+- DO NOT invent placeholder text like "Hello", "Hello World", "Sample", "Lorem ipsum", "Welcome", or any greeting unless the user typed it.
+- DO NOT translate the user's text. Keep their exact language and wording.
+- If the user wrote text inside quotes, use that exact quoted text — do not add anything before/after.
+- Split a long user phrase into 3–6 dramatic scenes for cinematic pacing.
+- Every scene MUST have a non-empty "text" field if the type is a text type. NEVER leave "text" empty or null.
 
-1. "calcom_text" - Text with fade + slide up + optional emphasis word in purple
-   {{"type": "calcom_text", "text": "No more back and forths", "emphasis_word": "back and forths", "bg": "white", "duration": 1.5}}
+PRIMARY TEXT SCENE TYPES (USE THESE — DO NOT use calcom_text, apple_text, zoom_text, gradient_text):
 
-2. "calcom_chat" - Chat bubble with typing effect (iMessage style)  
-   {{"type": "calcom_chat", "text": "Are you free Tuesday?", "sender": true, "bg": "white", "duration": 2.0}}
-   sender=true (blue, right side), sender=false (gray, left side)
+A. "motion_blur_in" — Apple keynote blur-in (each char appears from heavy gaussian blur)
+   USE FOR: opening / hero phrases, dramatic single statements
+   {{"type": "motion_blur_in", "text": "<USER WORDS>", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.6}}
 
-3. "logo_reveal" - Logo appears center, moves left, brand name fades in right
-   {{"type": "logo_reveal", "brand_name": "Brand", "bg": "black", "duration": 3.0}}
+B. "motion_char_fade" — Char-by-char fade + 16px slide-up + optional gradient (orange→purple) on emphasis_word
+   USE FOR: narrative lines with one strong key word
+   {{"type": "motion_char_fade", "text": "<USER WORDS>", "emphasis_word": "<one_word_from_text>", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 1.8}}
 
-4. "apple_text" - Simple text fade + scale (for alternating black/white backgrounds)
-   {{"type": "apple_text", "text": "Hello", "bg": "black", "duration": 1.2}}
+C. "motion_apple_scale" — Word-by-word scale 0.9→1.0 + slide-from-left + fade
+   USE FOR: short punchy phrases (2–4 words)
+   {{"type": "motion_apple_scale", "text": "<USER WORDS>", "bg": "white", "color": [0,0,0], "duration": 1.4}}
 
-5. "zoom_text" - Text with zoom in/out camera effect
-   {{"type": "zoom_text", "text": "WOW", "start_zoom": 0.8, "end_zoom": 1.2, "bg": "white", "duration": 1.5}}
+D. "motion_word_slide" — Word-by-word slide-in from the left with subtle drop shadow
+   USE FOR: storytelling / longer narrative
+   {{"type": "motion_word_slide", "text": "<USER WORDS>", "bg": "white", "color": [0,0,0], "shadow": true, "duration": 1.6}}
 
-6. "device_mockup" - 3D phone/tablet mockup showing video content
-   {{"type": "device_mockup", "device": "phone", "rotation": 15, "bg": "white", "duration": 3.0}}
+E. "motion_fade_underline" — Char fade + scale + slide-up + animated draw-underline on emphasis_words
+   USE FOR: closing call-to-action / payoff lines with 1–2 highlighted words
+   {{"type": "motion_fade_underline", "text": "<USER WORDS>", "emphasis_words": ["<word1>", "<word2>"], "bg": "white", "color": [0,0,0], "duration": 1.6}}
 
-7. "motion_blur_in" - Premium blur-in: each character appears from heavy blur (Apple keynote style)
-   {{"type": "motion_blur_in", "text": "Quer esse texto?", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.6}}
+NON-TEXT SUPPORTING TYPES (use only when needed):
+- "calcom_chat" — only for messaging/chat-style content
+- "device_mockup" — only when user mentions a phone/device
+- "logo_reveal" — only when a logo is provided
 
-8. "motion_char_fade" - Char-by-char fade + 16px slide-up. Optional gradient (orange→purple) on emphasis_word
-   {{"type": "motion_char_fade", "text": "could mean 150 devices to manage.", "emphasis_word": "manage", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 2.0}}
+CINEMATIC RULES:
+- Alternate background between white and black between scenes for rhythm.
+- Default text color: white on black bg, black on white bg.
+- For motion_char_fade with use_gradient=true, pick the most meaningful word as emphasis_word — DO NOT add color to it manually, the gradient applies automatically.
+- Scene duration: 1.2–2.0 s.
+- Total video: 5–10 s (3–6 scenes).
+- Use motion_blur_in for the first/hero scene.
 
-9. "motion_apple_scale" - Word-by-word scale 0.9→1.0 + slide-from-left 22px + fade. Apple-style.
-   {{"type": "motion_apple_scale", "text": "Made Really Easy", "bg": "white", "color": [0,0,0], "duration": 1.5}}
-
-10. "motion_word_slide" - Word-by-word slide-in from left with subtle drop shadow
-    {{"type": "motion_word_slide", "text": "This one word slide in", "bg": "white", "color": [0,0,0], "shadow": true, "duration": 1.5}}
-
-11. "motion_fade_underline" - Char-by-char fade + scale 0.9→1.0 + slide-up + animated underline on emphasis_words
-    {{"type": "motion_fade_underline", "text": "Can animate like them.", "emphasis_words": ["animate", "them"], "bg": "white", "color": [0,0,0], "duration": 1.6}}
-
-STYLE RULES (Cal.com / Apple keynote video style):
-1. White background (#FFFFFF) is default
-2. Black text (#000000) on white background  
-3. Purple (#8A2BE2) for emphasis words that bounce in
-4. Chat bubbles: blue for sender (right), gray for receiver (left)
-5. Smooth ease-out animations, text NEVER goes outside screen
-6. Duration per scene: 1.0-2.0 seconds
-7. Use zoom_text for dramatic emphasis
-
-PREMIUM MOTION RULES (use motion_* types liberally for cinematic feel):
-- Use "motion_blur_in" for OPENING/HERO shots and dramatic single phrases (1.4–1.8s)
-- Use "motion_char_fade" with emphasis_word + gradient for KEY business/value words ("manage", "demands", "Introducing")
-- Use "motion_apple_scale" for SHORT punchy phrases ("Made Really Easy", "in Premiere Pro")
-- Use "motion_word_slide" for STORYTELLING / longer narrative phrases on white bg
-- Use "motion_fade_underline" with emphasis_words for CALL-TO-ACTION ("Can animate like them.")
-- Alternate background colors (white / black) between motion scenes for rhythm
-- Color: white text on black bg, black text on white bg, gradient applies automatically on emphasis
-
-KEEP EXACT TEXT - DO NOT translate or modify user's text!
-
-RETURN JSON:
+OUTPUT JSON SHAPE:
 {{
     "scenes": [
-        {{"type": "calcom_text", "text": "We've all been there", "bg": "white", "duration": 1.2}},
-        {{"type": "calcom_chat", "text": "Are you free Tuesday?", "sender": true, "bg": "white", "duration": 2.0}},
-        {{"type": "calcom_text", "text": "meetings simplified.", "emphasis_word": "simplified.", "bg": "white", "duration": 1.5}}
+        {{"type": "motion_blur_in", "text": "<EXACT USER PHRASE PART 1>", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.6}},
+        {{"type": "motion_char_fade", "text": "<EXACT USER PHRASE PART 2>", "emphasis_word": "<key_word>", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 1.8}},
+        {{"type": "motion_apple_scale", "text": "<EXACT USER PHRASE PART 3>", "bg": "white", "color": [0,0,0], "duration": 1.4}},
+        {{"type": "motion_fade_underline", "text": "<EXACT USER PHRASE PART 4>", "emphasis_words": ["<word>"], "bg": "white", "color": [0,0,0], "duration": 1.6}}
     ]
 }}
 
-USER REQUEST: {prompt}
-
-Return ONLY valid JSON."""
+Return ONLY valid JSON, no markdown, no commentary."""
 
         msg = UserMessage(text=system_prompt)
         response = await chat.send_message(msg)
-        
+
         logger.info(f"Universal AI response: {response[:500]}")
-        
+
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
         if json_start != -1 and json_end > json_start:
             result = json.loads(response[json_start:json_end])
+
+            # === Post-processing: strip placeholder/empty text scenes ===
+            BANNED_TEXTS = {"hello", "hello world", "hello world!", "sample", "lorem ipsum",
+                            "welcome", "your text", "your text here", "text", "title", "subtitle"}
+            cleaned = []
+            for sc in result.get("scenes", []) or []:
+                txt = (sc.get("text") or "").strip()
+                if sc.get("type", "").startswith(("motion_", "calcom_", "apple_", "zoom_",
+                                                  "gradient_", "text", "chat")):
+                    if not txt:
+                        logger.warning(f"Dropping scene with empty text: {sc.get('type')}")
+                        continue
+                    if txt.lower() in BANNED_TEXTS:
+                        logger.warning(f"Dropping scene with placeholder text '{txt}'")
+                        continue
+                cleaned.append(sc)
+            result["scenes"] = cleaned
+
+            # If LLM completely ignored quoted text, force a hero motion_blur_in scene with it
+            if literal_text and result["scenes"]:
+                has_literal = any(
+                    literal_text.lower() in (s.get("text") or "").lower()
+                    for s in result["scenes"]
+                )
+                if not has_literal:
+                    logger.warning("LLM ignored literal user text; injecting hero scene")
+                    result["scenes"].insert(0, {
+                        "type": "motion_blur_in",
+                        "text": literal_text,
+                        "bg": "white",
+                        "color": [0, 0, 0],
+                        "by_char": True,
+                        "duration": 1.7,
+                    })
+
+            if not result["scenes"]:
+                logger.warning("All scenes dropped; using literal/user fallback")
+                fallback_text = literal_text or prompt[:80].strip()
+                if fallback_text:
+                    result["scenes"] = [{
+                        "type": "motion_blur_in",
+                        "text": fallback_text,
+                        "bg": "white",
+                        "color": [0, 0, 0],
+                        "by_char": True,
+                        "duration": 1.8,
+                    }]
+
             if logo_path:
                 result["logo_path"] = logo_path
             if brand_name:
                 result["brand_name"] = brand_name
+            result["user_prompt"] = prompt
             logger.info(f"Parsed universal script: {result}")
             return result
     except Exception as e:
         logger.warning(f"Universal script generation failed: {e}")
-    
-    # Fallback
-    fallback_text = "Привет мир" if is_russian else "Hello World"
+
+    # Fallback — use literal quoted text if present, else first 80 chars of prompt
+    fallback_text = literal_text or prompt[:80].strip() or ("Привет" if is_russian else "Welcome")
     return {
         "scenes": [
-            {"type": "calcom_text", "text": fallback_text, "bg": "white", "duration": 1.5}
+            {"type": "motion_blur_in", "text": fallback_text, "bg": "white",
+             "color": [0, 0, 0], "by_char": True, "duration": 1.8}
         ],
-        "total_duration": 1.5
+        "user_prompt": prompt,
+        "total_duration": 1.8,
     }
 
 

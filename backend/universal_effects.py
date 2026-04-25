@@ -2311,6 +2311,23 @@ async def render_professional_video(
         
         scene_type = active.get("type", "text")
         content = active.get("content", {})
+
+        # Skip text-bearing scenes that have no real text (avoids placeholder "Hello" rendering)
+        TEXT_SCENE_TYPES = {
+            "text", "gradient_text", "gradient_sweep", "apple_text", "calcom_text",
+            "calcom_chat", "zoom_text", "chat",
+            "motion_blur_in", "motion_char_fade", "motion_apple_scale",
+            "motion_word_slide", "motion_fade_underline",
+        }
+        if scene_type in TEXT_SCENE_TYPES:
+            _txt = (content.get("text") or "").strip()
+            if not _txt:
+                # No text → render plain background, do not draw default "Hello"
+                if frame_num == 0:
+                    logger.warning(f"Skipping text rendering: empty text for scene type {scene_type}")
+                # Fall through; bg remains the plain background already created
+                scene_type = "_skip_text"
+                content = {}
         
         # === TEXT - Word by word ===
         if scene_type == "text":
@@ -2855,10 +2872,15 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
     """
     # Get scenes from script_data (new format uses "scenes", old format uses "elements")
     raw_scenes = script_data.get("scenes", []) or script_data.get("elements", [])
-    
+
     if not raw_scenes:
-        # Fallback
-        raw_scenes = [{"type": "apple_text", "text": "Hello World", "bg": "black", "duration": 1.5}]
+        # Fallback — use original user prompt if available, otherwise empty (no placeholder text)
+        user_prompt = (script_data.get("user_prompt") or script_data.get("prompt") or "").strip()
+        if user_prompt:
+            raw_scenes = [{"type": "motion_apple_scale", "text": user_prompt[:80],
+                           "bg": "white", "duration": 1.8}]
+        else:
+            raw_scenes = []
     
     scenes = []
     logo_path = script_data.get("logo_path")
@@ -2901,6 +2923,21 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
                 "color": elem.get("color", text_color),
                 "font_size": elem.get("font_size", 140),
                 "emphasis": elem.get("emphasis", False)
+            }
+
+        # === MOTION TYPES (5 cinematic text animations) ===
+        elif scene_type in ("motion_blur_in", "motion_char_fade", "motion_apple_scale",
+                            "motion_word_slide", "motion_fade_underline"):
+            scene["content"] = {
+                "text": elem.get("text", ""),
+                "color": elem.get("color", text_color),
+                "font_size": elem.get("font_size", 150),
+                "weight": elem.get("weight", "bold"),
+                "by_char": elem.get("by_char", True),
+                "emphasis_word": elem.get("emphasis_word"),
+                "emphasis_words": elem.get("emphasis_words"),
+                "use_gradient": elem.get("use_gradient", True),
+                "shadow": elem.get("shadow", True),
             }
         
         # === CALCOM TEXT (with emphasis word) ===
