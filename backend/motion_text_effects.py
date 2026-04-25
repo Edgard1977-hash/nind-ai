@@ -276,7 +276,6 @@ def draw_text_word_slide_left(
 
 
 # ---------- 5. FADE + SCALE-UP + DRAW-UNDERLINE ---------- #
-
 def draw_text_fade_scale_up_underline(
     img: Image.Image,
     text: str,
@@ -347,4 +346,152 @@ def draw_text_fade_scale_up_underline(
                     fill=(*color, 255),
                 )
 
+    return Image.alpha_composite(base, layer)
+
+
+# ---------- 6. WORD SLIDE-FROM-RIGHT ---------- #
+
+def draw_text_word_slide_right(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    color: Tuple[int, int, int] = (255, 255, 255),
+    font_size: int = 140,
+    weight: str = "bold",
+) -> Image.Image:
+    """Word-by-word slide-from-right with stagger + fade. TikTok-style."""
+    base = img.convert("RGBA")
+    font, fitted_size = fit_text_to_width(text, MAX_TEXT_WIDTH, font_size, weight)
+    space_w = fitted_size // 3
+
+    words = text.split()
+    if not words:
+        return base
+    widths = [_measure(w, font)[0] for w in words]
+    total_w = sum(widths) + space_w * (len(words) - 1)
+    text_h = _measure("Mg", font)[1]
+    start_x = (WIDTH - total_w) // 2
+    y = (HEIGHT - text_h) // 2
+
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+
+    cur_x = start_x
+    for i, w in enumerate(words):
+        ww = widths[i]
+        wp = _stagger_progress(progress, len(words), i, item_dur=0.5)
+        eased = ease_out_cubic(wp)
+        alpha = int(255 * eased)
+        slide = int(110 * (1 - eased))  # slide from RIGHT (+offset)
+        wx = cur_x + slide
+        d.text((wx, y), w, font=font, fill=(*color, alpha))
+        cur_x += ww + space_w
+
+    return Image.alpha_composite(base, layer)
+
+
+# ---------- 7. WORD SLIDE-UP (from below) ---------- #
+
+def draw_text_word_slide_up(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    color: Tuple[int, int, int] = (255, 255, 255),
+    font_size: int = 140,
+    weight: str = "bold",
+) -> Image.Image:
+    """Word-by-word slide-from-below + fade. Each word floats up with stagger."""
+    base = img.convert("RGBA")
+    font, fitted_size = fit_text_to_width(text, MAX_TEXT_WIDTH, font_size, weight)
+    space_w = fitted_size // 3
+
+    words = text.split()
+    if not words:
+        return base
+    widths = [_measure(w, font)[0] for w in words]
+    total_w = sum(widths) + space_w * (len(words) - 1)
+    text_h = _measure("Mg", font)[1]
+    start_x = (WIDTH - total_w) // 2
+    y = (HEIGHT - text_h) // 2
+
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+
+    cur_x = start_x
+    for i, w in enumerate(words):
+        ww = widths[i]
+        wp = _stagger_progress(progress, len(words), i, item_dur=0.5)
+        eased = ease_out_cubic(wp)
+        alpha = int(255 * eased)
+        rise = int(90 * (1 - eased))  # slide UP from below (positive y-offset)
+        d.text((cur_x, y + rise), w, font=font, fill=(*color, alpha))
+        cur_x += ww + space_w
+
+    return Image.alpha_composite(base, layer)
+
+
+# ---------- 8. WORD SLIDE-DOWN (from above) ---------- #
+
+def draw_text_word_slide_down(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    color: Tuple[int, int, int] = (255, 255, 255),
+    font_size: int = 140,
+    weight: str = "bold",
+) -> Image.Image:
+    """Word-by-word fall-from-above + fade."""
+    base = img.convert("RGBA")
+    font, fitted_size = fit_text_to_width(text, MAX_TEXT_WIDTH, font_size, weight)
+    space_w = fitted_size // 3
+
+    words = text.split()
+    if not words:
+        return base
+    widths = [_measure(w, font)[0] for w in words]
+    total_w = sum(widths) + space_w * (len(words) - 1)
+    text_h = _measure("Mg", font)[1]
+    start_x = (WIDTH - total_w) // 2
+    y = (HEIGHT - text_h) // 2
+
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+
+    cur_x = start_x
+    for i, w in enumerate(words):
+        ww = widths[i]
+        wp = _stagger_progress(progress, len(words), i, item_dur=0.5)
+        eased = ease_out_cubic(wp)
+        alpha = int(255 * eased)
+        fall = int(90 * (1 - eased))  # fall from ABOVE (negative y-offset)
+        d.text((cur_x, y - fall), w, font=font, fill=(*color, alpha))
+        cur_x += ww + space_w
+
+    return Image.alpha_composite(base, layer)
+
+
+# ---------- 9. WHOLE-LINE SLIDE-UP-FADE ---------- #
+
+def draw_text_line_slide_up(
+    img: Image.Image,
+    text: str,
+    progress: float,
+    color: Tuple[int, int, int] = (255, 255, 255),
+    font_size: int = 150,
+    weight: str = "bold",
+) -> Image.Image:
+    """Whole-line slide-up-fade as a single block. CTA / payoff style."""
+    base = img.convert("RGBA")
+    font, _ = fit_text_to_width(text, MAX_TEXT_WIDTH, font_size, weight)
+    text_w, text_h = _measure(text, font)
+    x = (WIDTH - text_w) // 2
+    y = (HEIGHT - text_h) // 2
+
+    eased = ease_out_cubic(min(1.0, progress * 1.4))
+    alpha = int(255 * eased)
+    rise = int(70 * (1 - eased))
+
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    d.text((x, y + rise), text, font=font, fill=(*color, alpha))
     return Image.alpha_composite(base, layer)

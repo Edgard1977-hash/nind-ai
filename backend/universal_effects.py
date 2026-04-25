@@ -2337,6 +2337,8 @@ async def render_professional_video(
             "calcom_chat", "zoom_text", "chat",
             "motion_blur_in", "motion_char_fade", "motion_apple_scale",
             "motion_word_slide", "motion_fade_underline",
+            "motion_word_slide_right", "motion_word_slide_up",
+            "motion_word_slide_down", "motion_line_slide_up",
         }
         if scene_type in TEXT_SCENE_TYPES:
             _txt = (content.get("text") or "").strip()
@@ -2504,6 +2506,46 @@ async def render_professional_video(
                 emphasis_words = [emphasis_words]
             mp = min(1.0, scene_progress * 1.3)
             bg = draw_text_fade_scale_up_underline(bg, text, mp, color, font_size, weight, emphasis_words)
+
+        # === MOTION 6: WORD SLIDE-FROM-RIGHT ===
+        elif scene_type == "motion_word_slide_right":
+            from motion_text_effects import draw_text_word_slide_right
+            text = content.get("text", "Hello")
+            color = tuple(content.get("color", [255, 255, 255]))
+            font_size = content.get("font_size", 140)
+            weight = content.get("weight", "bold")
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_word_slide_right(bg, text, mp, color, font_size, weight)
+
+        # === MOTION 7: WORD SLIDE-UP (from below) ===
+        elif scene_type == "motion_word_slide_up":
+            from motion_text_effects import draw_text_word_slide_up
+            text = content.get("text", "Hello")
+            color = tuple(content.get("color", [255, 255, 255]))
+            font_size = content.get("font_size", 140)
+            weight = content.get("weight", "bold")
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_word_slide_up(bg, text, mp, color, font_size, weight)
+
+        # === MOTION 8: WORD SLIDE-DOWN (from above) ===
+        elif scene_type == "motion_word_slide_down":
+            from motion_text_effects import draw_text_word_slide_down
+            text = content.get("text", "Hello")
+            color = tuple(content.get("color", [255, 255, 255]))
+            font_size = content.get("font_size", 140)
+            weight = content.get("weight", "bold")
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_word_slide_down(bg, text, mp, color, font_size, weight)
+
+        # === MOTION 9: WHOLE-LINE SLIDE-UP ===
+        elif scene_type == "motion_line_slide_up":
+            from motion_text_effects import draw_text_line_slide_up
+            text = content.get("text", "Hello")
+            color = tuple(content.get("color", [255, 255, 255]))
+            font_size = content.get("font_size", 150)
+            weight = content.get("weight", "bold")
+            mp = min(1.0, scene_progress * 1.4)
+            bg = draw_text_line_slide_up(bg, text, mp, color, font_size, weight)
         
         # === CALCOM TEXT (with emphasis word) ===
         elif scene_type == "calcom_text":
@@ -2950,9 +2992,11 @@ async def render_universal_video(script_data: Dict, output_dir: Path, fps: int =
                 "emphasis": elem.get("emphasis", False)
             }
 
-        # === MOTION TYPES (5 cinematic text animations) ===
+        # === MOTION TYPES (9 cinematic text animations) ===
         elif scene_type in ("motion_blur_in", "motion_char_fade", "motion_apple_scale",
-                            "motion_word_slide", "motion_fade_underline"):
+                            "motion_word_slide", "motion_fade_underline",
+                            "motion_word_slide_right", "motion_word_slide_up",
+                            "motion_word_slide_down", "motion_line_slide_up"):
             scene["content"] = {
                 "text": elem.get("text", ""),
                 "color": elem.get("color", text_color),

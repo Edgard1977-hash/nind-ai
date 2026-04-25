@@ -524,18 +524,35 @@ E. "motion_fade_underline" — char fade + scale 0.6→1.0 + slide-up 38px + ani
    USE FOR final call-to-action / payoff line. Pick 1–2 emphasis_words.
    {{"type": "motion_fade_underline", "text": "...", "emphasis_words": ["<word1>", "<word2>"], "bg": "white", "color": [0,0,0], "duration": 1.7}}
 
+F. "motion_word_slide_right" — word-by-word slide-from-RIGHT + fade. TikTok / Adobe-tutorial style.
+   USE FOR opening titles or transitional phrases.
+   {{"type": "motion_word_slide_right", "text": "...", "bg": "black", "color": [255,255,255], "duration": 1.5}}
+
+G. "motion_word_slide_up" — word-by-word slide-from-BELOW + fade. Each word floats up.
+   USE FOR emotional / reflective lines, lyrics, value statements.
+   {{"type": "motion_word_slide_up", "text": "...", "bg": "white", "color": [0,0,0], "duration": 1.5}}
+
+H. "motion_word_slide_down" — word-by-word slide-from-ABOVE + fade. Each word falls in.
+   USE FOR list items, headlines, dramatic announcements.
+   {{"type": "motion_word_slide_down", "text": "...", "bg": "black", "color": [255,255,255], "duration": 1.5}}
+
+I. "motion_line_slide_up" — whole phrase slides up as a single block + fade. Bold and clean.
+   USE FOR final CTA / one-line statement / closing phrase.
+   {{"type": "motion_line_slide_up", "text": "...", "bg": "black", "color": [255,255,255], "duration": 1.5}}
+
 NON-TEXT SUPPORTING TYPES (use only when needed):
 - "calcom_chat" — only for messaging/chat-style content
 - "device_mockup" — only when user mentions a phone/device
 - "logo_reveal" — only when a logo is provided
 
 CINEMATIC RULES:
-- Use 3–6 scenes total. Each scene MUST use a DIFFERENT motion_* type.
+- Use 4–6 scenes total. Each scene MUST use a DIFFERENT motion_* type (pick from A–I above).
+- Mix entry directions for variety: from-left, from-right, from-above, from-below.
 - Always include "motion_blur_in" as the first/hero scene.
 - Alternate background between "white" and "black" between scenes.
 - Default text color: white on black bg, black on white bg.
 - For motion_char_fade with use_gradient=true, pick the most meaningful word as emphasis_word.
-- Scene duration: 1.2–2.0 s. Total video: 5–10 s.
+- Scene duration: 1.2–2.0 s. Total video: 6–10 s.
 
 OUTPUT JSON SHAPE:
 {{
