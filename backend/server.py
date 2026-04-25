@@ -1584,7 +1584,18 @@ async def process_video_generation(project_id: str):
             )
         
         # Step 1: Generate script based on format
-        if format_id == "chat_animation":
+        # NOTE: All text-only formats (ai_story / apple_text / kinetic_typography) are
+        # routed through the unified motion_* engine for consistent cinematic typography.
+        TEXT_FORMATS_VIA_MOTION = {"ai_story", "apple_text", "kinetic_typography"}
+        if format_id in TEXT_FORMATS_VIA_MOTION:
+            script_data = await generate_universal_script(
+                project["prompt"],
+                project["language"],
+            )
+            # Force motion-engine render path
+            format_id = "_motion_engine"
+
+        elif format_id == "chat_animation":
             script_data = await generate_chat_animation_script(
                 project["prompt"],
                 project["language"]
@@ -1653,8 +1664,29 @@ async def process_video_generation(project_id: str):
         audio_url = None
         poster_url = None
         
+        # ============ MOTION ENGINE (universal text/cinematic typography) ============
+        if format_id == "_motion_engine":
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {"progress": 35, "progress_message": "Рендерим кинетическую типографию..."}}
+            )
+
+            final_video_str = await render_universal_video(script_data, work_dir)
+            final_video = Path(final_video_str) if final_video_str else None
+
+            if final_video and final_video.exists():
+                await db.video_projects.update_one(
+                    {"id": project_id},
+                    {"$set": {"progress": 85, "progress_message": "Финализируем видео..."}}
+                )
+                poster_url = await generate_poster_image(final_video, work_dir)
+                final_name = f"video_{project_id}.mp4"
+                final_path = UPLOADS_DIR / final_name
+                final_video.rename(final_path)
+                video_url = f"/api/uploads/{final_name}"
+
         # ============ CHAT_ANIMATION FORMAT (Universal) ============
-        if format_id == "chat_animation":
+        elif format_id == "chat_animation":
             await db.video_projects.update_one(
                 {"id": project_id},
                 {"$set": {"progress": 30, "progress_message": "Создаём анимацию сообщений..."}}

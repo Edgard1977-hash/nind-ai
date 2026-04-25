@@ -2312,6 +2312,25 @@ async def render_professional_video(
         scene_type = active.get("type", "text")
         content = active.get("content", {})
 
+        # === FORCE-REDIRECT legacy text scene types → motion_* engine ===
+        # Older code paths and LLM responses sometimes still produce "text", "calcom_text",
+        # "apple_text", "zoom_text", "gradient_text". Map them to motion_* so every
+        # text scene uses the new cinematic typography.
+        LEGACY_TEXT_REMAP = {
+            "text": "motion_apple_scale",
+            "calcom_text": "motion_char_fade",
+            "apple_text": "motion_blur_in",
+            "zoom_text": "motion_apple_scale",
+            "gradient_text": "motion_char_fade",
+            "gradient_sweep": "motion_blur_in",
+        }
+        if scene_type in LEGACY_TEXT_REMAP and content.get("text"):
+            scene_type = LEGACY_TEXT_REMAP[scene_type]
+            # Default sensible motion params per redirected type
+            content.setdefault("by_char", True)
+            content.setdefault("use_gradient", True)
+            content.setdefault("shadow", True)
+
         # Skip text-bearing scenes that have no real text (avoids placeholder "Hello" rendering)
         TEXT_SCENE_TYPES = {
             "text", "gradient_text", "gradient_sweep", "apple_text", "calcom_text",
