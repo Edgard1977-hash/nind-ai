@@ -434,16 +434,41 @@ async def generate_universal_script(prompt: str, language: str, logo_path: str =
     api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
 
-    # Extract literal quoted text the user wants on screen, if any.
-    # Supports: "..."  '...'  «...»  „...“  ‘...’
+    # ===== Intent detection =====
+    # Topic intent: user describes what the video should be ABOUT — LLM must invent text.
+    # Literal intent: user provides exact text in quotes / after colon — text must be used verbatim.
+    prompt_lower = prompt.lower()
+    topic_markers = (
+        " про ", " о ", "про то", "на тему", "тему ", "тематик",
+        " about ", " on the topic", " regarding ", " concerning ",
+    )
+    is_topic_intent = any(m in f" {prompt_lower} " for m in topic_markers)
+
+    # Look for explicit literal markers
+    literal_markers_re = re.compile(
+        r'(?:сделай\s+(?:такой\s+)?текст|анимац\w*\s+текст\w*|текст(?:а)?\s*[:\-]|'
+        r'make\s+text|animate\s+text|text\s*[:\-])\s*'
+        r'(?:["“„«‟](?P<q1>[^"”»“„‟]+)["”»‟“]'
+        r"|'(?P<q2>[^']+)'"
+        r'|(?P<plain>.+))$',
+        re.IGNORECASE,
+    )
     quoted_match = re.search(
-        r'["“„«‟]([^"”«»“„‟]+)["”»‟“]'  # double quotes & guillemets
-        r"|'([^']+)'"                    # single quotes
-        r"|‘([^’]+)’",                   # curly single
+        r'["“„«‟]([^"”»“„‟]+)["”»‟“]'
+        r"|'([^']+)'"
+        r"|‘([^’]+)’",
         prompt,
     )
+
     literal_text = ""
-    if quoted_match:
+    explicit_literal = literal_markers_re.search(prompt.strip())
+    if explicit_literal and not is_topic_intent:
+        literal_text = (
+            explicit_literal.group("q1")
+            or explicit_literal.group("q2")
+            or (explicit_literal.group("plain") or "").strip(' "\'«»“”„‟‘’')
+        ).strip()
+    elif quoted_match and not is_topic_intent:
         literal_text = next((g for g in quoted_match.groups() if g), "").strip()
     
     try:
@@ -459,40 +484,45 @@ async def generate_universal_script(prompt: str, language: str, logo_path: str =
 USER REQUEST (verbatim, in their exact words):
 \"\"\"{prompt}\"\"\"
 
-{"USER PROVIDED EXACT TEXT TO DISPLAY: «" + literal_text + "» — every text scene MUST contain ONLY characters from this exact string (you may split it into clauses across scenes, but never invent new words)." if literal_text else ""}
+INTENT DETECTION (choose exactly one mode):
+
+MODE A — LITERAL TEXT MODE (active when user provides exact wording for the screen):
+{"  → ACTIVE. The user wants this exact text on screen: «" + literal_text + "». Every text scene MUST contain ONLY characters from this exact string. You MAY split it across 3–6 scenes for cinematic pacing, but DO NOT invent any new words." if literal_text else "  → INACTIVE. (No literal text was provided.)"}
+
+MODE B — TOPIC MODE (active when user describes what the video should be ABOUT):
+{"  → ACTIVE. The user wants a video ABOUT a topic, NOT the topic word itself. WRITE 3–6 short, punchy phrases (in " + ("Russian" if is_russian else "the user's language") + ") that tell a mini-story about the topic. Each scene = one phrase. Be creative, persuasive, cinematic." if is_topic_intent else "  → INACTIVE. (User did not describe a topic.)"}
+
+If NEITHER mode is active above, treat the request as Topic Mode and write 3–6 short narrative phrases inspired by the prompt.
 
 {"BRAND NAME: " + brand_name if brand_name else ""}
 {"HAS LOGO: yes" if logo_path else ""}
 
-CRITICAL RULES:
-- The "text" field of every scene MUST contain ONLY words from the USER REQUEST above (split into short clauses).
-- DO NOT invent placeholder text like "Hello", "Hello World", "Sample", "Lorem ipsum", "Welcome", or any greeting unless the user typed it.
-- DO NOT translate the user's text. Keep their exact language and wording.
-- If the user wrote text inside quotes, use that exact quoted text — do not add anything before/after.
-- Split a long user phrase into 3–6 dramatic scenes for cinematic pacing.
-- Every scene MUST have a non-empty "text" field if the type is a text type. NEVER leave "text" empty or null.
+UNIVERSAL RULES:
+- Output language MUST match the user's language ({"Russian" if is_russian else "English"} detected).
+- Every scene MUST have a non-empty "text" field if it is a text-type scene.
+- DO NOT use placeholders like "Hello", "Hello World", "Sample", "Welcome", "Lorem ipsum", "Text", "Title".
+- DO NOT translate the user's text in Literal Mode.
 
-PRIMARY TEXT SCENE TYPES (USE THESE — DO NOT use calcom_text, apple_text, zoom_text, gradient_text):
+PRIMARY TEXT SCENE TYPES — USE A DIFFERENT TYPE FOR EACH SCENE so the video feels varied:
 
-A. "motion_blur_in" — Apple keynote blur-in (each char appears from heavy gaussian blur)
-   USE FOR: opening / hero phrases, dramatic single statements
-   {{"type": "motion_blur_in", "text": "<USER WORDS>", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.6}}
+A. "motion_blur_in" — heavy gaussian blur (38px) → 0, char-by-char. CINEMATIC OPENING.
+   {{"type": "motion_blur_in", "text": "...", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.7}}
 
-B. "motion_char_fade" — Char-by-char fade + 16px slide-up + optional gradient (orange→purple) on emphasis_word
-   USE FOR: narrative lines with one strong key word
-   {{"type": "motion_char_fade", "text": "<USER WORDS>", "emphasis_word": "<one_word_from_text>", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 1.8}}
+B. "motion_char_fade" — char fade + 28px slide-up + optional gradient (orange→purple) on emphasis_word.
+   USE FOR narrative lines with one strong word.
+   {{"type": "motion_char_fade", "text": "...", "emphasis_word": "<one_word>", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 1.8}}
 
-C. "motion_apple_scale" — Word-by-word scale 0.9→1.0 + slide-from-left + fade
-   USE FOR: short punchy phrases (2–4 words)
-   {{"type": "motion_apple_scale", "text": "<USER WORDS>", "bg": "white", "color": [0,0,0], "duration": 1.4}}
+C. "motion_apple_scale" — word scale 0.78→1.0 + slide-from-left 56px. Apple keynote feel.
+   USE FOR short punchy phrases (2–4 words).
+   {{"type": "motion_apple_scale", "text": "...", "bg": "white", "color": [0,0,0], "duration": 1.4}}
 
-D. "motion_word_slide" — Word-by-word slide-in from the left with subtle drop shadow
-   USE FOR: storytelling / longer narrative
-   {{"type": "motion_word_slide", "text": "<USER WORDS>", "bg": "white", "color": [0,0,0], "shadow": true, "duration": 1.6}}
+D. "motion_word_slide" — word slide-from-left 110px with thick blurred drop shadow.
+   USE FOR storytelling on white bg.
+   {{"type": "motion_word_slide", "text": "...", "bg": "white", "color": [0,0,0], "shadow": true, "duration": 1.6}}
 
-E. "motion_fade_underline" — Char fade + scale + slide-up + animated draw-underline on emphasis_words
-   USE FOR: closing call-to-action / payoff lines with 1–2 highlighted words
-   {{"type": "motion_fade_underline", "text": "<USER WORDS>", "emphasis_words": ["<word1>", "<word2>"], "bg": "white", "color": [0,0,0], "duration": 1.6}}
+E. "motion_fade_underline" — char fade + scale 0.6→1.0 + slide-up 38px + animated thick underline on emphasis_words.
+   USE FOR final call-to-action / payoff line. Pick 1–2 emphasis_words.
+   {{"type": "motion_fade_underline", "text": "...", "emphasis_words": ["<word1>", "<word2>"], "bg": "white", "color": [0,0,0], "duration": 1.7}}
 
 NON-TEXT SUPPORTING TYPES (use only when needed):
 - "calcom_chat" — only for messaging/chat-style content
@@ -500,20 +530,21 @@ NON-TEXT SUPPORTING TYPES (use only when needed):
 - "logo_reveal" — only when a logo is provided
 
 CINEMATIC RULES:
-- Alternate background between white and black between scenes for rhythm.
+- Use 3–6 scenes total. Each scene MUST use a DIFFERENT motion_* type.
+- Always include "motion_blur_in" as the first/hero scene.
+- Alternate background between "white" and "black" between scenes.
 - Default text color: white on black bg, black on white bg.
-- For motion_char_fade with use_gradient=true, pick the most meaningful word as emphasis_word — DO NOT add color to it manually, the gradient applies automatically.
-- Scene duration: 1.2–2.0 s.
-- Total video: 5–10 s (3–6 scenes).
-- Use motion_blur_in for the first/hero scene.
+- For motion_char_fade with use_gradient=true, pick the most meaningful word as emphasis_word.
+- Scene duration: 1.2–2.0 s. Total video: 5–10 s.
 
 OUTPUT JSON SHAPE:
 {{
     "scenes": [
-        {{"type": "motion_blur_in", "text": "<EXACT USER PHRASE PART 1>", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.6}},
-        {{"type": "motion_char_fade", "text": "<EXACT USER PHRASE PART 2>", "emphasis_word": "<key_word>", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 1.8}},
-        {{"type": "motion_apple_scale", "text": "<EXACT USER PHRASE PART 3>", "bg": "white", "color": [0,0,0], "duration": 1.4}},
-        {{"type": "motion_fade_underline", "text": "<EXACT USER PHRASE PART 4>", "emphasis_words": ["<word>"], "bg": "white", "color": [0,0,0], "duration": 1.6}}
+        {{"type": "motion_blur_in", "text": "...", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.7}},
+        {{"type": "motion_char_fade", "text": "...", "emphasis_word": "...", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 1.8}},
+        {{"type": "motion_apple_scale", "text": "...", "bg": "white", "color": [0,0,0], "duration": 1.4}},
+        {{"type": "motion_word_slide", "text": "...", "bg": "white", "color": [0,0,0], "shadow": true, "duration": 1.6}},
+        {{"type": "motion_fade_underline", "text": "...", "emphasis_words": ["..."], "bg": "white", "color": [0,0,0], "duration": 1.7}}
     ]
 }}
 
