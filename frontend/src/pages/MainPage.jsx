@@ -206,7 +206,23 @@ export const MainPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const popupStartY = useRef(0);
   
-  // Helper function to calculate time ago
+  // Tick state forces "time ago" labels to refresh every 30 seconds
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Russian plural: "1 минута", "2 минуты", "5 минут"
+  const ruPlural = (n, forms) => {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return forms[0];
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return forms[1];
+    return forms[2];
+  };
+
+  // Helper function to calculate time ago (multilingual + grammar-correct)
   const getTimeAgo = (createdAt, completedAt) => {
     // ВСЕГДА используем created_at - время когда пользователь создал видео
     const dateToUse = createdAt;
@@ -219,66 +235,156 @@ export const MainPage = () => {
     const dateWithTz = (dateStr.endsWith('Z') || dateStr.includes('+')) ? dateStr : dateStr + 'Z';
     const created = new Date(dateWithTz);
     
-    // Check if date is valid
     if (isNaN(created.getTime())) {
       console.warn('[TIME_AGO] Invalid date:', dateToUse);
       return '';
     }
     
-    const diffMs = now - created;
+    const diffMs = Math.max(0, now - created);
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
+    const diffWeek = Math.floor(diffDay / 7);
+    const diffMonth = Math.floor(diffDay / 30);
+    const diffYear = Math.floor(diffDay / 365);
 
     // Get language - SAME KEY as ProfilePage uses!
     const lang = localStorage.getItem('slind_language') || user?.language || 'ru';
-    
+
     const timeFormats = {
       ru: {
         justNow: 'Только что',
-        minAgo: (n) => `${n}мин. назад`,
-        hourAgo: (n) => `${n}ч назад`,
-        dayAgo: (n) => `${n}дня назад`,
+        secAgo: (n) => `${n} ${ruPlural(n, ['секунду', 'секунды', 'секунд'])} назад`,
+        minAgo: (n) => `${n} ${ruPlural(n, ['минуту', 'минуты', 'минут'])} назад`,
+        hourAgo: (n) => `${n} ${ruPlural(n, ['час', 'часа', 'часов'])} назад`,
+        dayAgo: (n) => `${n} ${ruPlural(n, ['день', 'дня', 'дней'])} назад`,
+        weekAgo: (n) => `${n} ${ruPlural(n, ['неделю', 'недели', 'недель'])} назад`,
+        monthAgo: (n) => `${n} ${ruPlural(n, ['месяц', 'месяца', 'месяцев'])} назад`,
+        yearAgo: (n) => `${n} ${ruPlural(n, ['год', 'года', 'лет'])} назад`,
       },
       en: {
         justNow: 'Just now',
+        secAgo: (n) => `${n}s ago`,
         minAgo: (n) => `${n}m ago`,
         hourAgo: (n) => `${n}h ago`,
         dayAgo: (n) => `${n}d ago`,
+        weekAgo: (n) => `${n}w ago`,
+        monthAgo: (n) => `${n}mo ago`,
+        yearAgo: (n) => `${n}y ago`,
       },
       de: {
         justNow: 'Gerade eben',
+        secAgo: (n) => `vor ${n} Sek`,
         minAgo: (n) => `vor ${n} Min`,
         hourAgo: (n) => `vor ${n} Std`,
         dayAgo: (n) => `vor ${n} T`,
+        weekAgo: (n) => `vor ${n} Wo`,
+        monthAgo: (n) => `vor ${n} Mon`,
+        yearAgo: (n) => `vor ${n} J`,
       },
       es: {
         justNow: 'Ahora mismo',
+        secAgo: (n) => `hace ${n} s`,
         minAgo: (n) => `hace ${n} min`,
         hourAgo: (n) => `hace ${n} h`,
         dayAgo: (n) => `hace ${n} d`,
+        weekAgo: (n) => `hace ${n} sem`,
+        monthAgo: (n) => `hace ${n} mes`,
+        yearAgo: (n) => `hace ${n} a`,
       },
       pt: {
         justNow: 'Agora mesmo',
+        secAgo: (n) => `há ${n} s`,
         minAgo: (n) => `há ${n} min`,
         hourAgo: (n) => `há ${n} h`,
         dayAgo: (n) => `há ${n} d`,
+        weekAgo: (n) => `há ${n} sem`,
+        monthAgo: (n) => `há ${n} mês`,
+        yearAgo: (n) => `há ${n} a`,
       },
       fr: {
-        justNow: 'À l\'instant',
+        justNow: "À l'instant",
+        secAgo: (n) => `il y a ${n} s`,
         minAgo: (n) => `il y a ${n} min`,
         hourAgo: (n) => `il y a ${n} h`,
         dayAgo: (n) => `il y a ${n} j`,
+        weekAgo: (n) => `il y a ${n} sem`,
+        monthAgo: (n) => `il y a ${n} mois`,
+        yearAgo: (n) => `il y a ${n} an`,
+      },
+      it: {
+        justNow: 'Adesso',
+        secAgo: (n) => `${n} sec fa`,
+        minAgo: (n) => `${n} min fa`,
+        hourAgo: (n) => `${n} h fa`,
+        dayAgo: (n) => `${n} g fa`,
+        weekAgo: (n) => `${n} sett fa`,
+        monthAgo: (n) => `${n} mes fa`,
+        yearAgo: (n) => `${n} a fa`,
+      },
+      pl: {
+        justNow: 'Przed chwilą',
+        secAgo: (n) => `${n} sek temu`,
+        minAgo: (n) => `${n} min temu`,
+        hourAgo: (n) => `${n} godz temu`,
+        dayAgo: (n) => `${n} dni temu`,
+        weekAgo: (n) => `${n} tyg temu`,
+        monthAgo: (n) => `${n} mies temu`,
+        yearAgo: (n) => `${n} lat temu`,
+      },
+      tr: {
+        justNow: 'Şimdi',
+        secAgo: (n) => `${n} sn önce`,
+        minAgo: (n) => `${n} dk önce`,
+        hourAgo: (n) => `${n} sa önce`,
+        dayAgo: (n) => `${n} g önce`,
+        weekAgo: (n) => `${n} hf önce`,
+        monthAgo: (n) => `${n} ay önce`,
+        yearAgo: (n) => `${n} y önce`,
+      },
+      zh: {
+        justNow: '刚刚',
+        secAgo: (n) => `${n}秒前`,
+        minAgo: (n) => `${n}分钟前`,
+        hourAgo: (n) => `${n}小时前`,
+        dayAgo: (n) => `${n}天前`,
+        weekAgo: (n) => `${n}周前`,
+        monthAgo: (n) => `${n}个月前`,
+        yearAgo: (n) => `${n}年前`,
+      },
+      ja: {
+        justNow: 'たった今',
+        secAgo: (n) => `${n}秒前`,
+        minAgo: (n) => `${n}分前`,
+        hourAgo: (n) => `${n}時間前`,
+        dayAgo: (n) => `${n}日前`,
+        weekAgo: (n) => `${n}週間前`,
+        monthAgo: (n) => `${n}ヶ月前`,
+        yearAgo: (n) => `${n}年前`,
+      },
+      ar: {
+        justNow: 'الآن',
+        secAgo: (n) => `قبل ${n} ث`,
+        minAgo: (n) => `قبل ${n} د`,
+        hourAgo: (n) => `قبل ${n} س`,
+        dayAgo: (n) => `قبل ${n} ي`,
+        weekAgo: (n) => `قبل ${n} أ`,
+        monthAgo: (n) => `قبل ${n} ش`,
+        yearAgo: (n) => `قبل ${n} سنة`,
       },
     };
 
-    const format = timeFormats[lang] || timeFormats['ru'];
+    const format = timeFormats[lang] || timeFormats['en'];
 
-    if (diffMin < 1) return format.justNow;
+    if (diffSec < 10) return format.justNow;
+    if (diffSec < 60) return format.secAgo(diffSec);
     if (diffMin < 60) return format.minAgo(diffMin);
     if (diffHour < 24) return format.hourAgo(diffHour);
-    return format.dayAgo(diffDay);
+    if (diffDay < 7) return format.dayAgo(diffDay);
+    if (diffWeek < 5) return format.weekAgo(diffWeek);
+    if (diffMonth < 12) return format.monthAgo(diffMonth);
+    return format.yearAgo(diffYear);
   };
 
   // Close menu on click outside
