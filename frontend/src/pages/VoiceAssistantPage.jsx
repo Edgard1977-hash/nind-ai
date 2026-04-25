@@ -239,15 +239,13 @@ const VoiceAssistantPage = () => {
     }
     if (isRecording || isTranscribing || isSubmitting) return;
 
-    // Iframe preview blocks microphone → open page in a new tab where mic works
-    if (isInIframe) {
-      toast.info('Открываю страницу в новой вкладке для доступа к микрофону...');
-      window.open(window.location.href, '_blank', 'noopener,noreferrer');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast.error('Ваш браузер не поддерживает запись. Откройте на HTTPS в новой вкладке.');
       return;
     }
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      toast.error('Ваш браузер не поддерживает запись. Откройте на HTTPS в новой вкладке.');
+    if (!window.isSecureContext) {
+      toast.error('Запись возможна только на HTTPS');
       return;
     }
 
@@ -275,7 +273,6 @@ const VoiceAssistantPage = () => {
         if (ev.data && ev.data.size > 0) audioChunksRef.current.push(ev.data);
       };
       recorder.onstop = async () => {
-        // Stop visualizer
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
         if (streamRef.current) {
@@ -303,6 +300,19 @@ const VoiceAssistantPage = () => {
     } catch (err) {
       console.error('Mic access failed:', err);
       const name = err?.name || '';
+      // In an iframe without allow="microphone" the browser rejects silently.
+      // Fall back to opening a fresh tab where the page is top-level and mic works.
+      if (isInIframe) {
+        const link = document.createElement('a');
+        link.href = window.location.href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.info('Откройте страницу в новой вкладке, там микрофон будет работать');
+        return;
+      }
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         toast.error('Доступ к микрофону запрещён. Разрешите его в настройках браузера.');
       } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
@@ -312,7 +322,7 @@ const VoiceAssistantPage = () => {
       } else if (name === 'SecurityError') {
         toast.error('Запись возможна только на HTTPS. Откройте страницу в отдельной вкладке.');
       } else {
-        toast.error('Не удалось получить доступ к микрофону');
+        toast.error('Не удалось получить доступ к микрофону: ' + (err?.message || name));
       }
     }
   };
@@ -399,9 +409,20 @@ const VoiceAssistantPage = () => {
             {isTranscribing && 'Распознаю речь...'}
             {isSubmitting && !isTranscribing && 'Отправляю запрос...'}
             {!isRecording && !isTranscribing && !isSubmitting && (
-              isInIframe
-                ? 'Откройте страницу в отдельной вкладке для работы микрофона'
-                : <>Нажмите <Mic className="w-3.5 h-3.5 inline-block -mt-0.5" /> чтобы говорить</>
+              isInIframe ? (
+                <a
+                  href={window.location.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="voice-open-newtab"
+                  data-testid="voice-open-newtab"
+                >
+                  Открыть в новой вкладке
+                  <span className="voice-open-newtab-hint">для работы микрофона</span>
+                </a>
+              ) : (
+                <>Нажмите <Mic className="w-3.5 h-3.5 inline-block -mt-0.5" /> чтобы говорить</>
+              )
             )}
           </div>
         </div>

@@ -73,6 +73,17 @@ AI-powered content generation platform (video, motion design, logos, promo video
 
 ## Changelog
 
+### 2026-04-25 (motion text engine)
+- **Добавлено 5 типов кинетической типографии** на основе анализа референсных видео (`/app/backend/motion_text_effects.py`):
+  1. `motion_blur_in` — Apple keynote blur-in (по буквам/словам, gaussian blur 22px → 0)
+  2. `motion_char_fade` — char-by-char fade + 16px slide-up + опциональный gradient orange→purple на emphasis_word
+  3. `motion_apple_scale` — word-by-word scale 0.9→1.0 + slide-from-left 22px + fade
+  4. `motion_word_slide` — word slide-in слева с soft drop shadow (gaussian blur 0.6)
+  5. `motion_fade_underline` — char-by-char fade + scale + slide-up + animated draw-underline на emphasis_words
+- Все стили зарегистрированы в `render_universal_video` (`universal_effects.py`) и в LLM-промпте `generate_universal_script` (`server.py`)
+- Sanity-test: `/app/backend/tests/test_motion_text_effects.py` — все 5 эффектов рендерятся без ошибок
+- Реальная end-to-end проверка: prompt "Apple keynote style…" → LLM выдала сцены с `motion_blur_in`, `motion_char_fade` (gradient on "Manage"), `motion_apple_scale` → видео завершилось 100%
+
 ### 2026-02-21 (session 2, part 2)
 - **Voice Assistant — полноценная интеграция Whisper**
   - Backend: `POST /api/voice/transcribe` принимает audio (webm/wav/mp3/m4a) → `OpenAISpeechToText` (whisper-1) через EMERGENT_LLM_KEY → возвращает `{text}`. Проверено curl.

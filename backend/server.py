@@ -468,7 +468,22 @@ AVAILABLE SCENE TYPES (Cal.com style):
 6. "device_mockup" - 3D phone/tablet mockup showing video content
    {{"type": "device_mockup", "device": "phone", "rotation": 15, "bg": "white", "duration": 3.0}}
 
-STYLE RULES (Cal.com video style):
+7. "motion_blur_in" - Premium blur-in: each character appears from heavy blur (Apple keynote style)
+   {{"type": "motion_blur_in", "text": "Quer esse texto?", "bg": "white", "color": [0,0,0], "by_char": true, "duration": 1.6}}
+
+8. "motion_char_fade" - Char-by-char fade + 16px slide-up. Optional gradient (orange→purple) on emphasis_word
+   {{"type": "motion_char_fade", "text": "could mean 150 devices to manage.", "emphasis_word": "manage", "bg": "black", "color": [255,255,255], "use_gradient": true, "duration": 2.0}}
+
+9. "motion_apple_scale" - Word-by-word scale 0.9→1.0 + slide-from-left 22px + fade. Apple-style.
+   {{"type": "motion_apple_scale", "text": "Made Really Easy", "bg": "white", "color": [0,0,0], "duration": 1.5}}
+
+10. "motion_word_slide" - Word-by-word slide-in from left with subtle drop shadow
+    {{"type": "motion_word_slide", "text": "This one word slide in", "bg": "white", "color": [0,0,0], "shadow": true, "duration": 1.5}}
+
+11. "motion_fade_underline" - Char-by-char fade + scale 0.9→1.0 + slide-up + animated underline on emphasis_words
+    {{"type": "motion_fade_underline", "text": "Can animate like them.", "emphasis_words": ["animate", "them"], "bg": "white", "color": [0,0,0], "duration": 1.6}}
+
+STYLE RULES (Cal.com / Apple keynote video style):
 1. White background (#FFFFFF) is default
 2. Black text (#000000) on white background  
 3. Purple (#8A2BE2) for emphasis words that bounce in
@@ -476,6 +491,15 @@ STYLE RULES (Cal.com video style):
 5. Smooth ease-out animations, text NEVER goes outside screen
 6. Duration per scene: 1.0-2.0 seconds
 7. Use zoom_text for dramatic emphasis
+
+PREMIUM MOTION RULES (use motion_* types liberally for cinematic feel):
+- Use "motion_blur_in" for OPENING/HERO shots and dramatic single phrases (1.4–1.8s)
+- Use "motion_char_fade" with emphasis_word + gradient for KEY business/value words ("manage", "demands", "Introducing")
+- Use "motion_apple_scale" for SHORT punchy phrases ("Made Really Easy", "in Premiere Pro")
+- Use "motion_word_slide" for STORYTELLING / longer narrative phrases on white bg
+- Use "motion_fade_underline" with emphasis_words for CALL-TO-ACTION ("Can animate like them.")
+- Alternate background colors (white / black) between motion scenes for rhythm
+- Color: white text on black bg, black text on white bg, gradient applies automatically on emphasis
 
 KEEP EXACT TEXT - DO NOT translate or modify user's text!
 
