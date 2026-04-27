@@ -47,7 +47,7 @@ function App() {
           style: {
             background: '#FFFFFF',
             border: 'none',
-            borderRadius: '40px',
+            borderRadius: '37px',
             color: '#000',
           },
         }}
