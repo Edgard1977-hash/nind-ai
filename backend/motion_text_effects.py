@@ -206,21 +206,25 @@ def draw_text_apple_scale_slide(
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
 
+    eps = 0.99
     cur_x = start_x
     for i, w in enumerate(words):
         ww = word_widths[i]
         wp = _stagger_progress(progress, len(words), i, item_dur=0.55)
         eased = ease_out_cubic(wp)
         alpha = int(255 * eased)
-        slide = int(56 * (1 - eased))            # stronger slide-left
-        scale = 0.78 + 0.22 * eased              # scale 0.78 -> 1.0
-
-        scaled_size = max(8, int(fitted_size * scale))
-        scaled_font = get_font(scaled_size, weight)
-        scaled_w, scaled_h = _measure(w, scaled_font)
-        wx = cur_x - slide + (ww - scaled_w) // 2
-        wy = y + (text_h - scaled_h) // 2
-        d.text((wx, wy), w, font=scaled_font, fill=(*color, alpha))
+        slide = int(56 * (1 - eased))
+        if eased >= eps:
+            # Snap: pixel-perfect alignment on final frame
+            d.text((cur_x, y), w, font=font, fill=(*color, alpha))
+        else:
+            scale = 0.78 + 0.22 * eased
+            scaled_size = max(8, int(fitted_size * scale))
+            scaled_font = get_font(scaled_size, weight)
+            scaled_w, scaled_h = _measure(w, scaled_font)
+            wx = cur_x - slide + (ww - scaled_w) // 2
+            wy = y + (text_h - scaled_h) // 2
+            d.text((wx, wy), w, font=scaled_font, fill=(*color, alpha))
         cur_x += ww + space_w
 
     return Image.alpha_composite(base, layer)
@@ -308,6 +312,9 @@ def draw_text_fade_scale_up_underline(
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
 
+    # Snap to original font on final frames to avoid sub-pixel baseline drift
+    eps = 0.99
+    full_text_h = _measure("Mg", font)[1]
     cur_x = start_x
     char_x_start = []
     for i, ch in enumerate(chars):
@@ -317,14 +324,19 @@ def draw_text_fade_scale_up_underline(
             cp = _stagger_progress(progress, len(chars), i, item_dur=0.5)
             eased = ease_out_cubic(cp)
             alpha = int(255 * eased)
-            slide = int(38 * (1 - eased))            # bigger slide
-            scale = 0.6 + 0.4 * eased                # scale 0.6 -> 1.0 (very visible pop)
-            scaled_size = max(8, int(fitted_size * scale))
-            scaled_font = get_font(scaled_size, weight)
-            sw, sh = _measure(ch, scaled_font)
-            wx = cur_x + (cw - sw) // 2
-            wy = y + (text_h - sh) // 2 + slide
-            d.text((wx, wy), ch, font=scaled_font, fill=(*color, alpha))
+            slide = int(38 * (1 - eased))
+            if eased >= eps:
+                # Snap: use original font + zero slide so final frame is pixel-perfect aligned
+                d.text((cur_x, y), ch, font=font, fill=(*color, alpha))
+            else:
+                scale = 0.6 + 0.4 * eased
+                scaled_size = max(8, int(fitted_size * scale))
+                scaled_font = get_font(scaled_size, weight)
+                sw, _sh = _measure(ch, scaled_font)
+                wx = cur_x + (cw - sw) // 2
+                # All chars share the SAME y baseline (use full_text_h as height reference)
+                wy = y + (full_text_h - _measure(ch, font)[1]) // 2 + slide
+                d.text((wx, wy), ch, font=scaled_font, fill=(*color, alpha))
         cur_x += cw
 
     if emphasis_words:
