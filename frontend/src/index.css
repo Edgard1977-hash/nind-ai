@@ -7492,31 +7492,20 @@ body {
 [data-sonner-toast] {
   background: #FFFFFF !important;
   border: none !important;
-  border-radius: 21px !important;
+  border-radius: 18px !important;
   color: #000 !important;
   padding: 18px 22px !important;
   font-family: -apple-system, 'SF Pro Text', sans-serif !important;
   font-size: 15px !important;
   font-weight: 500 !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
-  touch-action: pan-x pan-y !important;
+  touch-action: none !important;
   cursor: grab !important;
+  user-select: none !important;
 }
 
 [data-sonner-toast]:active {
   cursor: grabbing !important;
-}
-
-[data-sonner-toast][data-swiping="true"] {
-  transition: none !important;
-}
-
-[data-sonner-toast][data-swipe-out="true"] {
-  animation: toastSwipeOut 0.2s ease forwards !important;
-}
-
-@keyframes toastSwipeOut {
-  to { opacity: 0; transform: translate(var(--swipe-amount-x, 0), var(--swipe-amount-y, -100%)); }
 }
 
 [data-sonner-toast][data-type="success"],

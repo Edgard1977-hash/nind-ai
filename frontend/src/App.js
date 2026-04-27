@@ -48,7 +48,7 @@ function App() {
           style: {
             background: '#FFFFFF',
             border: 'none',
-            borderRadius: '27px',
+            borderRadius: '24px',
             color: '#000',
           },
         }}
