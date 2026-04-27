@@ -43,11 +43,12 @@ function App() {
       <Toaster 
         position="top-center" 
         duration={3000}
+        swipeDirections={["top", "left", "right"]}
         toastOptions={{
           style: {
             background: '#FFFFFF',
             border: 'none',
-            borderRadius: '37px',
+            borderRadius: '27px',
             color: '#000',
           },
         }}
