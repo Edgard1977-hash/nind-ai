@@ -7490,46 +7490,30 @@ body {
 
 /* ===== CUSTOM TOAST / SONNER STYLES ===== */
 [data-sonner-toast] {
-  background: #1D1E20 !important;
+  background: #FFFFFF !important;
   border: none !important;
-  border-radius: 44px !important;
-  color: #fff !important;
+  border-radius: 34px !important;
+  color: #000 !important;
   padding: 14px 20px !important;
   font-family: -apple-system, 'SF Pro Text', sans-serif !important;
   font-size: 15px !important;
   font-weight: 500 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
 }
 
-[data-sonner-toast][data-type="success"] {
-  background: #1D1E20 !important;
-}
-
-[data-sonner-toast][data-type="error"] {
-  background: #1D1E20 !important;
-}
-
+[data-sonner-toast][data-type="success"],
+[data-sonner-toast][data-type="error"],
 [data-sonner-toast][data-type="info"] {
-  background: #1D1E20 !important;
+  background: #FFFFFF !important;
+  color: #000 !important;
 }
 
-/* Close button */
+[data-sonner-toast] [data-icon] {
+  color: #000 !important;
+}
+
 [data-sonner-toast] [data-close-button] {
-  background: transparent !important;
-  border: none !important;
-  color: rgba(255, 255, 255, 0.6) !important;
-  cursor: pointer !important;
-  width: 20px !important;
-  height: 20px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: color 0.2s ease !important;
-  margin-left: 8px !important;
-}
-
-[data-sonner-toast] [data-close-button]:hover {
-  color: rgba(255, 255, 255, 1) !important;
+  display: none !important;
 }
 
 /* Swipe animation */

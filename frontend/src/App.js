@@ -42,14 +42,13 @@ function App() {
       </BrowserRouter>
       <Toaster 
         position="top-center" 
-        closeButton
         duration={3000}
         toastOptions={{
           style: {
-            background: '#1D1E20',
-            border: '0.5px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '50px',
-            color: '#fff',
+            background: '#FFFFFF',
+            border: 'none',
+            borderRadius: '40px',
+            color: '#000',
           },
         }}
       />
