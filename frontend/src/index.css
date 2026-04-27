@@ -21,11 +21,11 @@
   --gray-medium: rgba(255, 255, 255, 0.5);
   --gray-dark: rgba(255, 255, 255, 0.15);
   --input-outer: #1D1E20;
-  --input-inner: #3D3F43;
+  --input-inner: #38393B;
   --card-bg: #3A3A3A;
   --panel-bg: #1D1E20;
   --radius-lg: 35px;
-  --radius-inner: 28px;
+  --radius-inner: 26px;
   --radius-md: 24px;
   --radius-btn: 35px;
 }
