@@ -119,3 +119,11 @@ AI-powered content generation platform (video, motion design, logos, promo video
 - Implemented new dark-themed UI
 - Added Google OAuth via Emergent-managed service
 - Created MainPage, AuthPopup, ProfilePage, VideoPage components
+
+## [2026-02-04] UI Bug Fix Batch
+- Light theme: expanded to cover main pages, upgrade/pricing cards, profile, hero subtitles, credits bar, buttons
+- Popup overlay: removed dark backdrop dimming (transparent) per user request
+- Popups (Language, Confirm, Appearance): rewrote swipe-to-close using pointer events (mouse + touch), smooth slide-down animation continues from drag position; tap-outside also triggers the same slide-down
+- Language popup: removed cyan tint on selected item — only white border shows selection; border-radius bumped +5px (19→24); inter-item gap increased (10→16px)
+- Upgrade page: explicit text colors in light/dark; pricing-card-top + pricing-card-bottom overrides for light theme
+

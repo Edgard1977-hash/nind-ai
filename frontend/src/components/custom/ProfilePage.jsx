@@ -87,22 +87,24 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
   const [showAppearancePopup, setShowAppearancePopup] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(currentLang || localStorage.getItem('slind_language') || 'en');
   const [showConfirmPopup, setShowConfirmPopup] = useState(null);
-  const [closingPopup, setClosingPopup] = useState(null); // 'language' | 'confirm' | null
   const [notifications, setNotifications] = useState([]);
   const fileInputRef = useRef(null);
+  const languagePopupRef = useRef(null);
+  const confirmPopupRef = useRef(null);
 
-  // Smooth popup close: play slide-down animation before unmount
-  const closePopupWithAnim = (which, setterFn, clearValue = false) => {
-    setClosingPopup(which);
-    setTimeout(() => {
-      setClosingPopup(null);
-      if (clearValue) {
-        setterFn(null);
-      } else {
-        setterFn(false);
-      }
-    }, 280);
+  // Smooth close: animate current position → offscreen (down), then unmount
+  const animateClose = (popupEl, onDone) => {
+    if (!popupEl) { onDone(); return; }
+    popupEl.style.transition = 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)';
+    popupEl.style.transform = 'translateY(100%)';
+    const done = () => { popupEl.removeEventListener('transitionend', done); onDone(); };
+    popupEl.addEventListener('transitionend', done);
+    // Safety fallback
+    setTimeout(done, 320);
   };
+
+  const closeLanguage = () => animateClose(languagePopupRef.current, () => setShowLanguagePopup(false));
+  const closeConfirm = () => animateClose(confirmPopupRef.current, () => setShowConfirmPopup(null));
 
   // Translation helper
   const t = (key) => getTranslation(selectedLanguage, key);
@@ -122,32 +124,46 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
     fetchNotifications();
   }, []);
 
-  // Swipe to close popup states
-  const [popupDragY, setPopupDragY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const popupStartY = useRef(0);
+  // Pointer-based swipe-to-close for popups (works for mouse + touch)
+  const popupDrag = useRef({ active: false, startY: 0, popupEl: null });
 
-  const handlePopupTouchStart = (e) => {
-    popupStartY.current = e.touches[0].clientY;
-    setIsDragging(true);
-  };
-
-  const handlePopupTouchMove = (e) => {
-    if (!isDragging) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - popupStartY.current;
-    if (diff > 0) {
-      setPopupDragY(diff);
-    }
-  };
-
-  const handlePopupTouchEnd = (closePopup) => {
-    if (popupDragY > 100) {
-      closePopup();
-    }
-    setPopupDragY(0);
-    setIsDragging(false);
-  };
+  const bindSwipe = (popupRef, onClose) => ({
+    onPointerDown: (e) => {
+      // Don't start drag when pressing interactive elements inside popup
+      if (e.target.closest('button, input, a, textarea, select')) return;
+      const popupEl = popupRef.current;
+      if (!popupEl) return;
+      popupDrag.current = { active: true, startY: e.clientY, popupEl };
+      popupEl.style.transition = 'none';
+      try { e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+    },
+    onPointerMove: (e) => {
+      const s = popupDrag.current;
+      if (!s.active) return;
+      const dy = Math.max(0, e.clientY - s.startY);
+      s.popupEl.style.transform = `translateY(${dy}px)`;
+    },
+    onPointerUp: (e) => {
+      const s = popupDrag.current;
+      if (!s.active) return;
+      s.active = false;
+      const dy = Math.max(0, e.clientY - s.startY);
+      s.popupEl.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1)';
+      if (dy > 100) {
+        s.popupEl.style.transform = 'translateY(100%)';
+        setTimeout(() => onClose && onClose(), 260);
+      } else {
+        s.popupEl.style.transform = '';
+      }
+    },
+    onPointerCancel: () => {
+      const s = popupDrag.current;
+      if (!s.active) return;
+      s.active = false;
+      s.popupEl.style.transition = 'transform 0.2s ease';
+      s.popupEl.style.transform = '';
+    },
+  });
 
   const fetchNotifications = async () => {
     try {
@@ -432,16 +448,14 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
 
         {showLanguagePopup && (
           <div
-            className={`popup-overlay ${closingPopup === 'language' ? 'closing' : ''}`}
-            onClick={() => closePopupWithAnim('language', setShowLanguagePopup)}
+            className="popup-overlay"
+            onClick={closeLanguage}
           >
             <div 
               className="language-popup" 
+              ref={languagePopupRef}
               onClick={e => e.stopPropagation()}
-              onTouchStart={handlePopupTouchStart}
-              onTouchMove={handlePopupTouchMove}
-              onTouchEnd={() => handlePopupTouchEnd(() => closePopupWithAnim('language', setShowLanguagePopup))}
-              style={{ transform: `translateY(${popupDragY}px)` }}
+              {...bindSwipe(languagePopupRef, () => setShowLanguagePopup(false))}
             >
               <div className="popup-handle" />
               <h3 className="popup-title">{t('selectLanguage')}</h3>
@@ -464,23 +478,21 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         {/* Confirm Popup */}
         {showConfirmPopup && (
           <div
-            className={`popup-overlay ${closingPopup === 'confirm' ? 'closing' : ''}`}
-            onClick={() => closePopupWithAnim('confirm', setShowConfirmPopup, true)}
+            className="popup-overlay"
+            onClick={closeConfirm}
           >
             <div 
               className="confirm-popup" 
+              ref={confirmPopupRef}
               onClick={e => e.stopPropagation()}
-              onTouchStart={handlePopupTouchStart}
-              onTouchMove={handlePopupTouchMove}
-              onTouchEnd={() => handlePopupTouchEnd(() => closePopupWithAnim('confirm', setShowConfirmPopup, true))}
-              style={{ transform: `translateY(${popupDragY}px)` }}
+              {...bindSwipe(confirmPopupRef, () => setShowConfirmPopup(null))}
             >
               <div className="popup-handle" />
               <h3 className="confirm-popup-title">{t('areYouSure')}</h3>
               <div className="confirm-popup-buttons">
                 <button 
                   className="confirm-btn-back"
-                  onClick={() => setShowConfirmPopup(null)}
+                  onClick={closeConfirm}
                 >
                   {t('noBack')}
                 </button>

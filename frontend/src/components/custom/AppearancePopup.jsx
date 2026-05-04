@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Appearance popup: System / Light / Dark theme picker
 const SunIcon = () => (
@@ -55,11 +55,20 @@ const TITLES = {
 };
 
 const AppearancePopup = ({ onClose, lang = "ru" }) => {
-  const [closing, setClosing] = useState(false);
   const [selected, setSelected] = useState(
     localStorage.getItem(APPEARANCE_KEY) || "system"
   );
+  const popupRef = useRef(null);
+  const drag = useRef({ active: false, startY: 0 });
   const t = TITLES[lang] || TITLES.en;
+
+  const doClose = () => {
+    const el = popupRef.current;
+    if (!el) { onClose && onClose(); return; }
+    el.style.transition = 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)';
+    el.style.transform = 'translateY(100%)';
+    setTimeout(() => onClose && onClose(), 280);
+  };
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") doClose(); };
@@ -68,9 +77,30 @@ const AppearancePopup = ({ onClose, lang = "ru" }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const doClose = () => {
-    setClosing(true);
-    setTimeout(() => onClose && onClose(), 280);
+  const onPointerDown = (e) => {
+    if (e.target.closest('button, input, a, textarea, select')) return;
+    const el = popupRef.current;
+    if (!el) return;
+    drag.current = { active: true, startY: e.clientY };
+    el.style.transition = 'none';
+    try { e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+  };
+  const onPointerMove = (e) => {
+    if (!drag.current.active) return;
+    const dy = Math.max(0, e.clientY - drag.current.startY);
+    popupRef.current.style.transform = `translateY(${dy}px)`;
+  };
+  const onPointerUp = (e) => {
+    if (!drag.current.active) return;
+    drag.current.active = false;
+    const dy = Math.max(0, e.clientY - drag.current.startY);
+    popupRef.current.style.transition = 'transform 0.26s cubic-bezier(0.4, 0, 0.2, 1)';
+    if (dy > 100) {
+      popupRef.current.style.transform = 'translateY(100%)';
+      setTimeout(() => onClose && onClose(), 260);
+    } else {
+      popupRef.current.style.transform = '';
+    }
   };
 
   const pick = (mode) => {
@@ -87,11 +117,19 @@ const AppearancePopup = ({ onClose, lang = "ru" }) => {
 
   return (
     <div
-      className={`popup-overlay appearance-popup-overlay ${closing ? "closing" : ""}`}
+      className="popup-overlay appearance-popup-overlay"
       onClick={doClose}
       data-testid="appearance-popup"
     >
-      <div className="appearance-popup" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="appearance-popup"
+        ref={popupRef}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
         <div className="popup-handle" />
         <h2 className="popup-title">{t.title}</h2>
         <div className="appearance-grid">
