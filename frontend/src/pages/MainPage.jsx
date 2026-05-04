@@ -124,7 +124,7 @@ const EXAMPLE_VIDEOS = [
 ];
 
 // Smooth progress component
-const SmoothProgressCard = ({ video }) => {
+const SmoothProgressCard = ({ video, onStop }) => {
   const [displayProgress, setDisplayProgress] = useState(0);
   const targetProgress = Math.min(Math.floor(video.progress || 0), 99);
 
@@ -159,9 +159,10 @@ const SmoothProgressCard = ({ video }) => {
             className="generating-stop-btn"
             onClick={(e) => {
               e.stopPropagation();
-              console.log('Stop generation:', video.id);
+              onStop && onStop(video);
             }}
             title="Stop generation"
+            data-testid={`stop-generation-${video.id}`}
           >
             <div className="stop-icon" />
           </button>
@@ -387,19 +388,51 @@ export const MainPage = () => {
     return format.yearAgo(diffYear);
   };
 
-  // Close menu on click outside
+  // Close menu on click outside, scroll, or resize
   useEffect(() => {
+    if (!openMenu) return;
     const handleClickOutside = (e) => {
-      if (openMenu && !e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
+      if (!e.target.closest('.creation-menu-wrapper') && !e.target.closest('.creation-menu-dropdown')) {
         setOpenMenu(null);
       }
     };
-    
+    const closeMenu = () => setOpenMenu(null);
+
     document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    window.addEventListener('scroll', closeMenu, true);
+    window.addEventListener('resize', closeMenu);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('scroll', closeMenu, true);
+      window.removeEventListener('resize', closeMenu);
+    };
   }, [openMenu]);
 
-  // Handle video download
+  // Handle stop generation — cancels the video, removes the card, restores prompt + attachments
+  const handleStopGeneration = async (video) => {
+    try {
+      // Restore prompt + any saved attachments back into the input
+      if (video.prompt) {
+        setPrompt(video.prompt);
+      }
+      if (Array.isArray(video.savedAttachments) && video.savedAttachments.length > 0) {
+        setAttachments(video.savedAttachments);
+      }
+      // Optimistically remove the card from UI
+      setGeneratingVideos(prev => prev.filter(v => v.id !== video.id));
+      // Call backend to cancel/delete the project
+      try {
+        await axios.delete(`${API}/videos/${video.id}`);
+      } catch (err) {
+        console.warn('Cancel API failed (non-fatal):', err);
+      }
+      toast.success('Генерация остановлена');
+    } catch (e) {
+      console.error('Stop failed:', e);
+      toast.error('Не удалось остановить');
+    }
+  };
+
   const handleDownload = async (video) => {
     try {
       const videoUrl = video.video_url?.startsWith('http') ? video.video_url : `${BACKEND_URL}${video.video_url}`;
@@ -882,6 +915,8 @@ export const MainPage = () => {
           const newVideo = {
             id: response.data.id,
             title: currentPrompt,
+            prompt: currentPrompt,
+            savedAttachments: currentAttachments,
             status: 'generating',
             progress: 0
           };
@@ -920,6 +955,8 @@ export const MainPage = () => {
       const newVideo = {
         id: response.data.id,
         title: currentPrompt,
+        prompt: currentPrompt,
+        savedAttachments: currentAttachments,
         status: 'generating',
         progress: 5
       };
@@ -1045,6 +1082,7 @@ export const MainPage = () => {
         onUpdateUser={handleUpdateUser}
         currentLang={currentLang}
         onLanguageChange={handleLanguageChange}
+        onUpgrade={() => { setShowProfile(false); navigate('/upgrade'); }}
       />
     );
   }
@@ -1156,12 +1194,12 @@ export const MainPage = () => {
                     onClick={() => fileInputRef.current?.click()}
                     data-testid="attach-button"
                   >
-                    <PlusIconSolid className="w-6 h-6" />
+                    <PlusIconSolid className="w-5 h-5" />
                   </button>
 
                   <div className="input-bottom-right">
                     <button className="input-icon-btn" onClick={() => navigate('/voice')} data-testid="mic-button">
-                      <MicIcon className="w-6 h-6" />
+                      <MicIcon className="w-5 h-5" />
                     </button>
                     
                     <button 
@@ -1270,7 +1308,7 @@ export const MainPage = () => {
                     ) : (generatingVideos.length > 0 || userVideos.length > 0) ? (
                       <div className="creations-grid-real">
                         {generatingVideos.map((video) => (
-                          <SmoothProgressCard key={video.id} video={video} />
+                          <SmoothProgressCard key={video.id} video={video} onStop={handleStopGeneration} />
                         ))}
                         {userVideos.map((video) => (
                           <div 
@@ -1316,14 +1354,21 @@ export const MainPage = () => {
                                   } else {
                                     const btn = e.currentTarget;
                                     const rect = btn.getBoundingClientRect();
-                                    const menuHeight = 130;
-                                    const menuWidth = 140;
+                                    const menuHeight = 132;
+                                    const menuWidth = 144;
                                     
-                                    let top = rect.top - menuHeight - 8;
+                                    // Always anchor menu BELOW the button if there's room,
+                                    // otherwise place it ABOVE — never both modes alternating mid-scroll.
+                                    const spaceBelow = window.innerHeight - rect.bottom;
+                                    const placeBelow = spaceBelow >= menuHeight + 12;
+                                    const top = placeBelow
+                                      ? rect.bottom + 8
+                                      : Math.max(10, rect.top - menuHeight - 8);
                                     let left = rect.left + rect.width / 2;
-                                    
-                                    top = Math.max(10, top);
-                                    left = Math.min(Math.max(left, menuWidth / 2 + 10), window.innerWidth - menuWidth / 2 - 10);
+                                    left = Math.min(
+                                      Math.max(left, menuWidth / 2 + 10),
+                                      window.innerWidth - menuWidth / 2 - 10
+                                    );
                                     
                                     setOpenMenu({ id: video.id, top, left });
                                   }

@@ -10,6 +10,10 @@ import AuthPage from "@/pages/AuthPage";
 import AuthCallback from "@/components/custom/AuthCallback";
 import UpgradePage from "@/pages/UpgradePage";
 import VoiceAssistantPage from "@/pages/VoiceAssistantPage";
+import { initThemeFromStorage } from "@/components/custom/AppearancePopup";
+
+// Initialize theme from localStorage before any render
+initThemeFromStorage();
 
 // Check for session_id in URL before rendering normal routes
 function AppRouter() {
@@ -77,18 +81,19 @@ function useToastSwipeToDismiss() {
       s.active = false;
       const dx = e.clientX - s.startX;
       const dy = e.clientY - s.startY;
-      const swiped = Math.abs(dx) > TRIGGER || -dy > TRIGGER;
-      toastEl.style.transition = 'transform 0.18s ease, opacity 0.18s ease';
-      if (swiped) {
-        const outX = Math.sign(dx) * 600;
-        const outY = -dy > TRIGGER ? -300 : 0;
+      const swipedUp = -dy > TRIGGER;
+      const swipedSide = Math.abs(dx) > TRIGGER;
+      toastEl.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease';
+      if (swipedUp || swipedSide) {
+        // Animate UP and OUT (consistent feel even when swiping sideways)
+        const outX = swipedSide ? Math.sign(dx) * 600 : 0;
+        const outY = swipedUp ? -260 : -120;
         toastEl.style.transform = `translate(${outX}px, ${outY}px)`;
         toastEl.style.opacity = '0';
         if (s.id) {
-          setTimeout(() => toast.dismiss(s.id), 180);
+          setTimeout(() => toast.dismiss(s.id), 200);
         } else {
-          // Fallback: dismiss all
-          setTimeout(() => toast.dismiss(), 180);
+          setTimeout(() => toast.dismiss(), 200);
         }
       } else {
         toastEl.style.transform = '';

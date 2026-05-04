@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, X, Globe, Bell, HelpCircle, LogOut, Trash2 }
 import { toast } from "sonner";
 import axios from "axios";
 import { translations, getTranslation } from "../../utils/translations";
+import AppearancePopup from "./AppearancePopup";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -61,7 +62,7 @@ const getProgressColor = (percentage) => {
   if (percentage === 0) return '#3A3B3F';
   if (percentage < 15) return '#FF4444';
   if (percentage < 30) return '#FFD700';
-  return '#FFFFFF';
+  return '#0F7DFE';
 };
 
 // Show success toast
@@ -83,6 +84,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
   const [usernameError, setUsernameError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [showLanguagePopup, setShowLanguagePopup] = useState(false);
+  const [showAppearancePopup, setShowAppearancePopup] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(currentLang || localStorage.getItem('slind_language') || 'en');
   const [showConfirmPopup, setShowConfirmPopup] = useState(null);
   const [notifications, setNotifications] = useState([]);
@@ -326,7 +328,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
           </div>
           <button 
             className="get-more-upgrade-btn"
-            onClick={() => {/* TODO: Upgrade flow */}}
+            onClick={() => onUpgrade && onUpgrade()}
             data-testid="upgrade-btn"
           >
             {t('upgrade')}
@@ -345,6 +347,19 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
           >
             <Globe className="settings-menu-icon" />
             <span className="settings-menu-text">{t('language')}</span>
+            <ChevronIcon className="settings-menu-arrow" />
+          </button>
+
+          <button 
+            className="settings-menu-item"
+            onClick={() => setShowAppearancePopup(true)}
+            data-testid="appearance-btn"
+          >
+            <svg className="settings-menu-icon" width="22" height="22" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="11" stroke="currentColor" strokeWidth="2" />
+              <path d="M16 5 A11 11 0 0 1 16 27 Z" fill="currentColor" />
+            </svg>
+            <span className="settings-menu-text">{selectedLanguage === 'ru' ? 'Внешний вид' : 'Appearance'}</span>
             <ChevronIcon className="settings-menu-arrow" />
           </button>
 
@@ -394,6 +409,13 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         </div>
 
         {/* Language Popup */}
+        {showAppearancePopup && (
+          <AppearancePopup 
+            onClose={() => setShowAppearancePopup(false)} 
+            lang={selectedLanguage}
+          />
+        )}
+
         {showLanguagePopup && (
           <div className="popup-overlay" onClick={() => setShowLanguagePopup(false)}>
             <div 
