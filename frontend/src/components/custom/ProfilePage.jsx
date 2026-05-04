@@ -87,8 +87,22 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
   const [showAppearancePopup, setShowAppearancePopup] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(currentLang || localStorage.getItem('slind_language') || 'en');
   const [showConfirmPopup, setShowConfirmPopup] = useState(null);
+  const [closingPopup, setClosingPopup] = useState(null); // 'language' | 'confirm' | null
   const [notifications, setNotifications] = useState([]);
   const fileInputRef = useRef(null);
+
+  // Smooth popup close: play slide-down animation before unmount
+  const closePopupWithAnim = (which, setterFn, clearValue = false) => {
+    setClosingPopup(which);
+    setTimeout(() => {
+      setClosingPopup(null);
+      if (clearValue) {
+        setterFn(null);
+      } else {
+        setterFn(false);
+      }
+    }, 280);
+  };
 
   // Translation helper
   const t = (key) => getTranslation(selectedLanguage, key);
@@ -417,13 +431,16 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         )}
 
         {showLanguagePopup && (
-          <div className="popup-overlay" onClick={() => setShowLanguagePopup(false)}>
+          <div
+            className={`popup-overlay ${closingPopup === 'language' ? 'closing' : ''}`}
+            onClick={() => closePopupWithAnim('language', setShowLanguagePopup)}
+          >
             <div 
               className="language-popup" 
               onClick={e => e.stopPropagation()}
               onTouchStart={handlePopupTouchStart}
               onTouchMove={handlePopupTouchMove}
-              onTouchEnd={() => handlePopupTouchEnd(() => setShowLanguagePopup(false))}
+              onTouchEnd={() => handlePopupTouchEnd(() => closePopupWithAnim('language', setShowLanguagePopup))}
               style={{ transform: `translateY(${popupDragY}px)` }}
             >
               <div className="popup-handle" />
@@ -437,9 +454,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
                   >
                     <span className="language-flag">{lang.flag}</span>
                     <span className="language-name">{lang.name}</span>
-                    <div className={`language-radio ${selectedLanguage === lang.code ? 'selected' : ''}`}>
-                      <div className="language-radio-inner" />
-                    </div>
                   </button>
                 ))}
               </div>
@@ -449,13 +463,16 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
 
         {/* Confirm Popup */}
         {showConfirmPopup && (
-          <div className="popup-overlay" onClick={() => setShowConfirmPopup(null)}>
+          <div
+            className={`popup-overlay ${closingPopup === 'confirm' ? 'closing' : ''}`}
+            onClick={() => closePopupWithAnim('confirm', setShowConfirmPopup, true)}
+          >
             <div 
               className="confirm-popup" 
               onClick={e => e.stopPropagation()}
               onTouchStart={handlePopupTouchStart}
               onTouchMove={handlePopupTouchMove}
-              onTouchEnd={() => handlePopupTouchEnd(() => setShowConfirmPopup(null))}
+              onTouchEnd={() => handlePopupTouchEnd(() => closePopupWithAnim('confirm', setShowConfirmPopup, true))}
               style={{ transform: `translateY(${popupDragY}px)` }}
             >
               <div className="popup-handle" />

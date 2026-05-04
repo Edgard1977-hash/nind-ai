@@ -35,58 +35,61 @@
 
 /* === LIGHT THEME === */
 [data-theme="light"] {
-  --bg-main: #F5F5F7;
-  --white: #1A1A1C;
-  --gray-light: rgba(0, 0, 0, 0.7);
-  --gray-medium: rgba(0, 0, 0, 0.5);
-  --gray-dark: rgba(0, 0, 0, 0.15);
+  --bg-main: #F2F2F7;
   --input-outer: #E5E5EA;
   --input-inner: #FFFFFF;
   --card-bg: #FFFFFF;
   --panel-bg: #FFFFFF;
   --popup-bg: #FFFFFF;
   --text-primary: #1A1A1C;
-  --text-secondary: rgba(0, 0, 0, 0.7);
+  --text-secondary: rgba(0, 0, 0, 0.6);
 }
 
 [data-theme="light"] body {
-  background: var(--bg-main) !important;
-  color: var(--text-primary);
+  background: #F2F2F7 !important;
+  color: #1A1A1C;
 }
 
-/* === LIGHT THEME — element-level overrides === */
-[data-theme="light"] .input-outer,
+/* === LIGHT THEME — targeted overrides, minimal and clean === */
 [data-theme="light"] .create-input-area,
-[data-theme="light"] .create-center-section-landing .create-input-area {
+[data-theme="light"] .input-outer {
   background: #E5E5EA !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 [data-theme="light"] .input-inner {
   background: #FFFFFF !important;
-  color: #1A1A1C !important;
 }
 
 [data-theme="light"] .input-inner textarea,
-[data-theme="light"] .input-inner input {
+[data-theme="light"] .input-inner input,
+[data-theme="light"] .create-content-v2 .input-inner input {
   color: #1A1A1C !important;
+  caret-color: #1A1A1C;
 }
 
 [data-theme="light"] .input-inner textarea::placeholder,
 [data-theme="light"] .input-inner input::placeholder {
-  color: rgba(0, 0, 0, 0.4) !important;
+  color: rgba(0, 0, 0, 0.42) !important;
 }
 
 [data-theme="light"] .hero-headline,
-[data-theme="light"] .hero-subtitle,
 [data-theme="light"] .hero-title,
 [data-theme="light"] .section-title,
 [data-theme="light"] .creation-title,
-[data-theme="light"] .video-title,
-[data-theme="light"] .settings-menu-text,
 [data-theme="light"] .profile-name,
-[data-theme="light"] .profile-handle,
-[data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3 {
+[data-theme="light"] .settings-menu-text,
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] .nav-link,
+[data-theme="light"] .logo-text {
   color: #1A1A1C !important;
+}
+
+[data-theme="light"] .hero-subtitle,
+[data-theme="light"] .profile-handle {
+  color: rgba(0, 0, 0, 0.6) !important;
 }
 
 [data-theme="light"] .header-upgrade-btn {
@@ -94,16 +97,29 @@
   color: #FFFFFF !important;
 }
 
-[data-theme="light"] .creation-card,
+[data-theme="light"] .get-started-btn {
+  background: #1A1A1C !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .creation-card {
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
 [data-theme="light"] .credits-progress-card,
 [data-theme="light"] .settings-menu-card,
 [data-theme="light"] .delete-account-card {
   background: #FFFFFF !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 [data-theme="light"] .input-icon-btn {
-  color: rgba(0, 0, 0, 0.7) !important;
+  color: rgba(0, 0, 0, 0.65) !important;
+}
+
+[data-theme="light"] .input-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
 }
 
 [data-theme="light"] .input-send-btn {
@@ -111,23 +127,36 @@
   color: #FFFFFF !important;
 }
 
-[data-theme="light"] .header,
-[data-theme="light"] .top-bar {
-  background: rgba(245, 245, 247, 0.85) !important;
+/* Language item in light theme */
+[data-theme="light"] .language-item {
+  background: #F2F2F7 !important;
 }
 
-[data-theme="light"] .creation-card .video-overlay-info {
-  background: linear-gradient(to top, rgba(0,0,0,0.55), transparent) !important;
+[data-theme="light"] .language-item.selected {
+  border-color: #1A1A1C !important;
 }
 
-[data-theme="light"] [data-sonner-toast] {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
+/* Appearance card in light */
+[data-theme="light"] .appearance-card {
+  background: #F2F2F7 !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: #1A1A1C !important;
 }
 
-/* Smooth theme transition */
-html, body, .App, [class*="popup"], [class*="card"], [class*="panel"], [class*="page"] {
-  transition: background-color 0.32s ease, color 0.32s ease, border-color 0.32s ease;
+[data-theme="light"] .appearance-card.selected {
+  border: 2px solid #1A1A1C !important;
+}
+
+[data-theme="light"] .appearance-label,
+[data-theme="light"] .language-name {
+  color: #1A1A1C !important;
+}
+
+/* Smooth theme transition on critical containers only */
+body, .input-outer, .input-inner, .creation-card, .settings-menu-card,
+.credits-progress-card, .language-popup, .appearance-popup, .formats-popup,
+.auth-popup, .language-item, .appearance-card {
+  transition: background-color 0.28s ease, color 0.28s ease, border-color 0.28s ease;
 }
 
 * {
@@ -3438,7 +3467,7 @@ body {
 .language-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
 }
 
 .language-item {
@@ -3448,13 +3477,13 @@ body {
   padding: 14px 16px;
   background: #252629;
   border: 2px solid transparent;
-  border-radius: 14px;
+  border-radius: 19px;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .language-item:active {
-  background: #2A2B2F;
+  background: #252629;
 }
 
 .language-item.selected {

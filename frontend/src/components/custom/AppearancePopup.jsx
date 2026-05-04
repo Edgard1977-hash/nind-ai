@@ -28,9 +28,14 @@ export const applyTheme = (mode) => {
   const html = document.documentElement;
   let theme = mode;
   if (mode === "system") {
+    // Respect OS preference — default to dark if no preference
     theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   }
-  html.setAttribute("data-theme", theme);
+  if (theme === "dark") {
+    html.removeAttribute("data-theme");
+  } else {
+    html.setAttribute("data-theme", theme);
+  }
 };
 
 export const initThemeFromStorage = () => {
