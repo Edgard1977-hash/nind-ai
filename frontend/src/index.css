@@ -299,15 +299,199 @@
   color: rgba(0, 0, 0, 0.55) !important;
 }
 
+/* === Logged-in dashboard panels === */
+[data-theme="light"] .bottom-tabs-container {
+  background: #E5E5EA !important;
+}
+[data-theme="light"] .bottom-tabs-indicator {
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .bottom-tab {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="light"] .bottom-tab.active {
+  color: #1A1A1C !important;
+}
+[data-theme="light"] .bottom-panel-content,
+[data-theme="light"] .creations-empty-pattern {
+  background: #FFFFFF !important;
+  border-radius: 35px 35px 0 0;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Format cards (grids and carousels) */
+[data-theme="light"] .format-card-page {
+  background: #FFFFFF !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme="light"] .format-card-bg {
+  background: #FFFFFF !important;
+}
+[data-theme="light"] .format-preview-page {
+  background: #F2F2F7 !important;
+}
+[data-theme="light"] .format-card-gradient {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 100%) !important;
+}
+[data-theme="light"] .formats-page-title,
+[data-theme="light"] .format-name-page {
+  color: #1A1A1C !important;
+}
+[data-theme="light"] .formats-page-header {
+  background: transparent !important;
+}
+[data-theme="light"] .formats-back-btn {
+  background: #FFFFFF !important;
+  color: #1A1A1C !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Format filter chips */
+[data-theme="light"] .formats-filter-chip,
+[data-theme="light"] .filter-chip {
+  background: #E5E5EA !important;
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+[data-theme="light"] .formats-filter-chip.active,
+[data-theme="light"] .filter-chip.active {
+  background: #1A1A1C !important;
+  color: #FFFFFF !important;
+}
+
+/* Voice page */
+[data-theme="light"] .voice-assistant-page {
+  background: #FFFFFF !important;
+}
+[data-theme="light"] .voice-assistant-main {
+  background: #FFFFFF !important;
+}
+[data-theme="light"] .voice-assistant-bottom {
+  background: #FFFFFF !important;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.06);
+}
+[data-theme="light"] .voice-attachment-chip {
+  background: #F2F2F7 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme="light"] .voice-assistant-back {
+  background: #F2F2F7 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #1A1A1C !important;
+}
+[data-theme="light"] .voice-status-label,
+[data-theme="light"] .voice-open-newtab,
+[data-theme="light"] .voice-open-newtab-hint {
+  color: rgba(0, 0, 0, 0.65) !important;
+}
+[data-theme="light"] .voice-input-container {
+  background: #F2F2F7 !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme="light"] .voice-input-container input,
+[data-theme="light"] .voice-input-container textarea {
+  color: #1A1A1C !important;
+}
+[data-theme="light"] .voice-input-container input::placeholder,
+[data-theme="light"] .voice-input-container textarea::placeholder {
+  color: rgba(0, 0, 0, 0.42) !important;
+}
+
+/* Auth popup / modals */
+[data-theme="light"] .auth-popup,
+[data-theme="light"] .formats-popup,
+[data-theme="light"] .format-detail-popup,
+[data-theme="light"] .invite-popup {
+  background: #FFFFFF !important;
+}
+[data-theme="light"] .auth-popup-title,
+[data-theme="light"] .formats-popup-title {
+  color: #1A1A1C !important;
+}
+
+/* Format popup card */
+[data-theme="light"] .popup-format-card {
+  background: #FFFFFF !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Generation progress card */
+[data-theme="light"] .generation-progress-card,
+[data-theme="light"] .generation-progress {
+  background: #FFFFFF !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  color: #1A1A1C !important;
+}
+
+/* Video page */
+[data-theme="light"] .video-page-header,
+[data-theme="light"] .video-back-btn {
+  color: #1A1A1C !important;
+}
+[data-theme="light"] .video-back-btn {
+  background: #FFFFFF !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Tooltips / dropdowns */
+[data-theme="light"] .pricing-credits-dropdown-menu {
+  background: #FFFFFF !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .pricing-credits-dropdown-menu button {
+  color: #1A1A1C !important;
+}
+[data-theme="light"] .pricing-credits-dropdown-menu button:hover {
+  background: #F2F2F7 !important;
+}
+[data-theme="light"] .pricing-credits-dropdown-btn {
+  color: #1A1A1C !important;
+}
+
+/* Three-dot context menu */
+[data-theme="light"] .video-menu-dropdown,
+[data-theme="light"] .context-menu,
+[data-theme="light"] .menu-dropdown {
+  background: #FFFFFF !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+[data-theme="light"] .video-menu-dropdown button,
+[data-theme="light"] .context-menu button,
+[data-theme="light"] .menu-dropdown button {
+  color: #1A1A1C !important;
+}
+
+/* Inputs that aren't yet covered (search, etc) */
+[data-theme="light"] .formats-search,
+[data-theme="light"] .formats-search-input {
+  background: #FFFFFF !important;
+  color: #1A1A1C !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+}
+[data-theme="light"] .formats-search-input::placeholder {
+  color: rgba(0, 0, 0, 0.42) !important;
+}
+
+/* Misc text — footer, labels */
+[data-theme="light"] .empty-state-text,
+[data-theme="light"] .empty-state-title,
+[data-theme="light"] .creations-empty-text {
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+
 /* === LIGHT THEME — targeted overrides, minimal and clean === */
 [data-theme="light"] .create-input-area,
 [data-theme="light"] .input-outer {
-  background: #E5E5EA !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 [data-theme="light"] .input-inner {
   background: #FFFFFF !important;
+  border: 0.5px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="light"] .input-inner textarea,
