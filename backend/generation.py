@@ -226,6 +226,7 @@ async def _process_basic_body(db, project: dict, work_dir: Path, uploads_dir: Pa
 
     await _mark(db, project_id, status="processing", progress=8, progress_message="Writing the script...")
 
+    text_available = True
     plan = None
     try:
         raw = await get_text_provider().complete(
@@ -234,17 +235,23 @@ async def _process_basic_body(db, project: dict, work_dir: Path, uploads_dir: Pa
                 f"User prompt: {prompt}\n"
                 "Language should follow the prompt.\n"
                 "Return JSON with title, narration, and 3 scenes. "
-                'Each scene has image_prompt (a detailed visual description), '
-                'animation (zoom_in, zoom_out, pan_left, or pan_right), and duration (3 to 5).'
+                "Each scene has text (one short on-screen caption, not the whole prompt), "
+                "image_prompt (a visual description of a photograph; do not ask for words, "
+                "letters, or captions inside the image), "
+                "animation (zoom_in, zoom_out, pan_left, or pan_right), and duration (3 to 5)."
             ),
         )
         plan = _parse_json(raw)
     except ProviderNotConfigured:
+        text_available = False
         logger.info("Text provider is not configured; using the prompt as the image description")
     except Exception as exc:
-        logger.warning("Basic script generation failed, using fallback: %s", exc)
+        raise RuntimeError(f"Script generation failed: {exc}") from exc
 
-    if not plan or not plan.get("scenes"):
+    if text_available:
+        if not plan or not plan.get("scenes"):
+            raise RuntimeError("The text model did not return a scene list.")
+    elif not plan or not plan.get("scenes"):
         plan = _fallback_plan(prompt)
 
     scenes_out = []
@@ -255,7 +262,12 @@ async def _process_basic_body(db, project: dict, work_dir: Path, uploads_dir: Pa
     await _mark(db, project_id, progress=25, progress_message="Creating images...")
 
     for index, scene in enumerate(scenes):
-        image_prompt = (scene.get("image_prompt") or prompt or "cinematic still").strip()
+        image_prompt = (scene.get("image_prompt") or "").strip()
+        caption = (scene.get("text") or "").strip() if text_available else ""
+        if text_available and not image_prompt:
+            image_prompt = "A cinematic vertical photograph with no written text"
+        elif not image_prompt:
+            image_prompt = (prompt or "A cinematic vertical photograph").strip()
         animation = scene.get("animation") or "zoom_in"
         if animation not in ("zoom_in", "zoom_out", "pan_left", "pan_right"):
             animation = "zoom_in"
@@ -265,8 +277,14 @@ async def _process_basic_body(db, project: dict, work_dir: Path, uploads_dir: Pa
             duration = 4
         duration = min(8.0, max(2.0, duration))
 
+        visual_prompt = image_prompt
+        if text_available:
+            visual_prompt = (
+                "One photograph with no written words, letters, or captions in the frame. "
+                + image_prompt
+            )
         try:
-            image_bytes = await image_provider.generate(image_prompt, aspect_ratio="9:16")
+            image_bytes = await image_provider.generate(visual_prompt, aspect_ratio="9:16")
         except ProviderNotConfigured:
             used_placeholder = True
             logger.info("AI image provider is not configured; using a labeled placeholder still")
@@ -280,7 +298,7 @@ async def _process_basic_body(db, project: dict, work_dir: Path, uploads_dir: Pa
         image_url = f"/api/uploads/{image_name}"
         scenes_out.append(
             {
-                "text": scene.get("text") or "",
+                "text": caption,
                 "image_prompt": image_prompt,
                 "image_url": image_url,
                 "animation": animation,
@@ -292,6 +310,7 @@ async def _process_basic_body(db, project: dict, work_dir: Path, uploads_dir: Pa
             work_dir,
             duration=duration,
             animation=animation,
+            caption=caption,
         )
         if clip:
             clip_paths.append(clip)

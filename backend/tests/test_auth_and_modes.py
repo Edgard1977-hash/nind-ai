@@ -186,8 +186,11 @@ def client(monkeypatch, tmp_path):
     image = FakeImage()
     set_provider_overrides(text=text, image=image, video=FakeVideo())
 
-    async def fake_clip(image_url, output_path, duration=4.0, animation="zoom_in"):
+    captions = []
+
+    async def fake_clip(image_url, output_path, duration=4.0, animation="zoom_in", caption=""):
         output_path.mkdir(parents=True, exist_ok=True)
+        captions.append(caption)
         clip = output_path / "clip.mp4"
         clip.write_bytes(b"fake-mp4")
         return clip
@@ -200,12 +203,12 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr("generation.add_audio_to_video", fake_concat)
 
     with TestClient(server.app) as test_client:
-        yield test_client, fake, text, image
+        yield test_client, fake, text, image, captions
     clear_provider_overrides()
 
 
 def test_register_login_and_me(client):
-    http, _db, _text, _image = client
+    http, _db, _text, _image, _captions = client
     registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
     assert registered.status_code == 200, registered.text
     body = registered.json()
@@ -233,7 +236,7 @@ def test_register_login_and_me(client):
 
 
 def test_legacy_sha256_password_is_upgraded(client):
-    http, db, _text, _image = client
+    http, db, _text, _image, _captions = client
     legacy = hashlib.sha256(b"correct-horse").hexdigest()
     db.users.docs.append(
         {
@@ -254,7 +257,7 @@ def test_legacy_sha256_password_is_upgraded(client):
 
 
 def test_protected_generate_rejects_missing_token(client):
-    http, _db, _text, _image = client
+    http, _db, _text, _image, _captions = client
     response = http.post("/api/video/generate", json={"prompt": "a cat", "mode": "basic"})
     assert response.status_code == 401
     listing = http.get("/api/videos")
@@ -262,7 +265,7 @@ def test_protected_generate_rejects_missing_token(client):
 
 
 def test_basic_generation_uses_providers_and_debits_credits(client):
-    http, db, text, image = client
+    http, db, text, image, captions = client
     registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
     token = registered.json()["token"]
     response = http.post(
@@ -276,6 +279,10 @@ def test_basic_generation_uses_providers_and_debits_credits(client):
     assert text.calls, "text provider was not called"
     assert image.prompts, "image provider was not called"
     assert "night market" in text.calls[0]["user"]
+    sent_prompt = image.prompts[0][0]
+    assert "lanterns over a wet street" in sent_prompt
+    assert sent_prompt != "night market in the rain"
+    assert "no written words" in sent_prompt.lower()
     project = db.video_projects.docs[0]
     assert project["user_id"] == registered.json()["user_id"]
     assert project["user_id"] != "someone-else"
@@ -286,8 +293,38 @@ def test_basic_generation_uses_providers_and_debits_credits(client):
     assert video_file.exists()
 
 
+def test_basic_generation_uses_scene_captions_not_the_raw_prompt(client):
+    http, db, _text, image, captions = client
+
+    class ScriptedText:
+        async def complete(self, *, system, user, model=None):
+            return (
+                '{"title":"Market","narration":"Lanterns glow.",'
+                '"scenes":[{"text":"Wet lanterns","image_prompt":"red lanterns above a rainy street",'
+                '"animation":"zoom_in","duration":3}]}'
+            )
+
+    set_provider_overrides(text=ScriptedText())
+    registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
+    token = registered.json()["token"]
+    response = http.post(
+        "/api/video/generate",
+        json={"prompt": "make a video about a night market", "mode": "basic"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200, response.text
+    project = db.video_projects.docs[0]
+    assert project["status"] == "completed"
+    assert project["image_source"] == "provider"
+    assert project["scenes"][0]["text"] == "Wet lanterns"
+    assert captions == ["Wet lanterns"]
+    sent = image.prompts[0][0]
+    assert "red lanterns above a rainy street" in sent
+    assert "make a video about a night market" not in sent
+
+
 def test_enhanced_mode_is_not_configured(client):
-    http, db, _text, _image = client
+    http, db, _text, _image, _captions = client
     registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
     token = registered.json()["token"]
     response = http.post(
@@ -309,7 +346,7 @@ class MissingImageProvider:
 
 
 def test_basic_generation_without_image_provider_finishes(client):
-    http, db, _text, _image = client
+    http, db, _text, _image, _captions = client
     set_provider_overrides(image=MissingImageProvider())
     registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
     token = registered.json()["token"]
@@ -328,7 +365,7 @@ def test_basic_generation_without_image_provider_finishes(client):
 
 
 def test_stuck_processing_job_is_marked_failed(client):
-    http, db, _text, _image = client
+    http, db, _text, _image, _captions = client
     registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
     token = registered.json()["token"]
     user_id = registered.json()["user_id"]
@@ -353,7 +390,7 @@ def test_stuck_processing_job_is_marked_failed(client):
 
 
 def test_formats_route_exists(client):
-    http, _db, _text, _image = client
+    http, _db, _text, _image, _captions = client
     response = http.get("/api/formats")
     assert response.status_code == 200
     assert response.json()["formats"]

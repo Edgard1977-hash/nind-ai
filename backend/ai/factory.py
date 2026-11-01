@@ -8,7 +8,7 @@ from typing import Any, Optional
 from ai.base import ProviderNotConfigured
 from ai.image import FallbackImageProvider, GeminiImageProvider, OpenRouterImageProvider
 from ai.stt import OpenAICompatibleSTTProvider
-from ai.text import OpenAICompatibleTextProvider
+from ai.text import OpenAICompatibleTextProvider, build_text_provider
 from ai.tts import OpenAICompatibleTTSProvider
 from ai.video import build_video_provider
 
@@ -40,7 +40,7 @@ def clear_provider_overrides() -> None:
 
 
 def get_text_provider() -> OpenAICompatibleTextProvider:
-    return _overrides.get("text") or OpenAICompatibleTextProvider()
+    return _overrides.get("text") or build_text_provider()
 
 
 def get_image_provider() -> FallbackImageProvider:
@@ -66,7 +66,7 @@ def provider_status() -> dict:
     """Report which providers have credentials, without calling them."""
     video = get_video_provider()
     return {
-        "text": bool(os.getenv("OPENROUTER_API_KEY")),
+        "text": bool(os.getenv("OPENROUTER_API_KEY") or os.getenv("GEMINI_API_KEY")),
         "image_gemini": bool(os.getenv("GEMINI_API_KEY")),
         "image_openrouter_fallback": bool(os.getenv("OPENROUTER_API_KEY")),
         "tts": bool(os.getenv("TTS_API_KEY") or os.getenv("OPENAI_API_KEY")),

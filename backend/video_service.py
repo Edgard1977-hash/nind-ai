@@ -150,7 +150,23 @@ async def create_gameplay_clip(gameplay_type: str, output_path: Path, duration: 
     return None
 
 
-async def create_image_video(image_url: str, output_path: Path, duration: float = 4.0, animation: str = "zoom_in") -> Optional[Path]:
+def _ffmpeg_drawtext(text: str) -> str:
+    cleaned = " ".join((text or "").split())
+    return (
+        cleaned.replace("\\", "\\\\")
+        .replace(":", "\\:")
+        .replace("'", "\\'")
+        .replace("%", "\\%")
+    )
+
+
+async def create_image_video(
+    image_url: str,
+    output_path: Path,
+    duration: float = 4.0,
+    animation: str = "zoom_in",
+    caption: str = "",
+) -> Optional[Path]:
     """Create a video from an image with Ken Burns effect"""
     video_path = output_path / f"scene_{uuid.uuid4().hex[:8]}.mp4"
     
@@ -179,11 +195,20 @@ async def create_image_video(image_url: str, output_path: Path, duration: float 
         else:  # pan_right
             zoompan = f"zoompan=z='1.1':x='iw/2-(iw/zoom/2)-on/({duration}*25)*(iw/zoom/10)':d={int(duration*25)}:s=720x1280:fps=25"
         
+        vf = f"scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,{zoompan}"
+        caption_text = _ffmpeg_drawtext(caption)[:180]
+        if caption_text:
+            font = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            vf += (
+                f",drawtext=fontfile={font}:text='{caption_text}':fontsize=42:"
+                "fontcolor=white:borderw=3:bordercolor=black:"
+                "x=(w-text_w)/2:y=h-160"
+            )
         cmd = [
             "ffmpeg", "-y",
             "-loop", "1",
             "-i", str(image_path),
-            "-vf", f"scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,{zoompan}",
+            "-vf", vf,
             "-c:v", "libx264",
             "-preset", "ultrafast",
             "-t", str(duration),

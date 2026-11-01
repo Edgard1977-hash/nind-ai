@@ -73,9 +73,10 @@ See `backend/.env.example` and `frontend/.env.example` for the full list and com
 | `JWT_SECRET` | `openssl rand -hex 32` |
 | `CORS_ORIGINS`, `PUBLIC_BACKEND_URL`, `FRONTEND_URL` | The real browser origin and the public API origin |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web). Authorized redirect URI: `{PUBLIC_BACKEND_URL}/api/auth/google/callback` |
-| `OPENROUTER_API_KEY` | https://openrouter.ai/keys — text scripts, and image fallback |
+| `GEMINI_API_KEY` | https://aistudio.google.com/apikey — one free key runs text (`GEMINI_TEXT_MODEL`, default `gemini-2.5-flash`) and images (`gemini-2.5-flash-image`) |
+| `GEMINI_TEXT_MODEL` | Optional. Used for scripts only when `OPENROUTER_API_KEY` is empty |
+| `OPENROUTER_API_KEY` | Optional. https://openrouter.ai/keys — preferred for text, and the image fallback when Gemini is unset |
 | `OPENROUTER_MODEL` | Any OpenRouter model id, default `openai/gpt-4o-mini` |
-| `GEMINI_API_KEY` | https://aistudio.google.com/apikey — image generation with `gemini-2.5-flash-image` |
 | `STT_API_KEY`, `STT_BASE_URL`, `STT_MODEL` | OpenAI (`https://api.openai.com/v1`, `whisper-1`) or Groq (`https://api.groq.com/openai/v1`, `whisper-large-v3`, key at https://console.groq.com/keys) |
 | `TTS_API_KEY`, `TTS_BASE_URL`, `TTS_MODEL`, `TTS_VOICE` | An OpenAI-compatible speech endpoint. `OPENAI_API_KEY` is used when `TTS_API_KEY` is empty |
 
