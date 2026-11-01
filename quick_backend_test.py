@@ -3,7 +3,7 @@ import json
 
 def test_formats_api():
     """Quick test of the formats API"""
-    url = "http://localhost:8000/api/formats"
+    url = "https://ai-format-studio.preview.emergentagent.com/api/formats"
     
     try:
         response = requests.get(url, timeout=10)
@@ -65,7 +65,7 @@ def test_formats_api():
 
 def test_video_generation():
     """Quick test of video generation"""
-    url = "http://localhost:8000/api/video/generate"
+    url = "https://ai-format-studio.preview.emergentagent.com/api/video/generate"
     
     # Test regular format
     data = {

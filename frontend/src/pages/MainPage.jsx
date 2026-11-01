@@ -4,11 +4,19 @@ import { Plus, ArrowUp, X, Loader2, Search, ChevronRight, ChevronLeft, Check, Mo
 import { toast } from "sonner";
 import axios from "axios";
 import ProfilePage from "../components/custom/ProfilePage";
-import Logo from "../components/custom/Logo";
-import GenerationModeToggle from "../components/custom/GenerationModeToggle";
 import { getTranslation } from "../utils/translations";
-import { API, BACKEND_URL } from "../lib/backend";
-import { clearUser, loadUser } from "../lib/session";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+// Logo SVG component
+const LogoSvg = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="25 130 1360 420" className={className}>
+    <g>
+      <path d="M 97.00 546.37 C64.96,542.61 38.70,519.91 29.71,488.20 C27.57,480.64 27.52,479.13 27.23,405.59 C26.95,333.02 27.00,330.43 28.98,322.59 C36.12,294.22 57.79,272.03 85.13,265.08 C104.06,260.27 118.50,261.95 137.00,271.12 C146.08,275.62 148.73,277.56 156.64,285.46 C166.43,295.25 172.10,304.58 176.02,317.36 C179.55,328.87 180.00,338.89 179.99,404.97 C179.99,483.75 179.58,487.79 169.77,506.21 C164.02,517.01 149.05,531.58 137.45,537.68 C125.31,544.06 108.34,547.70 97.00,546.37 ZM 260.50 503.84 C242.54,500.46 231.50,494.62 218.44,481.56 C207.83,470.94 203.62,464.34 198.99,451.00 C195.93,442.19 195.16,423.24 195.07,354.47 C194.98,286.29 195.32,283.21 204.83,264.50 C208.58,257.11 211.10,253.81 218.95,246.00 C229.80,235.21 236.28,231.02 248.77,226.73 C255.78,224.32 259.72,223.63 268.78,223.24 C282.25,222.65 290.32,224.26 302.63,229.98 C320.14,238.12 332.34,250.33 339.87,267.27 C346.44,282.04 347.06,288.80 347.69,353.00 C348.44,430.46 347.23,445.08 338.57,462.50 C331.58,476.58 321.19,487.69 308.04,495.15 C293.79,503.24 275.30,506.62 260.50,503.84 ZM 1209.50 500.98 C1182.05,497.49 1154.42,481.64 1137.67,459.76 C1122.41,439.83 1113.49,419.15 1109.52,394.47 C1107.54,382.16 1107.51,350.71 1109.46,338.78 C1117.87,287.48 1152.09,246.54 1196.00,235.25 C1205.58,232.79 1208.16,232.55 1225.50,232.53 C1242.33,232.51 1245.47,232.78 1253.00,234.84 C1267.96,238.93 1284.16,248.64 1289.31,256.59 C1290.51,258.45 1291.84,259.98 1292.25,259.99 C1292.66,259.99 1293.00,233.03 1293.00,200.06 C1293.00,153.20 1293.27,139.94 1294.25,139.31 C1294.94,138.86 1313.89,138.37 1336.36,138.21 C1372.09,137.95 1377.52,138.11 1379.61,139.48 L 1382.00 141.05 L 1382.00 316.94 C1382.00,413.68 1381.73,493.55 1381.39,494.42 C1380.85,495.83 1376.13,496.00 1338.41,496.00 L 1296.04 496.00 L 1295.38 493.38 C1295.02,491.93 1294.97,486.49 1295.29,481.29 L 1295.85 471.82 L 1290.44 477.81 C1281.22,487.99 1266.13,496.25 1250.53,499.65 C1242.13,501.49 1219.28,502.23 1209.50,500.98 ZM 1257.84 425.55 C1272.94,421.54 1284.68,408.23 1290.63,388.40 C1293.37,379.26 1293.14,352.90 1290.24,343.81 C1283.13,321.53 1268.48,308.09 1249.38,306.31 C1238.34,305.28 1226.06,308.93 1217.25,315.87 C1205.18,325.38 1195.96,347.79 1196.01,367.50 C1196.06,387.92 1206.51,410.38 1220.42,419.94 C1230.00,426.54 1245.44,428.85 1257.84,425.55 ZM 412.61 494.42 C411.57,491.72 411.94,240.65 412.98,239.00 C413.80,237.71 419.62,237.50 455.38,237.50 C478.18,237.50 497.08,237.75 497.39,238.06 C497.70,238.37 498.08,243.54 498.23,249.56 L 498.50 260.50 L 506.50 252.45 C515.47,243.43 523.79,238.51 536.02,234.98 C545.40,232.27 569.68,231.16 580.99,232.93 C618.09,238.71 642.85,263.57 652.28,304.50 C654.28,313.19 654.37,316.68 654.72,404.76 L 655.08 496.02 L 611.29 495.76 L 567.50 495.50 L 566.99 416.50 C566.48,338.17 566.45,337.44 564.25,331.00 C561.17,321.98 555.79,315.16 549.00,311.68 C543.78,309.00 542.94,308.88 532.50,309.20 C522.57,309.52 521.04,309.82 516.77,312.36 C511.35,315.58 507.35,319.95 505.21,325.00 C501.17,334.55 501.07,336.69 501.04,417.75 L 501.00 496.00 L 457.11 496.00 C418.00,496.00 413.15,495.83 412.61,494.42 ZM 700.41 494.85 C699.30,493.07 699.46,240.13 700.56,239.08 C701.08,238.59 720.55,238.04 743.83,237.85 C784.79,237.51 786.21,237.56 787.58,239.44 C788.79,241.09 789.00,259.96 788.99,366.44 C788.98,435.22 788.70,492.51 788.37,493.75 L 787.77 496.00 L 744.44 496.00 C712.79,496.00 700.93,495.69 700.41,494.85 ZM 835.51 492.75 C834.59,487.65 835.40,239.27 836.33,238.33 C837.25,237.42 919.49,237.15 920.40,238.07 C920.71,238.38 921.09,243.55 921.23,249.57 L 921.50 260.50 L 929.50 252.39 C936.02,245.78 939.07,243.54 946.00,240.26 C960.84,233.25 964.90,232.49 987.00,232.56 C1005.32,232.62 1007.04,232.79 1015.45,235.36 C1043.32,243.90 1062.09,262.76 1071.54,291.72 C1077.68,310.54 1077.40,305.29 1077.75,404.76 L 1078.08 496.02 L 1034.29 495.76 L 990.50 495.50 L 990.00 416.00 L 989.50 336.50 L 987.18 330.76 C982.45,319.04 976.22,312.27 968.12,310.02 C963.36,308.69 950.98,308.72 945.69,310.07 C935.91,312.56 929.03,320.19 925.93,332.01 C924.10,338.98 924.00,343.51 924.00,417.68 L 924.00 496.00 L 880.05 496.00 L 836.09 496.00 L 835.51 492.75 ZM 700.25 216.34 C699.28,215.95 699.00,207.43 699.00,178.47 L 699.00 141.11 L 701.22 139.56 C703.15,138.21 708.97,138.00 744.57,138.00 C783.14,138.00 785.79,138.11 787.35,139.83 C788.82,141.46 789.00,145.64 789.00,178.72 C789.00,211.60 788.82,215.85 787.42,216.39 C785.53,217.12 702.05,217.06 700.25,216.34 Z" fill="currentColor"/>
+    </g>
+  </svg>
+);
 
 // Search icon SVG (user's custom)
 const SearchIconCustom = ({ className }) => (
@@ -185,7 +193,6 @@ export const MainPage = () => {
   // New states for logged-in view
   const [activeMainTab, setActiveMainTab] = useState("Creations");
   const [selectedFormat, setSelectedFormat] = useState(null);
-  const [generationMode, setGenerationMode] = useState("basic");
   const [showFormatPopup, setShowFormatPopup] = useState(false);
   const [showFormatsListPopup, setShowFormatsListPopup] = useState(false);
   const [generatePrompt, setGeneratePrompt] = useState(true);
@@ -624,10 +631,10 @@ export const MainPage = () => {
 
   // Check auth status and setup scroll listener
   useEffect(() => {
-    const savedUser = loadUser();
+    const savedUser = localStorage.getItem("slind_user");
     if (savedUser) {
       try {
-        const parsedUser = savedUser;
+        const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
         
         // Fetch videos immediately after setting user
@@ -652,7 +659,7 @@ export const MainPage = () => {
         
         setTimeout(fetchInitialVideos, 500);
       } catch (e) {
-        clearUser();
+        localStorage.removeItem("slind_user");
       }
     }
     
@@ -873,7 +880,7 @@ export const MainPage = () => {
         prompt: currentPrompt,
         format_id: selectedFormat?.id || "auto",
         language: "auto",
-        mode: generationMode,
+        user_id: user.id || user.user_id
       };
       
       if (currentAttachments.length > 0) {
@@ -1012,7 +1019,7 @@ export const MainPage = () => {
 
   const handleLogout = () => {
     setUser(null);
-    clearUser();
+    localStorage.removeItem("slind_user");
     setShowProfile(false);
   };
 
@@ -1107,7 +1114,7 @@ export const MainPage = () => {
         {/* Fixed Header */}
         <header className="main-fixed-header">
           <div className="header-left-logo">
-            <Logo className="header-logo-svg" />
+            <LogoSvg className="header-logo-svg" />
           </div>
           
           <div className="header-right-actions">
@@ -1147,7 +1154,6 @@ export const MainPage = () => {
 
               {/* Input area */}
               <div className="create-input-area">
-                <GenerationModeToggle mode={generationMode} onChange={setGenerationMode} />
                 <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
                   {attachments.length > 0 && (
                     <div className="attachments-row">
@@ -1226,8 +1232,8 @@ export const MainPage = () => {
                 <div 
                   className="bottom-tabs-indicator"
                   style={{
-                    left: '4px',
-                    width: 'calc(100% - 8px)'
+                    left: activeMainTab === 'Creations' ? '4px' : '50%',
+                    width: 'calc(50% - 4px)'
                   }}
                 />
                 <button 
@@ -1240,10 +1246,60 @@ export const MainPage = () => {
                 >
                   {t('myCreations')}
                 </button>
+                <button 
+                  className={`bottom-tab ${activeMainTab === 'Formats' ? 'active' : ''}`}
+                  onClick={() => setActiveMainTab('Formats')}
+                  data-testid="formats-tab"
+                >
+                  {t('formats')}
+                </button>
               </div>
 
               {/* Content */}
               <div className="bottom-panel-content">
+                {activeMainTab === 'Formats' ? (
+                  <>
+                    {/* My Custom Formats Section */}
+                    <div className="formats-section-my">
+                      <h3 className="formats-section-label">My</h3>
+                      {/* Empty state for now */}
+                      <div className="my-formats-empty">
+                        <p className="no-formats-text">No custom formats</p>
+                      </div>
+                    </div>
+
+                    {/* All Formats Section */}
+                    <div className="formats-section-all">
+                      <h3 className="formats-section-label">All</h3>
+                      <div className="formats-grid-logged">
+                        {FORMATS.slice(0, 8).map((format) => (
+                          <button 
+                            key={format.id}
+                            className="format-card-carousel-btn"
+                            onClick={() => handleSelectFormat(format)}
+                            data-testid={`create-format-${format.id}`}
+                          >
+                            <div 
+                              className="format-card-bg"
+                              style={{ backgroundColor: format.color }}
+                            />
+                            <div className="format-card-gradient" />
+                            <span className="format-card-name">{format.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <button 
+                      className="create-see-all-btn"
+                      onClick={() => navigate('/formats')}
+                      data-testid="create-see-all-btn"
+                    >
+                      {t('seeAll')}
+                    </button>
+                  </>
+                ) : (
+                  /* My Creations */
                   <>
                     {isLoadingVideos ? (
                       <div className="library-loading">
@@ -1357,7 +1413,7 @@ export const MainPage = () => {
                       </div>
                     )}
                   </>
-                
+                )}
               </div>
             </div>
           </div>
@@ -1549,7 +1605,7 @@ export const MainPage = () => {
         <div className="header-blur" />
         <div className="header-content">
           <div className={`logo-container ${headerScrolled ? 'hidden' : ''}`}>
-            <Logo className="logo-svg" />
+            <LogoSvg className="logo-svg" />
           </div>
           
           <span className={`header-overview-text ${headerScrolled ? 'visible' : ''}`}>Overview</span>
@@ -1886,7 +1942,7 @@ export const MainPage = () => {
           <div className="footer-card">
             
             <div className="footer-logo">
-              <Logo className="footer-logo-svg" />
+              <LogoSvg className="footer-logo-svg" />
             </div>
             
             <div className="footer-columns">

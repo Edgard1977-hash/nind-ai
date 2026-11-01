@@ -1,5 +1,3 @@
-from pathlib import Path
-_BACKEND = Path(__file__).resolve().parent
 import bpy
 import sys
 import math
@@ -55,7 +53,7 @@ def setup_render(width=1080, height=1920, samples=32):
 def render_frame(output_path, rotation_y=12):
     clear_scene()
     
-    gltf_path = str(_BACKEND / "iphone_model/source/iphone_simple.gltf")
+    gltf_path = "/app/backend/iphone_model/source/iphone_simple.gltf"
     
     try:
         bpy.ops.import_scene.gltf(filepath=gltf_path)

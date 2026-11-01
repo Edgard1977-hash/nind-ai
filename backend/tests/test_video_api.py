@@ -7,7 +7,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8000').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ai-format-studio.preview.emergentagent.com').rstrip('/')
 
 class TestHealthAndFormats:
     """Test health check and format endpoints"""
@@ -18,7 +18,7 @@ class TestHealthAndFormats:
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
-        assert data["message"] == "nind API"
+        assert data["message"] == "VidFlux AI API"
         print("PASS: API root endpoint works")
     
     def test_get_formats(self):

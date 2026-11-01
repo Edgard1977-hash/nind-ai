@@ -1,5 +1,3 @@
-from pathlib import Path
-_BACKEND = Path(__file__).resolve().parent
 """
 Blender script to render iPhone 15 Pro FRONT view (screen side)
 The previous renders showed the BACK of the phone - we need the FRONT
@@ -11,8 +9,8 @@ import sys
 import math
 
 # Paths
-MODEL_PATH = str(_BACKEND / "iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb")
-OUTPUT_DIR = str(_BACKEND / "iphone_15_renders_front")
+MODEL_PATH = "/app/backend/iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb"
+OUTPUT_DIR = "/app/backend/iphone_15_renders_front"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Resolution - high quality

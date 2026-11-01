@@ -1,42 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Download, Link2, RefreshCw, Trash2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Download, Share2, Home, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
-import { API, BACKEND_URL } from "@/lib/backend";
 
-const mediaUrl = (path) => {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  return `${BACKEND_URL}${path}`;
-};
-
-const formatWhen = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const formatDuration = (project) => {
-  const seconds = (project?.scenes || []).reduce(
-    (sum, scene) => sum + (Number(scene?.duration) || 0),
-    0
-  );
-  if (!seconds) return null;
-  const whole = Math.round(seconds);
-  const minutes = Math.floor(whole / 60);
-  const rest = whole % 60;
-  return minutes ? `${minutes}m ${rest}s` : `${rest}s`;
-};
-
-const modeLabel = (mode) => (mode === "enhanced" ? "Улучшенная" : "Базовая");
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 export const VideoPage = () => {
   const { id } = useParams();
@@ -44,19 +13,19 @@ export const VideoPage = () => {
   const [project, setProject] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(false);
 
   const fetchProject = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/video/${id}`);
       setProject(response.data);
-      setError(null);
       setIsLoading(false);
+
       if (response.data.status === "pending" || response.data.status === "processing") {
         setTimeout(fetchProject, 2000);
       }
     } catch (err) {
-      setError(err.response?.status === 401 ? "Sign in to view this video" : "This video could not be found");
+      console.error("Failed to fetch project:", err);
+      setError("Проект не найден");
       setIsLoading(false);
     }
   }, [id]);
@@ -65,180 +34,186 @@ export const VideoPage = () => {
     fetchProject();
   }, [fetchProject]);
 
-  const copyLink = async () => {
+  const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied");
+      toast.success("Ссылка скопирована!");
     } catch {
-      toast.error("Could not copy the link");
+      toast.error("Не удалось скопировать ссылку");
     }
   };
 
-  const download = () => {
-    if (!project?.video_url) return;
-    const link = document.createElement("a");
-    link.href = mediaUrl(project.video_url);
-    link.download = `${project.title || "nind"}.mp4`;
-    link.click();
-  };
-
-  const remove = async () => {
-    if (!window.confirm("Delete this video?")) return;
-    setBusy(true);
-    try {
-      await axios.delete(`${API}/videos/${id}`);
-      toast.success("Deleted");
-      navigate("/");
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not delete");
-      setBusy(false);
-    }
-  };
-
-  const regenerate = async () => {
-    if (!project?.prompt) {
-      navigate("/create");
-      return;
-    }
-    setBusy(true);
-    try {
-      const response = await axios.post(`${API}/video/generate`, {
-        prompt: project.prompt,
-        format_id: project.format_id || "auto",
-        language: project.language || "auto",
-        mode: project.mode || "basic",
-      });
-      toast.success("Generating a new version");
-      navigate(`/video/${response.data.id}`);
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not regenerate");
-      setBusy(false);
+  const handleDownload = () => {
+    if (project?.video_url) {
+      const link = document.createElement("a");
+      link.href = `${BACKEND_URL}${project.video_url}`;
+      link.download = `${project.title || "video"}.mp4`;
+      link.click();
+      toast.success("Скачивание началось!");
     }
   };
 
   if (isLoading) {
     return (
-      <div className="nind-video" data-testid="video-page">
-        <div className="nind-video-status">Loading…</div>
+      <div className="min-h-screen bg-black flex items-center justify-center" data-testid="video-page">
+        <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (error || !project) {
+  if (error) {
     return (
-      <div className="nind-video" data-testid="video-page">
-        <header className="nind-video-top">
-          <button type="button" className="nind-video-icon" onClick={() => navigate("/")} data-testid="back-button">
-            <ArrowLeft size={18} />
-          </button>
-        </header>
-        <div className="nind-video-status">
-          <h1>Video unavailable</h1>
-          <p>{error}</p>
-          <button type="button" className="nind-video-primary" onClick={() => navigate("/")}>
-            Back home
-          </button>
-        </div>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4" data-testid="video-page">
+        <p className="text-red-400 text-lg">{error}</p>
+        <button 
+          onClick={() => navigate("/")} 
+          className="glass-button px-6 py-3 rounded-full flex items-center gap-2"
+        >
+          <Home className="w-4 h-4" />
+          На главную
+        </button>
       </div>
     );
   }
 
-  const processing = project.status === "pending" || project.status === "processing";
-  const failed = project.status === "error" || project.status === "failed";
-  const ready = project.status === "completed" && project.video_url;
-  const when = formatWhen(project.created_at || project.completed_at);
-  const duration = formatDuration(project);
-  const formatName = (project.format_id || "auto").split("_").join(" ");
+  const isProcessing = project?.status === "pending" || project?.status === "processing";
+  const isCompleted = project?.status === "completed";
+  const hasError = project?.status === "error";
+  const hasVideo = project?.video_url;
 
   return (
-    <div className="nind-video" data-testid="video-page">
-      <header className="nind-video-top">
-        <button type="button" className="nind-video-icon" onClick={() => navigate("/")} data-testid="back-button" aria-label="Back">
-          <ArrowLeft size={18} />
+    <div className="min-h-screen bg-black" data-testid="video-page">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4">
+        <button
+          onClick={() => navigate("/")}
+          className="p-2 rounded-full glass-ios"
+          data-testid="back-button"
+        >
+          <ArrowLeft className="w-5 h-5" />
         </button>
-        <span className="nind-video-brand">nind</span>
-        <span className="nind-video-top-spacer" />
+        
+        <div className="flex gap-2">
+          {hasVideo && (
+            <button
+              onClick={handleDownload}
+              className="p-2 rounded-full glass-ios"
+              data-testid="download-button"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            onClick={handleShare}
+            className="p-2 rounded-full glass-ios"
+            data-testid="share-button"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
-      <main className="nind-video-layout">
-        <section className="nind-video-stage">
-          {processing && (
-            <div className="nind-video-progress" data-testid="video-progress">
-              <div className="nind-video-progress-track">
-                <div style={{ width: `${Math.min(100, project.progress || 4)}%` }} />
+      {/* Main Content */}
+      <main className="px-4 pb-8">
+        {/* Title */}
+        <h1 className="text-xl font-bold text-center mb-6 px-4">
+          {project?.title || "Генерация..."}
+        </h1>
+
+        {/* Processing State */}
+        {isProcessing && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="relative w-24 h-24 mb-6">
+              <div className="absolute inset-0 border-4 border-white/10 rounded-full" />
+              <div 
+                className="absolute inset-0 border-4 border-transparent border-t-white rounded-full animate-spin"
+                style={{ animationDuration: "1s" }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold">{project?.progress || 0}%</span>
               </div>
-              <strong>{project.progress || 0}%</strong>
-              <p>{project.progress_message || "Rendering…"}</p>
             </div>
-          )}
+            <p className="text-white/60 text-center">
+              {project?.progress_message || "Обработка..."}
+            </p>
+          </div>
+        )}
 
-          {failed && (
-            <div className="nind-video-progress nind-video-error" data-testid="video-error">
-              <strong>Could not finish this video</strong>
-              <p>{project.error || "The generation failed."}</p>
+        {/* Error State */}
+        {hasError && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="glass-ios rounded-2xl p-6 mb-4 max-w-sm text-center">
+              <p className="text-red-400 font-medium mb-2">Ошибка</p>
+              <p className="text-white/60 text-sm">{project?.error}</p>
             </div>
-          )}
-
-          {ready && (
-            <video
-              className="nind-video-player"
-              src={mediaUrl(project.video_url)}
-              poster={project.poster_url ? mediaUrl(project.poster_url) : undefined}
-              controls
-              playsInline
-              preload="metadata"
-              data-testid="video-element"
-            />
-          )}
-
-          {!processing && !failed && !ready && (
-            <div className="nind-video-progress">
-              <p>The file is not ready yet.</p>
-            </div>
-          )}
-        </section>
-
-        <section className="nind-video-meta">
-          <p className="nind-video-kicker">{modeLabel(project.mode)}</p>
-          <h1>{project.title || project.prompt || "Untitled"}</h1>
-          {project.prompt && project.title && project.prompt !== project.title && (
-            <p className="nind-video-prompt">{project.prompt}</p>
-          )}
-
-          <dl className="nind-video-facts">
-            <div>
-              <dt>Mode</dt>
-              <dd>{project.mode === "enhanced" ? "Enhanced" : "Basic"}</dd>
-            </div>
-            <div>
-              <dt>Format</dt>
-              <dd>{formatName}</dd>
-            </div>
-            <div>
-              <dt>Duration</dt>
-              <dd>{duration || "—"}</dd>
-            </div>
-            <div>
-              <dt>Created</dt>
-              <dd>{when || "—"}</dd>
-            </div>
-          </dl>
-
-          <div className="nind-video-actions">
-            <button type="button" className="nind-video-primary" onClick={download} disabled={!ready} data-testid="download-button">
-              <Download size={16} /> Download
-            </button>
-            <button type="button" className="nind-video-secondary" onClick={regenerate} disabled={busy} data-testid="regenerate-button">
-              <RefreshCw size={16} /> Regenerate
-            </button>
-            <button type="button" className="nind-video-secondary" onClick={copyLink} data-testid="share-button">
-              <Link2 size={16} /> Copy link
-            </button>
-            <button type="button" className="nind-video-danger" onClick={remove} disabled={busy} data-testid="delete-button">
-              <Trash2 size={16} /> Delete
+            <button
+              onClick={() => navigate("/create")}
+              className="glass-button px-6 py-3 rounded-full flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Попробовать снова
             </button>
           </div>
-        </section>
+        )}
+
+        {/* Completed State */}
+        {isCompleted && (
+          <div className="space-y-6">
+            {/* Video Player */}
+            {hasVideo ? (
+              <div className="aspect-[9/16] max-w-sm mx-auto bg-black rounded-3xl overflow-hidden border border-white/10">
+                <video
+                  src={`${BACKEND_URL}${project.video_url}`}
+                  poster={project.poster_url ? `${BACKEND_URL}${project.poster_url}` : undefined}
+                  controls
+                  playsInline
+                  preload="auto"
+                  className="w-full h-full object-contain"
+                  data-testid="video-element"
+                />
+              </div>
+            ) : (
+              <div className="aspect-[9/16] max-w-sm mx-auto bg-white/5 rounded-3xl flex items-center justify-center">
+                <p className="text-white/40">Видео недоступно</p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 max-w-sm mx-auto">
+              {hasVideo && (
+                <button
+                  onClick={handleDownload}
+                  className="flex-1 glass-button py-4 rounded-[40px] font-semibold flex items-center justify-center gap-2"
+                  data-testid="download-btn-main"
+                >
+                  <Download className="w-5 h-5" />
+                  Скачать
+                </button>
+              )}
+              <button
+                onClick={() => navigate("/create")}
+                className="flex-1 glass-button py-4 rounded-[40px] font-semibold flex items-center justify-center gap-2"
+                data-testid="new-video-btn"
+              >
+                Создать ещё
+              </button>
+            </div>
+
+            {/* Info */}
+            {project?.script && (
+              <div className="glass-ios rounded-2xl p-4 max-w-sm mx-auto">
+                <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Скрипт</p>
+                <p className="text-white/80 text-sm line-clamp-4">{project.script}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Prompt */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-white/30 uppercase tracking-wider mb-1">Промт</p>
+          <p className="text-white/50 text-sm max-w-md mx-auto">{project?.prompt}</p>
+        </div>
       </main>
     </div>
   );

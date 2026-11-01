@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Plus, ArrowUp, ArrowLeft, X, Mic, Square, Loader2 } from 'lucide-react';
-import { BACKEND_URL } from "@/lib/backend";
-import { loadUser } from "@/lib/session";
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const VoiceAssistantPage = () => {
@@ -33,8 +32,14 @@ const VoiceAssistantPage = () => {
     } catch {
       setIsInIframe(true);
     }
-    const saved = loadUser();
-    if (saved) setUser(saved);
+    const saved = localStorage.getItem('slind_user');
+    if (saved) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch {
+        localStorage.removeItem('slind_user');
+      }
+    }
   }, []);
 
   // --- Waveform drawing ---
@@ -180,7 +185,7 @@ const VoiceAssistantPage = () => {
         prompt: currentPrompt,
         format_id: 'auto',
         language: 'auto',
-        mode: 'basic',
+        user_id: user.id || user.user_id,
       };
 
       if (currentAttachments.length > 0) {

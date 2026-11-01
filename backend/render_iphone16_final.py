@@ -1,5 +1,3 @@
-from pathlib import Path
-_BACKEND = Path(__file__).resolve().parent
 """
 Final ultra-smooth render: 91 angles (step 1°)
 """
@@ -7,8 +5,8 @@ import bpy
 import os
 import math
 
-MODEL_PATH = str(_BACKEND / "iphone_16_model/source/iphone_16_black.glb")
-OUTPUT_DIR = str(_BACKEND / "iphone_16_renders_final")
+MODEL_PATH = "/app/backend/iphone_16_model/source/iphone_16_black.glb"
+OUTPUT_DIR = "/app/backend/iphone_16_renders_final"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 RES_X = 800
