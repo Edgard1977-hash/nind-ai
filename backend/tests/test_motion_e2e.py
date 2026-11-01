@@ -4,7 +4,8 @@ through render_universal_video and inspect the produced video frames.
 import asyncio
 import sys
 import os
-sys.path.insert(0, "/app/backend")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from universal_effects import render_universal_video
 

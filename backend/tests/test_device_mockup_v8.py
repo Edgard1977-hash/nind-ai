@@ -14,11 +14,12 @@ import pytest
 import requests
 import os
 import time
+from pathlib import Path
 
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://ai-format-studio.preview.emergentagent.com"
+    BASE_URL = "http://localhost:8000"
 
 
 class TestDeviceMockupAPIV8:
@@ -322,7 +323,7 @@ class TestIPhoneCompositorV8:
     def test_compositor_v8_imports(self):
         """Verify iphone_compositor.py v8 can be imported with new functions"""
         import sys
-        sys.path.insert(0, '/app/backend')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         
         from iphone_compositor import (
             render_dynamic_phone,
@@ -341,7 +342,7 @@ class TestIPhoneCompositorV8:
     def test_render_dynamic_phone_parameters(self):
         """Verify render_dynamic_phone has correct parameters"""
         import sys
-        sys.path.insert(0, '/app/backend')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         
         import inspect
         from iphone_compositor import render_dynamic_phone
@@ -362,7 +363,7 @@ class TestIPhoneCompositorV8:
     def test_camera_animation_parameters(self):
         """Verify render_camera_animation has phone_scale_start and phone_scale_end"""
         import sys
-        sys.path.insert(0, '/app/backend')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         
         import inspect
         from iphone_compositor import render_camera_animation
@@ -386,7 +387,7 @@ class TestIPhoneCompositorV8:
     def test_render_simple_frame(self):
         """Test that render functions can create a frame without error"""
         import sys
-        sys.path.insert(0, '/app/backend')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         
         from PIL import Image
         from iphone_compositor import render_dynamic_phone
@@ -411,7 +412,7 @@ class TestIPhoneCompositorV8:
     def test_float_animation_frame(self):
         """Test float animation creates frame without error"""
         import sys
-        sys.path.insert(0, '/app/backend')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         
         from PIL import Image
         from iphone_compositor import render_dynamic_phone
@@ -433,7 +434,7 @@ class TestIPhoneCompositorV8:
     def test_landscape_output_size(self):
         """Test 16:9 landscape output size works"""
         import sys
-        sys.path.insert(0, '/app/backend')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         
         from PIL import Image
         from iphone_compositor import render_dynamic_phone
@@ -456,7 +457,7 @@ class TestIPhoneCompositorV8:
     def test_phone_always_visible_margins(self):
         """Verify phone stays within margins at all animation progress points"""
         import sys
-        sys.path.insert(0, '/app/backend')
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
         
         from PIL import Image
         import numpy as np

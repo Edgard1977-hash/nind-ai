@@ -1,3 +1,5 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 """
 Blender script to render iPhone 16 3D model from GLTF
 Run with: blender --background --python render_iphone.py -- <args>
@@ -84,7 +86,7 @@ def render_frame(output_path, rotation_y=15, float_offset=0):
     clear_scene()
     
     # Import model
-    gltf_path = "/app/backend/iphone_model/source/1b338ec19f15ad72904b (1).gltf"
+    gltf_path = str(_BACKEND / "iphone_model/source/1b338ec19f15ad72904b (1).gltf")
     import_gltf(gltf_path)
     
     # Setup scene

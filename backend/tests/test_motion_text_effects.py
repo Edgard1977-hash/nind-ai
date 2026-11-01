@@ -1,6 +1,7 @@
 """Sanity test for motion text effects — render single frames at progress=0.7 to verify no crashes."""
 import sys
-sys.path.insert(0, "/app/backend")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PIL import Image
 from motion_text_effects import (

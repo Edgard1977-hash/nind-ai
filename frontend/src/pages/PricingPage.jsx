@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Check, Sparkles, Crown, Zap, Star } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import { BACKEND_URL } from "@/lib/backend";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Generate random stars
@@ -139,20 +139,7 @@ export const PricingPage = () => {
     setIsLoading(true);
     
     try {
-      const response = await axios.post(`${API}/subscription/checkout`, {
-        plan_id: planId,
-        origin_url: window.location.origin
-      });
-      
-      // Redirect to Stripe checkout
-      if (response.data.url) {
-        window.location.href = response.data.url;
-      } else {
-        throw new Error("No checkout URL received");
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error("Ошибка при создании оплаты. Попробуйте позже.");
+      toast.info("Checkout moves to Whop in a later release.");
     } finally {
       setIsLoading(false);
       setSelectedPlan(null);
@@ -192,7 +179,7 @@ export const PricingPage = () => {
         </button>
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-purple-400" />
-          <span className="font-semibold">VidFlux AI</span>
+          <span className="font-semibold">nind</span>
         </div>
         <div className="w-10" />
       </header>

@@ -14,7 +14,7 @@ import requests
 import time
 import sys
 
-BASE_URL = "https://ai-format-studio.preview.emergentagent.com"
+BASE_URL = "http://localhost:8000"
 
 def make_request(method, url, **kwargs):
     """Make HTTP request with retries"""

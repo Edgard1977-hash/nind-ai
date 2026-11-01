@@ -1,0 +1,39 @@
+# Local stack. Mongo is optional: omit the profile and point MONGO_URL at Atlas.
+#   docker compose --profile local-mongo up --build
+# API: http://localhost:8000   Web: http://localhost:8080
+
+services:
+  mongo:
+    image: mongo:7
+    profiles: ["local-mongo"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - nind_mongo:/data/db
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      mongo:
+        condition: service_started
+        required: false
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: ""
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  nind_mongo:

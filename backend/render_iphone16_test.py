@@ -1,3 +1,5 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 """
 Quick test render of iPhone 16 Black - check if it shows FRONT (screen)
 """
@@ -6,8 +8,8 @@ import bpy
 import os
 import math
 
-MODEL_PATH = "/app/backend/iphone_16_model/source/iphone_16_black.glb"
-OUTPUT_PATH = "/app/backend/uploads/iphone16_test.png"
+MODEL_PATH = str(_BACKEND / "iphone_16_model/source/iphone_16_black.glb")
+OUTPUT_PATH = str(_BACKEND / "uploads/iphone16_test.png")
 
 def clear_scene():
     bpy.ops.object.select_all(action='SELECT')

@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import Logo from "@/components/custom/Logo";
+import { API, BACKEND_URL } from "@/lib/backend";
+import { saveUser } from "@/lib/session";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const FRONTEND_URL = window.location.origin;
-const API = `${BACKEND_URL}/api`;
-
-// Google icon
-const GoogleIcon = ({ className }) => (
-  <svg viewBox="0 0 24 24" className={className}>
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -18,282 +15,133 @@ const GoogleIcon = ({ className }) => (
   </svg>
 );
 
-// Email envelope icon (from user's uploaded image, white version)
-const EnvelopeIcon = ({ className }) => (
-  <svg viewBox="0 0 512 512" fill="currentColor" className={className}>
-    <path d="M48 128C48 100.5 70.5 78 98 78H414C441.5 78 464 100.5 464 128V130.2L256 263.5L48 130.2V128ZM48 178.3V384C48 411.5 70.5 434 98 434H414C441.5 434 464 411.5 464 384V178.3L275.6 299.8C264.5 307.1 249.5 307.1 238.4 299.8L48 178.3Z"/>
-  </svg>
-);
-
 const AuthPage = () => {
   const navigate = useNavigate();
-  
-  // Views: 'initial', 'login', 'signup'
-  const [view, setView] = useState('initial');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [intent, setIntent] = useState("login");
+  const [step, setStep] = useState("email");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const isFormValid = email.trim() !== '' && password.trim() !== '';
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  const handleGoogleLogin = () => {
-    const redirectUri = `${FRONTEND_URL}/auth/callback`;
-    const authUrl = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUri)}`;
-    window.location.href = authUrl;
+  const continueWithGoogle = () => {
+    const next = encodeURIComponent(window.location.origin);
+    window.location.href = `${BACKEND_URL}/api/auth/google?next=${next}`;
   };
 
-  const handleEmailLogin = async () => {
-    if (!isFormValid) return;
-    
+  const continueFromEmail = (event) => {
+    event.preventDefault();
+    if (!emailValid) {
+      toast.error("Enter a valid email");
+      return;
+    }
+    setStep("password");
+  };
+
+  const submitPassword = async (event) => {
+    event.preventDefault();
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API}/auth/login`, {
+      const path = intent === "login" ? "login" : "register";
+      const response = await axios.post(`${API}/auth/${path}`, {
         email: email.trim(),
-        password: password
+        password,
       });
-      
-      const userData = response.data;
-      localStorage.setItem("slind_user", JSON.stringify(userData));
-      toast.success("Вход выполнен!");
-      navigate('/');
+      saveUser(response.data);
+      toast.success(intent === "login" ? "Welcome back" : "Account created");
+      navigate("/");
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error(error.response?.data?.detail || "Ошибка входа");
+      toast.error(error.response?.data?.detail || "Could not continue");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEmailSignup = async () => {
-    if (!isFormValid) return;
-    
-    setIsLoading(true);
-    try {
-      const response = await axios.post(`${API}/auth/register`, {
-        email: email.trim(),
-        password: password
-      });
-      
-      const userData = response.data;
-      localStorage.setItem("slind_user", JSON.stringify(userData));
-      toast.success("Регистрация успешна!");
-      navigate('/');
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast.error(error.response?.data?.detail || "Ошибка регистрации");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (view === 'login') {
-      handleEmailLogin();
-    } else if (view === 'signup') {
-      handleEmailSignup();
-    }
-  };
-
-  const resetForm = () => {
-    setEmail('');
-    setPassword('');
-  };
-
-  const switchToLogin = () => {
-    resetForm();
-    setView('login');
-  };
-
-  const switchToSignup = () => {
-    resetForm();
-    setView('signup');
-  };
-
-  const goBack = () => {
-    setView('initial');
-    resetForm();
+  const switchIntent = () => {
+    setIntent((current) => (current === "login" ? "signup" : "login"));
+    setStep("email");
+    setPassword("");
   };
 
   return (
-    <div className="auth-page" data-testid="auth-page">
-      {/* Back button for login/signup forms */}
-      {view !== 'initial' && (
-        <button 
-          className="auth-back-btn"
-          onClick={goBack}
-          data-testid="auth-back-btn"
-        >
-          <ChevronLeft className="w-7 h-7" />
-        </button>
-      )}
+    <div className="nind-auth" data-testid="auth-page">
+      <div className="nind-auth-card">
+        <Logo className="nind-auth-logo" />
+        <h1 className="nind-auth-title" data-testid="auth-title">
+          {intent === "login" ? "Welcome back" : "Create an account"}
+        </h1>
 
-      {/* Content */}
-      <div className={`auth-page-content ${view !== 'initial' ? 'form-view' : ''}`}>
-        {/* Title for initial view */}
-        {view === 'initial' && (
-          <div className="auth-header-text">
-            <h1 className="auth-page-title-large">Get started</h1>
-            <p className="auth-page-subtitle">Log in or Sign up</p>
-          </div>
-        )}
-        
-        {/* Title for login/signup */}
-        {view !== 'initial' && (
-          <div className="auth-form-header">
-            <h1 className="auth-page-title" data-testid="auth-title">
-              {view === 'login' ? 'Log in' : 'Sign up'}
-            </h1>
-            <p className="auth-page-subtitle-form">
-              {view === 'login' ? 'to nind ai' : 'create an account'}
-            </p>
-          </div>
-        )}
-
-        {/* Initial view - social buttons */}
-        {view === 'initial' && (
-          <div className="auth-buttons-container">
-            <button 
-              className="auth-social-btn google"
-              onClick={handleGoogleLogin}
-              data-testid="google-login-btn"
-            >
-              <GoogleIcon className="w-5 h-5" />
-              <span>Continue with Google</span>
+        {step === "email" ? (
+          <form className="nind-auth-form" onSubmit={continueFromEmail}>
+            <input
+              type="email"
+              className="nind-auth-input"
+              placeholder="Email address"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              autoFocus
+              data-testid="email-input"
+            />
+            <button type="submit" className="nind-auth-primary" data-testid="submit-btn">
+              Continue
             </button>
-
-            <button 
-              className="auth-social-btn email"
-              onClick={() => setView('login')}
-              data-testid="email-login-btn"
+          </form>
+        ) : (
+          <form className="nind-auth-form" onSubmit={submitPassword}>
+            <button
+              type="button"
+              className="nind-auth-back"
+              onClick={() => setStep("email")}
+              data-testid="auth-back-btn"
             >
-              <EnvelopeIcon className="w-5 h-5" />
-              <span>Continue with Email</span>
+              {email}
             </button>
-          </div>
-        )}
-
-        {/* Login/Signup form */}
-        {(view === 'login' || view === 'signup') && (
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <div className="auth-input-group">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="auth-input"
-                data-testid="email-input"
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="auth-input-group">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder={view === 'signup' ? "Create password" : "Password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="auth-input"
-                data-testid="password-input"
-                autoComplete={view === 'signup' ? "new-password" : "current-password"}
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-                data-testid="password-toggle"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-
+            <input
+              type={intent === "signup" ? "password" : "password"}
+              className="nind-auth-input"
+              placeholder="Password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete={intent === "signup" ? "new-password" : "current-password"}
+              autoFocus
+              data-testid="password-input"
+            />
             <button
               type="submit"
-              className={`auth-submit-btn ${isFormValid ? 'active' : ''}`}
-              disabled={!isFormValid || isLoading}
+              className="nind-auth-primary"
+              disabled={isLoading}
               data-testid="submit-btn"
             >
-              {isLoading ? 'Loading...' : (view === 'login' ? 'Log in' : 'Sign up')}
+              {isLoading ? "Please wait…" : "Continue"}
             </button>
-
-            {/* Footer under button - Lost password on left, Sign up/Log in on right */}
-            <div className="auth-form-footer">
-              {view === 'login' ? (
-                <>
-                  <button 
-                    type="button"
-                    className="auth-link auth-link-gray"
-                    onClick={() => toast.info("Функция восстановления пароля скоро будет доступна")}
-                    data-testid="forgot-password-btn"
-                  >
-                    Lost password?
-                  </button>
-                  <p className="auth-switch-text">
-                    No account?{' '}
-                    <button 
-                      type="button"
-                      className="auth-link auth-link-white"
-                      onClick={switchToSignup}
-                      data-testid="switch-to-signup"
-                    >
-                      Sign up
-                    </button>
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div></div>
-                  <p className="auth-switch-text">
-                    Have account?{' '}
-                    <button 
-                      type="button"
-                      className="auth-link auth-link-white"
-                      onClick={switchToLogin}
-                      data-testid="switch-to-login"
-                    >
-                      Log in
-                    </button>
-                  </p>
-                </>
-              )}
-            </div>
           </form>
         )}
+
+        <div className="nind-auth-or" aria-hidden="true"><span>OR</span></div>
+
+        <button
+          type="button"
+          className="nind-auth-google"
+          onClick={continueWithGoogle}
+          data-testid="google-login-btn"
+        >
+          <GoogleIcon />
+          Continue with Google
+        </button>
+
+        <button type="button" className="nind-auth-switch" onClick={switchIntent} data-testid="switch-intent">
+          {intent === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
+        </button>
       </div>
 
-      {/* Gradient overlay for initial view */}
-      {view === 'initial' && (
-        <div className="auth-gradient-overlay"></div>
-      )}
-
-      {/* Grid background for initial view */}
-      {view === 'initial' && (
-        <div className="auth-grid">
-          <svg viewBox="0 0 400 200" preserveAspectRatio="none" className="auth-grid-svg">
-            <line x1="0" y1="0" x2="0" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
-            <line x1="80" y1="0" x2="80" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
-            <line x1="160" y1="0" x2="160" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
-            <line x1="240" y1="0" x2="240" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
-            <line x1="320" y1="0" x2="320" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
-            <line x1="400" y1="0" x2="400" y2="200" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
-            <path d="M0,0 Q200,0 400,0" stroke="rgba(255,255,255,0.03)" strokeWidth="1" fill="none"/>
-            <path d="M0,50 Q200,40 400,50" stroke="rgba(255,255,255,0.04)" strokeWidth="1" fill="none"/>
-            <path d="M0,100 Q200,80 400,100" stroke="rgba(255,255,255,0.04)" strokeWidth="1" fill="none"/>
-            <path d="M0,150 Q200,120 400,150" stroke="rgba(255,255,255,0.05)" strokeWidth="1" fill="none"/>
-            <path d="M0,200 Q200,160 400,200" stroke="rgba(255,255,255,0.05)" strokeWidth="1" fill="none"/>
-          </svg>
-        </div>
-      )}
-
-      {/* Privacy Policy text at bottom */}
-      <p className="auth-privacy-text">
-        By continuing, I acknowledge the{' '}
-        <a href="#" className="auth-privacy-link">Privacy Policy</a>
-        {' '}and agree to the{' '}
-        <a href="#" className="auth-privacy-link">Terms of Use</a>
-        . I also confirm that I am at least 18 years old
+      <p className="nind-auth-legal">
+        By continuing you agree to the Terms and the Privacy Policy.
       </p>
     </div>
   );

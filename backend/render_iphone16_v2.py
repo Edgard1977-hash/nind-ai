@@ -1,3 +1,5 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 """
 Render iPhone 16 - FIXED ORIENTATION
 Phone standing vertically with screen facing camera
@@ -7,8 +9,8 @@ import bpy
 import os
 import math
 
-MODEL_PATH = "/app/backend/iphone_16_model/source/iphone_16_black.glb"
-OUTPUT_DIR = "/app/backend/iphone_16_renders"
+MODEL_PATH = str(_BACKEND / "iphone_16_model/source/iphone_16_black.glb")
+OUTPUT_DIR = str(_BACKEND / "iphone_16_renders")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Render settings

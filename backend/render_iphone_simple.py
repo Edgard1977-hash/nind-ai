@@ -1,3 +1,5 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 import bpy
 import sys
 import os
@@ -117,7 +119,7 @@ def setup_render(width=1080, height=1920, samples=32):
 def render_frame(output_path, rotation_y=12):
     clear_scene()
     
-    gltf_path = "/app/backend/iphone_model/source/1b338ec19f15ad72904b (1).gltf"
+    gltf_path = str(_BACKEND / "iphone_model/source/1b338ec19f15ad72904b (1).gltf")
     
     # Try direct import first
     try:
