@@ -54,7 +54,7 @@ export const CreatePage = () => {
     const handleBeforeUnload = (e) => {
       if (uploadProgress > 0 || isLoading) {
         e.preventDefault();
-        e.returnValue = 'Загрузка в процессе! Если вы уйдёте, загрузка прервётся.';
+        e.returnValue = 'Upload in progress. Leaving will cancel it.';
         return e.returnValue;
       }
     };
@@ -102,7 +102,7 @@ export const CreatePage = () => {
       }, { timeout: 60000 });
       
       if (onProgress) {
-        onProgress(Math.round(((i + 1) / totalChunks) * 100), `Часть ${i + 1}/${totalChunks}`);
+        onProgress(Math.round(((i + 1) / totalChunks) * 100), `Part ${i + 1}/${totalChunks}`);
       }
       console.log(`Uploaded chunk ${i + 1}/${totalChunks}`);
     }
@@ -118,7 +118,7 @@ export const CreatePage = () => {
     if (!file) return;
     
     if (!file.type.startsWith("video/")) {
-      toast.error("Пожалуйста, выберите видео файл");
+      toast.error("Please choose a video file");
       return;
     }
     
@@ -129,8 +129,8 @@ export const CreatePage = () => {
     
     try {
       // ALWAYS use chunked upload for videos to bypass proxy size limits
-      setUploadMessage(`Загружаем ${fileSizeMB.toFixed(1)} MB по частям...`);
-      toast.info(`Загрузка ${fileSizeMB.toFixed(1)} MB видео...`);
+      setUploadMessage(`Uploading ${fileSizeMB.toFixed(1)} MB in parts...`);
+      toast.info(`Uploading a ${fileSizeMB.toFixed(1)} MB video...`);
       
       const url = await uploadFileChunked(file, (progress, msg) => {
         setUploadProgress(progress);
@@ -140,10 +140,10 @@ export const CreatePage = () => {
       
       setUploadProgress(0);
       setUploadMessage("");
-      toast.success("Видео загружено!");
+      toast.success("Video uploaded");
     } catch (error) {
       console.error("Video upload failed:", error);
-      toast.error(`Ошибка загрузки: ${error.message || 'Попробуйте ещё раз'}`);
+      toast.error(`Upload failed: ${error.message || "Try again"}`);
       setVideoFile(null);
       setVideoPreview(null);
     }
@@ -155,7 +155,7 @@ export const CreatePage = () => {
     if (!file) return;
     
     if (!file.type.startsWith("audio/")) {
-      toast.error("Пожалуйста, выберите аудио файл");
+      toast.error("Please choose an audio file");
       return;
     }
     
@@ -169,10 +169,10 @@ export const CreatePage = () => {
         headers: { "Content-Type": "multipart/form-data" }
       });
       setMusicUrl(response.data.url);
-      toast.success("Музыка загружена");
+      toast.success("Music uploaded");
     } catch (error) {
       console.error("Music upload failed:", error);
-      toast.error("Ошибка загрузки музыки");
+      toast.error("Music upload failed");
       setMusicFile(null);
     }
   };
@@ -219,13 +219,13 @@ export const CreatePage = () => {
         });
       } catch (error) {
         console.error("Upload failed:", error);
-        toast.error(`Ошибка загрузки: ${file.name}`);
+        toast.error(`Upload failed: ${file.name}`);
       }
     }
     
     setMediaFiles(prev => [...prev, ...uploadedUrls]);
     setUploadProgress(0);
-    toast.success(`Загружено ${uploadedUrls.length} файл(ов)`);
+    toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
   };
 
   const handleLogoSelect = async (e) => {
@@ -244,10 +244,10 @@ export const CreatePage = () => {
         url: response.data.url,
         preview: URL.createObjectURL(file)
       });
-      toast.success("Логотип загружен");
+      toast.success("Logo uploaded");
     } catch (error) {
       console.error("Logo upload failed:", error);
-      toast.error("Ошибка загрузки логотипа");
+      toast.error("Logo upload failed");
     }
   };
 
@@ -272,7 +272,7 @@ export const CreatePage = () => {
   const handleSubmit = async () => {
     // For device mockup, prompt is optional
     if (!videoUrl && !prompt.trim()) {
-      toast.error("Введите описание");
+      toast.error("Enter a description");
       return;
     }
 
@@ -281,7 +281,7 @@ export const CreatePage = () => {
     try {
       // If video is uploaded, create 3D device mockup animation
       if (videoUrl) {
-        setMontageMessage("Создаём 3D анимацию устройства...");
+        setMontageMessage("Creating a 3D device animation...");
         setMontageProgress(10);
         
         // Send to device mockup endpoint - phone FULLY VISIBLE
@@ -297,7 +297,7 @@ export const CreatePage = () => {
         
         const projectId = response.data.id;
         setMontageProgress(30);
-        setMontageMessage("Рендерим cinematic анимацию...");
+        setMontageMessage("Rendering the animation...");
         
         // Poll for progress
         const pollInterval = setInterval(async () => {
@@ -308,20 +308,20 @@ export const CreatePage = () => {
             // Estimate progress based on status
             if (data.status === "processing") {
               setMontageProgress(prev => Math.min(prev + 5, 85));
-              setMontageMessage("Создаём плавную 3D анимацию...");
+              setMontageMessage("Rendering a smooth 3D animation...");
             }
             
             if (data.status === "completed" && data.video_url) {
               clearInterval(pollInterval);
               setMontageResult(`${BACKEND_URL}${data.video_url}`);
               setMontageProgress(100);
-              setMontageMessage("Готово!");
+              setMontageMessage("Done");
               setIsLoading(false);
-              toast.success("Cinematic анимация готова!");
+              toast.success("Animation ready");
             } else if (data.status === "failed") {
               clearInterval(pollInterval);
               setIsLoading(false);
-              toast.error(`Ошибка: ${data.error || "Не удалось создать"}`);
+              toast.error(data.error || "Could not create the video");
             }
           } catch (e) {
             console.error("Poll error:", e);
@@ -351,11 +351,11 @@ export const CreatePage = () => {
       
       const response = await axios.post(`${API}/video/generate`, requestData);
       
-      toast.success("Генерация началась! AI анализирует ваш промт...");
+      toast.success("Generation started");
       navigate(`/video/${response.data.id}`);
     } catch (error) {
       console.error("Failed to start generation:", error);
-      toast.error(error.response?.data?.detail || "Ошибка при запуске генерации");
+      toast.error(error.response?.data?.detail || "Could not start generation");
     } finally {
       if (!videoUrl) setIsLoading(false);
     }
@@ -396,7 +396,7 @@ export const CreatePage = () => {
         <button
           onClick={() => {
             if (uploadProgress > 0 || isLoading) {
-              toast.warning("Дождитесь завершения загрузки!");
+              toast.warning("Wait for the upload to finish");
               return;
             }
             navigate("/");
@@ -407,7 +407,7 @@ export const CreatePage = () => {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-lg font-semibold">
-          {type === "video" ? "Создать видео" : "Создать фото"}
+          {type === "video" ? "Create a video" : "Create a photo"}
         </h1>
         <div className="w-10" /> {/* Spacer */}
       </header>
@@ -424,7 +424,7 @@ export const CreatePage = () => {
           <div className="w-full max-w-md" data-testid="montage-result">
             <div className="flex items-center gap-2 mb-3">
               <Check className="w-5 h-5 text-green-400" />
-              <span className="text-white font-medium">3D анимация готова!</span>
+              <span className="text-white font-medium">3D animation ready</span>
             </div>
             <div className="glass-ios rounded-2xl overflow-hidden">
               <video
@@ -442,7 +442,7 @@ export const CreatePage = () => {
                 data-testid="download-montage"
               >
                 <Download className="w-5 h-5" />
-                Скачать
+                Download
               </a>
               <button
                 onClick={resetMontage}
@@ -450,7 +450,7 @@ export const CreatePage = () => {
                 data-testid="new-montage"
               >
                 <Sparkles className="w-5 h-5" />
-                Создать ещё
+                Create another
               </button>
             </div>
           </div>
@@ -476,7 +476,7 @@ export const CreatePage = () => {
           <div className="w-full max-w-md" data-testid="video-preview">
             <div className="flex items-center gap-2 mb-3">
               <Film className="w-5 h-5 text-purple-400" />
-              <span className="text-white/60 text-sm">Видео для 3D анимации</span>
+              <span className="text-white/60 text-sm">Video for the 3D animation</span>
             </div>
             <div className="relative glass-ios rounded-2xl overflow-hidden">
               <video
@@ -494,7 +494,7 @@ export const CreatePage = () => {
             </div>
             
             <p className="text-white/40 text-sm text-center mt-3">
-              Видео будет показано на 3D телефоне с анимацией. Нажмите отправить.
+              The video will play on a 3D phone. Press send.
             </p>
           </div>
         ) : mediaFiles.length > 0 ? (
@@ -502,7 +502,7 @@ export const CreatePage = () => {
           <div className="w-full max-w-md">
             <div className="flex items-center gap-2 mb-3">
               <Package className="w-5 h-5 text-white/60" />
-              <span className="text-white/60 text-sm">Изображения продукта ({mediaFiles.length})</span>
+              <span className="text-white/60 text-sm">Product images ({mediaFiles.length})</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {mediaFiles.map((file, index) => (
@@ -556,7 +556,7 @@ export const CreatePage = () => {
                     type="text"
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
-                    placeholder="Название бренда"
+                    placeholder="Brand name"
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-white/40 outline-none focus:border-white/30"
                     data-testid="brand-name-input"
                   />
@@ -568,10 +568,10 @@ export const CreatePage = () => {
           <div className="text-center animate-float">
             <Sparkles className="w-16 h-16 mx-auto mb-4 text-white/30" />
             <p className="text-white/50 text-lg">
-              Опишите что хотите создать
+              Describe what you want to create
             </p>
             <p className="text-white/30 text-sm mt-2">
-              или загрузите видео для 3D анимации на устройстве
+              or upload a video for a 3D device animation
             </p>
           </div>
         )}
@@ -585,7 +585,7 @@ export const CreatePage = () => {
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
-            <p className="text-center text-white/40 text-xs mt-1">{uploadMessage || `Загрузка ${uploadProgress}%`}</p>
+            <p className="text-center text-white/40 text-xs mt-1">{uploadMessage || `Uploading ${uploadProgress}%`}</p>
           </div>
         )}
       </main>
@@ -596,10 +596,10 @@ export const CreatePage = () => {
           <div className="glass-ios rounded-2xl p-4 max-w-md mx-auto">
             <div className="flex items-center gap-2 mb-3">
               <Package className="w-5 h-5 text-purple-400" />
-              <span className="text-white font-medium">Реклама продукта</span>
+              <span className="text-white font-medium">Product ad</span>
             </div>
             <p className="text-white/50 text-sm mb-3">
-              Добавьте изображения вашего продукта или AI создаст их по описанию
+              Add product photos, or AI will create them from the description
             </p>
             <div className="flex gap-2">
               <button
@@ -612,7 +612,7 @@ export const CreatePage = () => {
                 data-testid="upload-product-images"
               >
                 <Image className="w-4 h-4" />
-                Загрузить фото
+                Upload photos
               </button>
               <button
                 onClick={() => {
@@ -622,7 +622,7 @@ export const CreatePage = () => {
                 data-testid="upload-logo"
               >
                 <Tag className="w-4 h-4" />
-                Загрузить лого
+                Upload a logo
               </button>
             </div>
           </div>
@@ -641,7 +641,7 @@ export const CreatePage = () => {
                 fileInputRef.current.click();
               }}
               className="p-3 rounded-full hover:bg-white/10 transition-colors"
-              title="Добавить изображения"
+              title="Add images"
               data-testid="add-image-btn"
             >
               <Image className="w-5 h-5 text-white/60" />
@@ -649,7 +649,7 @@ export const CreatePage = () => {
             <button
               onClick={() => videoInputRef.current.click()}
               className={`p-3 rounded-full hover:bg-white/10 transition-colors ${videoFile ? 'bg-purple-500/20' : ''}`}
-              title="Загрузить видео для монтажа"
+              title="Upload a video to edit"
               data-testid="add-video-btn"
             >
               <Video className="w-5 h-5 text-white/60" />
@@ -660,7 +660,7 @@ export const CreatePage = () => {
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={videoFile ? "Описание для 3D анимации (опционально)" : "Опишите ваше видео..."}
+              placeholder={videoFile ? "Description for the 3D animation (optional)" : "Describe your video..."}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 py-2"
               onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSubmit()}
               disabled={isLoading}

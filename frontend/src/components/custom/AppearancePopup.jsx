@@ -24,33 +24,20 @@ const SystemIcon = () => (
 
 const APPEARANCE_KEY = "slind_theme";
 
-export const applyTheme = (mode) => {
+export const applyTheme = () => {
   const html = document.documentElement;
-  let theme = mode;
-  if (mode === "system") {
-    // Respect OS preference — default to dark if no preference
-    theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-  }
-  if (theme === "dark") {
-    html.removeAttribute("data-theme");
-  } else {
-    html.setAttribute("data-theme", theme);
-  }
+  html.removeAttribute("data-theme");
+  html.style.colorScheme = "dark";
 };
 
 export const initThemeFromStorage = () => {
-  const saved = localStorage.getItem(APPEARANCE_KEY) || "system";
-  applyTheme(saved);
-  if (saved === "system") {
-    const mq = window.matchMedia("(prefers-color-scheme: light)");
-    const onChange = () => applyTheme("system");
-    mq.addEventListener?.("change", onChange);
-  }
-  return saved;
+  localStorage.removeItem(APPEARANCE_KEY);
+  applyTheme();
+  return "dark";
 };
 
 const TITLES = {
-  ru: { title: "Внешний вид", system: "System", light: "Light", dark: "Dark" },
+  ru: { title: "Appearance", system: "System", light: "Light", dark: "Dark" },
   en: { title: "Appearance", system: "System", light: "Light", dark: "Dark" },
 };
 

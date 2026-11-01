@@ -36,7 +36,7 @@ const formatDuration = (project) => {
   return minutes ? `${minutes}m ${rest}s` : `${rest}s`;
 };
 
-const modeLabel = (mode) => (mode === "enhanced" ? "Улучшенная" : "Базовая");
+const modeLabel = (mode) => (mode === "enhanced" ? "Enhanced" : "Basic");
 
 export const VideoPage = () => {
   const { id } = useParams();
@@ -145,6 +145,9 @@ export const VideoPage = () => {
 
   const processing = project.status === "pending" || project.status === "processing";
   const failed = project.status === "error" || project.status === "failed";
+  const notice = project.notice || (project.image_source === "placeholder"
+    ? "Preview. AI image provider is not configured."
+    : "");
   const ready = project.status === "completed" && project.video_url;
   const when = formatWhen(project.created_at || project.completed_at);
   const duration = formatDuration(project);
@@ -204,6 +207,7 @@ export const VideoPage = () => {
           {project.prompt && project.title && project.prompt !== project.title && (
             <p className="nind-video-prompt">{project.prompt}</p>
           )}
+          {notice && <p className="nind-video-prompt">{notice}</p>}
 
           <dl className="nind-video-facts">
             <div>
@@ -229,7 +233,7 @@ export const VideoPage = () => {
               <Download size={16} /> Download
             </button>
             <button type="button" className="nind-video-secondary" onClick={regenerate} disabled={busy} data-testid="regenerate-button">
-              <RefreshCw size={16} /> Regenerate
+              <RefreshCw size={16} /> Retry
             </button>
             <button type="button" className="nind-video-secondary" onClick={copyLink} data-testid="share-button">
               <Link2 size={16} /> Copy link

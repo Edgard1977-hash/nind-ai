@@ -17,11 +17,11 @@ const FORMATS = [
   { id: 12, name: "Format", color: "#3A3A3A" },
 ];
 
-const TABS = ["Все", "Популярные", "Новые", "Тренды"];
+const TABS = ["All", "Popular", "New", "Trends"];
 
 const FormatsPage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("Все");
+  const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   return (

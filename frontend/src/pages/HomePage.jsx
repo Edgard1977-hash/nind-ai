@@ -39,10 +39,10 @@ export const HomePage = () => {
   };
 
   const tabs = [
-    { id: "all", label: "Все" },
-    { id: "video", label: "Видео" },
-    { id: "photo", label: "Фото" },
-    { id: "recent", label: "Недавние" },
+    { id: "all", label: "All" },
+    { id: "video", label: "Video" },
+    { id: "photo", label: "Photo" },
+    { id: "recent", label: "Recent" },
   ];
 
   const completedVideos = videos.filter(v => v.status === "completed" && v.video_url);
@@ -69,7 +69,7 @@ export const HomePage = () => {
               data-testid="create-video-btn"
             >
               <Video className="w-5 h-5" />
-              <span className="font-semibold text-sm">Видео</span>
+              <span className="font-semibold text-sm">Video</span>
             </button>
             <button
               onClick={() => navigate("/montage")}
@@ -77,7 +77,7 @@ export const HomePage = () => {
               data-testid="montage-btn"
             >
               <Film className="w-5 h-5" />
-              <span className="font-semibold text-sm">Монтаж</span>
+              <span className="font-semibold text-sm">Edit</span>
             </button>
             <button
               onClick={() => navigate("/create?type=photo")}
@@ -85,7 +85,7 @@ export const HomePage = () => {
               data-testid="create-photo-btn"
             >
               <Image className="w-5 h-5" />
-              <span className="font-semibold text-sm">Фото</span>
+              <span className="font-semibold text-sm">Photo</span>
             </button>
           </div>
         </div>
@@ -132,7 +132,7 @@ export const HomePage = () => {
               )}
               {/* Video title overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-xs text-white truncate">{video.title || "Видео"}</p>
+                <p className="text-xs text-white truncate">{video.title || "Video"}</p>
               </div>
             </button>
           ))
@@ -155,7 +155,7 @@ export const HomePage = () => {
         <div className="flex justify-around items-center">
           <button className="flex flex-col items-center gap-1 text-white" data-testid="nav-home">
             <Home className="w-6 h-6" />
-            <span className="text-xs">Главная</span>
+            <span className="text-xs">Home</span>
           </button>
           <button 
             onClick={() => navigate("/create")}
@@ -163,7 +163,7 @@ export const HomePage = () => {
             data-testid="nav-create"
           >
             <Compass className="w-6 h-6" />
-            <span className="text-xs">Создать</span>
+            <span className="text-xs">Create</span>
           </button>
           <button 
             onClick={() => navigate("/pricing")}
@@ -171,11 +171,11 @@ export const HomePage = () => {
             data-testid="nav-pricing"
           >
             <Crown className="w-6 h-6" />
-            <span className="text-xs">Тарифы</span>
+            <span className="text-xs">Pricing</span>
           </button>
           <button className="flex flex-col items-center gap-1 text-white/50" data-testid="nav-profile">
             <User className="w-6 h-6" />
-            <span className="text-xs">Профиль</span>
+            <span className="text-xs">Profile</span>
           </button>
         </div>
       </nav>

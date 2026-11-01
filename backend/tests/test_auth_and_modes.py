@@ -301,6 +301,57 @@ def test_enhanced_mode_is_not_configured(client):
     assert db.video_projects.docs == []
 
 
+class MissingImageProvider:
+    name = "unconfigured"
+
+    async def generate(self, prompt, *, aspect_ratio="9:16"):
+        raise ProviderNotConfigured("AI image provider is not configured")
+
+
+def test_basic_generation_without_image_provider_finishes(client):
+    http, db, _text, _image = client
+    set_provider_overrides(image=MissingImageProvider())
+    registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
+    token = registered.json()["token"]
+    response = http.post(
+        "/api/video/generate",
+        json={"prompt": "night market in the rain", "mode": "basic"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200, response.text
+    project = db.video_projects.docs[0]
+    assert project["status"] == "completed"
+    assert project["image_source"] == "placeholder"
+    assert "not configured" in (project.get("notice") or "").lower()
+    assert project["progress"] == 100
+    assert db.users.docs[0]["credits"] == 90
+
+
+def test_stuck_processing_job_is_marked_failed(client):
+    http, db, _text, _image = client
+    registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
+    token = registered.json()["token"]
+    user_id = registered.json()["user_id"]
+    db.users.docs[0]["credits"] = 90
+    db.video_projects.docs.append(
+        {
+            "id": "stuck-job",
+            "user_id": user_id,
+            "status": "processing",
+            "progress": 40,
+            "credits_charged": 10,
+            "prompt": "stuck",
+            "updated_at": "2000-01-01T00:00:00+00:00",
+        }
+    )
+    response = http.get("/api/video/stuck-job", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "failed"
+    assert "timed out" in body["error"].lower()
+    assert db.users.docs[0]["credits"] == 100
+
+
 def test_formats_route_exists(client):
     http, _db, _text, _image = client
     response = http.get("/api/formats")
