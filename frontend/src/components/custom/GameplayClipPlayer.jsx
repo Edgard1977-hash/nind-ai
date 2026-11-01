@@ -97,7 +97,7 @@ export const GameplayClipPlayer = ({ project, audioUrl }) => {
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-red-900/50 to-black">
               <Youtube className="w-16 h-16 text-red-500 mb-4" />
               <p className="text-white/70 text-sm text-center px-4">
-                YouTube клип будет здесь
+                The YouTube clip will appear here
               </p>
               {youtubeUrl && (
                 <p className="text-white/50 text-xs mt-2 px-4 truncate max-w-full">
@@ -110,7 +110,7 @@ export const GameplayClipPlayer = ({ project, audioUrl }) => {
           {/* YouTube badge */}
           <div className="absolute top-3 left-3 flex items-center gap-2 bg-red-600 px-2 py-1 rounded-full">
             <Youtube className="w-3 h-3 text-white" />
-            <span className="text-xs text-white font-medium">Клип</span>
+            <span className="text-xs text-white font-medium">Clip</span>
           </div>
         </div>
 

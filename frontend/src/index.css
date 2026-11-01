@@ -34,613 +34,124 @@
 }
 
 /* === LIGHT THEME === */
-[data-theme="light"] {
-  --bg-main: #F2F2F7;
-  --input-outer: #E5E5EA;
-  --input-inner: #FFFFFF;
-  --card-bg: #FFFFFF;
-  --panel-bg: #FFFFFF;
-  --popup-bg: #FFFFFF;
-  --text-primary: #1A1A1C;
-  --text-secondary: rgba(0, 0, 0, 0.6);
-  --white: #1A1A1C;
-  --gray-light: rgba(0, 0, 0, 0.7);
-  --gray-medium: rgba(0, 0, 0, 0.5);
-  --gray-dark: rgba(0, 0, 0, 0.12);
-}
 
-[data-theme="light"] body,
-[data-theme="light"] html {
-  background: #F2F2F7 !important;
-  color: #1A1A1C;
-}
 
 /* Page-level containers */
-[data-theme="light"] .main-page-fixed,
-[data-theme="light"] .create-page,
-[data-theme="light"] .upgrade-page,
-[data-theme="light"] .voice-assistant-page,
-[data-theme="light"] .profile-page-v2,
-[data-theme="light"] .video-page,
-[data-theme="light"] .formats-page,
-[data-theme="light"] .home-page,
-[data-theme="light"] .App {
-  background: #F2F2F7 !important;
-  color: #1A1A1C;
-}
+
 
 /* Perspective grid – lighten strokes */
-[data-theme="light"] .perspective-grid svg line,
-[data-theme="light"] .perspective-grid svg path {
-  stroke: rgba(0, 0, 0, 0.07) !important;
-}
+
 
 /* Header */
-[data-theme="light"] .main-fixed-header,
-[data-theme="light"] .upgrade-header,
-[data-theme="light"] .create-header {
-  background: transparent !important;
-}
-[data-theme="light"] .header-logo-svg path,
-[data-theme="light"] .header-logo-svg,
-[data-theme="light"] .logo-text {
-  color: #1A1A1C !important;
-  fill: #1A1A1C !important;
-}
+
 
 /* Profile trigger / round avatar button outline */
-[data-theme="light"] .profile-trigger,
-[data-theme="light"] .profile-trigger-btn,
-[data-theme="light"] .header-profile-btn {
-  background: #FFFFFF !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  color: #1A1A1C !important;
-}
+
 
 /* Creation cards / video tiles */
-[data-theme="light"] .video-card,
-[data-theme="light"] .creation-card,
-[data-theme="light"] .video-thumbnail-card,
-[data-theme="light"] .gallery-video-card {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
+
 
 /* Video meta / "time ago" text */
-[data-theme="light"] .video-time-ago,
-[data-theme="light"] .video-card-time,
-[data-theme="light"] .video-meta-text,
-[data-theme="light"] .gallery-video-title {
-  color: rgba(0, 0, 0, 0.7) !important;
-}
+
 
 /* Upgrade (pricing) page text */
-[data-theme="light"] .upgrade-title,
-[data-theme="light"] .upgrade-faq-title,
-[data-theme="light"] .pricing-card-name,
-[data-theme="light"] .pricing-price,
-[data-theme="light"] .pricing-credits-text,
-[data-theme="light"] .faq-question-text,
-[data-theme="light"] .faq-answer {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .upgrade-subtitle,
-[data-theme="light"] .pricing-period {
-  color: rgba(0, 0, 0, 0.55) !important;
-}
-[data-theme="light"] .pricing-card {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .pricing-card-top {
-  background: #FFFFFF !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .pricing-card-bottom {
-  background: #F7F7FA !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .pricing-credits-box {
-  background: #F2F2F7 !important;
-}
-[data-theme="light"] .pricing-credits-icon,
-[data-theme="light"] .pricing-credits-icon path {
-  fill: #1A1A1C !important;
-}
-[data-theme="light"] .pricing-subscribe-btn {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
-[data-theme="light"] .upgrade-billing-tabs {
-  background: #E5E5EA !important;
-}
-[data-theme="light"] .upgrade-billing-indicator {
-  background: #FFFFFF !important;
-}
-[data-theme="light"] .upgrade-billing-tab {
-  color: rgba(0, 0, 0, 0.55) !important;
-}
-[data-theme="light"] .upgrade-billing-tab.active {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .upgrade-close-btn {
-  background: #FFFFFF !important;
-  color: #1A1A1C !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08);
-}
-[data-theme="light"] .faq-item {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.06) !important;
-}
-[data-theme="light"] .faq-item.open {
-  background: #FFFFFF !important;
-}
-[data-theme="light"] .pricing-check-icon,
-[data-theme="light"] .faq-arrow {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .pricing-features-list li {
-  color: rgba(0, 0, 0, 0.75) !important;
-}
-[data-theme="light"] .pricing-features-title {
-  color: rgba(0, 0, 0, 0.55) !important;
-}
+
 
 /* Profile page chevrons / icons */
-[data-theme="light"] .settings-menu-icon,
-[data-theme="light"] .settings-menu-arrow,
-[data-theme="light"] .profile-v2-arrow,
-[data-theme="light"] .profile-v2-close-btn,
-[data-theme="light"] .profile-v2-back-btn {
-  color: #1A1A1C !important;
-}
+
 
 /* Account divider */
-[data-theme="light"] .account-divider {
-  background: rgba(0, 0, 0, 0.08) !important;
-}
+
 
 /* Credits text / labels */
-[data-theme="light"] .credits-amount,
-[data-theme="light"] .credits-label,
-[data-theme="light"] .get-more-text,
-[data-theme="light"] .profile-v2-username,
-[data-theme="light"] .profile-v2-plan,
-[data-theme="light"] .confirm-popup-title,
-[data-theme="light"] .popup-title {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .credits-progress-track {
-  background: rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .credits-icon-small path {
-  fill: #1A1A1C !important;
-}
-[data-theme="light"] .get-more-icon path {
-  fill: #1A1A1C !important;
-}
+
 
 /* Get More card / Upgrade button in Account — use black BG on light theme */
-[data-theme="light"] .get-more-card {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .get-more-upgrade-btn {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
+
 
 /* Avatar / profile card */
-[data-theme="light"] .profile-v2-user-card,
-[data-theme="light"] .profile-v2-avatar {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .default-avatar-icon path,
-[data-theme="light"] .default-avatar-icon-large path {
-  fill: #1A1A1C !important;
-}
+
 
 /* Delete account text stays red */
-[data-theme="light"] .settings-menu-item.delete {
-  color: #FF3B30 !important;
-}
-[data-theme="light"] .settings-menu-item.delete .settings-menu-icon {
-  color: #FF3B30 !important;
-}
+
 
 /* Profile edit inputs */
-[data-theme="light"] .profile-edit-input-top,
-[data-theme="light"] .profile-edit-input-bottom {
-  background: #FFFFFF !important;
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .profile-edit-input-vertical {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .profile-input-divider-horizontal {
-  background: rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .profile-save-btn {
-  background: rgba(0, 0, 0, 0.1) !important;
-  color: rgba(0, 0, 0, 0.4) !important;
-}
-[data-theme="light"] .profile-save-btn.active {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
+
 
 /* Confirm popup buttons */
-[data-theme="light"] .confirm-btn-back {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
-[data-theme="light"] .confirm-btn-yes {
-  background: #F2F2F7 !important;
-  color: #1A1A1C !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
+
 
 /* Popup handle */
-[data-theme="light"] .popup-handle {
-  background: rgba(0, 0, 0, 0.2) !important;
-}
+
 
 /* Main hero / typography */
-[data-theme="light"] .main-greeting,
-[data-theme="light"] .main-subtext,
-[data-theme="light"] .main-section-title,
-[data-theme="light"] .heading-main {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .create-subtitle {
-  color: rgba(0, 0, 0, 0.55) !important;
-}
+
 
 /* === Logged-in dashboard panels === */
-[data-theme="light"] .bottom-panel {
-  background: #FFFFFF !important;
-  border-top: 0.5px solid rgba(0, 0, 0, 0.06);
-}
-[data-theme="light"] .bottom-tabs-container {
-  background: #E5E5EA !important;
-}
-[data-theme="light"] .bottom-tabs-indicator {
-  background: #FFFFFF !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-[data-theme="light"] .bottom-tab {
-  color: rgba(0, 0, 0, 0.55) !important;
-}
-[data-theme="light"] .bottom-tab.active {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .bottom-panel-content,
-[data-theme="light"] .creations-empty-pattern {
-  background: #FFFFFF !important;
-}
-[data-theme="light"] .creations-pattern-grid > * {
-  filter: brightness(0.95);
-}
+
 
 /* Format cards (grids and carousels) */
-[data-theme="light"] .format-card-page {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .format-card-bg {
-  background: #FFFFFF !important;
-}
-[data-theme="light"] .format-preview-page {
-  background: #F2F2F7 !important;
-}
-[data-theme="light"] .format-card-gradient {
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 100%) !important;
-}
-[data-theme="light"] .formats-page-title,
-[data-theme="light"] .format-name-page {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .formats-page-header {
-  background: transparent !important;
-}
-[data-theme="light"] .formats-back-btn {
-  background: #FFFFFF !important;
-  color: #1A1A1C !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08);
-}
+
 
 /* Format filter chips */
-[data-theme="light"] .formats-filter-chip,
-[data-theme="light"] .filter-chip {
-  background: #E5E5EA !important;
-  color: rgba(0, 0, 0, 0.7) !important;
-}
-[data-theme="light"] .formats-filter-chip.active,
-[data-theme="light"] .filter-chip.active {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
+
 
 /* Voice page */
-[data-theme="light"] .voice-assistant-page {
-  background: #FFFFFF !important;
-}
-[data-theme="light"] .voice-assistant-main {
-  background: #FFFFFF !important;
-}
-[data-theme="light"] .voice-assistant-bottom {
-  background: #FFFFFF !important;
-  border-top: 0.5px solid rgba(0, 0, 0, 0.06);
-}
-[data-theme="light"] .voice-attachment-chip {
-  background: #F2F2F7 !important;
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .voice-assistant-back {
-  background: #F2F2F7 !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .voice-status-label,
-[data-theme="light"] .voice-open-newtab,
-[data-theme="light"] .voice-open-newtab-hint {
-  color: rgba(0, 0, 0, 0.65) !important;
-}
-[data-theme="light"] .voice-input-container {
-  background: transparent !important;
-}
-[data-theme="light"] .voice-input-field {
-  background: #F2F2F7 !important;
-  color: #1A1A1C !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .voice-input-field::placeholder {
-  color: rgba(0, 0, 0, 0.42) !important;
-}
-[data-theme="light"] .voice-plus-btn {
-  background: #F2F2F7 !important;
-  color: #1A1A1C !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .voice-plus-btn:hover {
-  background: #E5E5EA !important;
-}
-[data-theme="light"] .voice-send-btn {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
-[data-theme="light"] .voice-input-container input,
-[data-theme="light"] .voice-input-container textarea {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .voice-input-container input::placeholder,
-[data-theme="light"] .voice-input-container textarea::placeholder {
-  color: rgba(0, 0, 0, 0.42) !important;
-}
+
 
 /* Auth popup / modals */
-[data-theme="light"] .auth-popup,
-[data-theme="light"] .formats-popup,
-[data-theme="light"] .format-detail-popup,
-[data-theme="light"] .invite-popup {
-  background: #FFFFFF !important;
-}
-[data-theme="light"] .auth-popup-title,
-[data-theme="light"] .formats-popup-title {
-  color: #1A1A1C !important;
-}
+
 
 /* Format popup card */
-[data-theme="light"] .popup-format-card {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
+
 
 /* Generation progress card */
-[data-theme="light"] .generation-progress-card,
-[data-theme="light"] .generation-progress {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-  color: #1A1A1C !important;
-}
+
 
 /* Video page */
-[data-theme="light"] .video-page-header,
-[data-theme="light"] .video-back-btn {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .video-back-btn {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08);
-}
+
 
 /* Tooltips / dropdowns */
-[data-theme="light"] .pricing-credits-dropdown-menu {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-[data-theme="light"] .pricing-credits-dropdown-menu button {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] .pricing-credits-dropdown-menu button:hover {
-  background: #F2F2F7 !important;
-}
-[data-theme="light"] .pricing-credits-dropdown-btn {
-  color: #1A1A1C !important;
-}
+
 
 /* Three-dot context menu */
-[data-theme="light"] .video-menu-dropdown,
-[data-theme="light"] .context-menu,
-[data-theme="light"] .menu-dropdown {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+
+/* Inputs, empty states, and the create field stay on the dark theme. */
+
+.generation-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  height: 100%;
 }
-[data-theme="light"] .video-menu-dropdown button,
-[data-theme="light"] .context-menu button,
-[data-theme="light"] .menu-dropdown button {
-  color: #1A1A1C !important;
+.generation-failed-text {
+  margin: 0;
+  color: #ffb4b4;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.generation-retry-btn {
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 
-/* Inputs that aren't yet covered (search, etc) */
-[data-theme="light"] .formats-search,
-[data-theme="light"] .formats-search-input {
-  background: #FFFFFF !important;
-  color: #1A1A1C !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-[data-theme="light"] .formats-search-input::placeholder {
-  color: rgba(0, 0, 0, 0.42) !important;
-}
-
-/* Misc text — footer, labels */
-[data-theme="light"] .empty-state-text,
-[data-theme="light"] .empty-state-title,
-[data-theme="light"] .creations-empty-text {
-  color: rgba(0, 0, 0, 0.7) !important;
-}
-
-/* === Create page (legacy Tailwind bg-black) === */
-[data-theme="light"] [data-testid="create-page"] {
-  background: #FFFFFF !important;
-  color: #1A1A1C !important;
-}
-[data-theme="light"] [data-testid="create-page"] .glass-ios {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-[data-theme="light"] [data-testid="create-page"] h1,
-[data-theme="light"] [data-testid="create-page"] h2,
-[data-theme="light"] [data-testid="create-page"] h3,
-[data-theme="light"] [data-testid="create-page"] p,
-[data-theme="light"] [data-testid="create-page"] span,
-[data-theme="light"] [data-testid="create-page"] .text-white {
-  color: #1A1A1C !important;
-}
-[data-theme="light"] [data-testid="create-page"] textarea,
-[data-theme="light"] [data-testid="create-page"] input {
-  color: #1A1A1C !important;
-  background: #F2F2F7 !important;
-}
-[data-theme="light"] [data-testid="create-page"] textarea::placeholder,
-[data-theme="light"] [data-testid="create-page"] input::placeholder {
-  color: rgba(0, 0, 0, 0.42) !important;
-}
-[data-theme="light"] [data-testid="create-page"] .space-bg,
-[data-theme="light"] [data-testid="create-page"] .stars,
-[data-theme="light"] [data-testid="create-page"] .star {
-  display: none !important;
-}
-
-/* === LIGHT THEME — targeted overrides, minimal and clean === */
-[data-theme="light"] .create-input-area,
-[data-theme="light"] .input-outer {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-[data-theme="light"] .input-inner {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="light"] .input-inner textarea,
-[data-theme="light"] .input-inner input,
-[data-theme="light"] .create-content-v2 .input-inner input {
-  color: #1A1A1C !important;
-  caret-color: #1A1A1C;
-}
-
-[data-theme="light"] .input-inner textarea::placeholder,
-[data-theme="light"] .input-inner input::placeholder {
-  color: rgba(0, 0, 0, 0.42) !important;
-}
-
-[data-theme="light"] .hero-headline,
-[data-theme="light"] .hero-title,
-[data-theme="light"] .section-title,
-[data-theme="light"] .creation-title,
-[data-theme="light"] .profile-name,
-[data-theme="light"] .settings-menu-text,
-[data-theme="light"] h1,
-[data-theme="light"] h2,
-[data-theme="light"] h3,
-[data-theme="light"] .nav-link,
-[data-theme="light"] .logo-text {
-  color: #1A1A1C !important;
-}
-
-[data-theme="light"] .hero-subtitle,
-[data-theme="light"] .profile-handle {
-  color: rgba(0, 0, 0, 0.6) !important;
-}
-
-[data-theme="light"] .header-upgrade-btn {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
-
-[data-theme="light"] .get-started-btn {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
-
-[data-theme="light"] .creation-card {
-  background: #FFFFFF !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-[data-theme="light"] .credits-progress-card,
-[data-theme="light"] .settings-menu-card,
-[data-theme="light"] .delete-account-card {
-  background: #FFFFFF !important;
-  border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
-}
-
-[data-theme="light"] .input-icon-btn {
-  color: rgba(0, 0, 0, 0.65) !important;
-}
-
-[data-theme="light"] .input-icon-btn:hover {
-  background: rgba(0, 0, 0, 0.06) !important;
-}
-
-[data-theme="light"] .input-send-btn {
-  background: #1A1A1C !important;
-  color: #FFFFFF !important;
-}
 
 /* Language item in light theme */
-[data-theme="light"] .language-item {
-  background: #F2F2F7 !important;
-}
 
-[data-theme="light"] .language-item.selected {
-  border-color: #1A1A1C !important;
-}
 
 /* Appearance card in light */
-[data-theme="light"] .appearance-card {
-  background: #F2F2F7 !important;
-  border-color: rgba(0, 0, 0, 0.15) !important;
-  color: #1A1A1C !important;
-}
 
-[data-theme="light"] .appearance-card.selected {
-  border: 2px solid #1A1A1C !important;
-}
-
-[data-theme="light"] .appearance-label,
-[data-theme="light"] .language-name {
-  color: #1A1A1C !important;
-}
 
 /* Smooth theme transition on critical containers only */
 body, .input-outer, .input-inner, .creation-card, .settings-menu-card,
@@ -3842,14 +3353,6 @@ body {
   transition: transform 0.1s ease;
 }
 
-[data-theme="light"] .appearance-popup,
-[data-theme="light"] .language-popup,
-[data-theme="light"] .confirm-popup,
-[data-theme="light"] .formats-popup,
-[data-theme="light"] .auth-popup,
-[data-theme="light"] .format-detail-popup {
-  background: #FFFFFF !important;
-}
 
 .appearance-popup .popup-title {
   text-align: center;
@@ -3889,10 +3392,6 @@ body {
               transform 0.18s ease;
 }
 
-[data-theme="light"] .appearance-card {
-  background: #FFFFFF;
-  border-color: rgba(0, 0, 0, 0.18);
-}
 
 .appearance-card:active {
   transform: scale(0.97);
@@ -3902,9 +3401,6 @@ body {
   border: 2px solid #FFFFFF;
 }
 
-[data-theme="light"] .appearance-card.selected {
-  border: 2px solid #1A1A1C;
-}
 
 .appearance-label {
   font-family: -apple-system, 'SF Pro Text', sans-serif;
@@ -8302,7 +7798,7 @@ body {
 .nind-logo { height: 28px; width: auto; display: block; object-fit: contain; }
 .header-logo-svg.nind-logo, .logo-svg.nind-logo { height: 30px; }
 .footer-logo-svg.nind-logo { height: 26px; }
-[data-theme="light"] .nind-logo { filter: invert(1); }
+
 .gen-mode-toggle { display: flex; gap: 4px; width: fit-content; margin: 0 auto 14px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
 .gen-mode-toggle button { border: 0; background: transparent; color: rgba(255,255,255,0.62); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .gen-mode-toggle button.active { background: #fff; color: #111; }
@@ -8324,12 +7820,8 @@ body {
 .nind-auth-legal { max-width: 360px; margin: 0; text-align: center; color: rgba(255,255,255,0.38); font-size: 12px; line-height: 1.5; }
 .nind-auth-legal a { color: rgba(255,255,255,0.7); }
 .nind-auth-muted { color: rgba(255,255,255,0.6); }
-[data-theme="light"] .nind-auth { background: #fff; color: #111; }
-[data-theme="light"] .nind-auth-input, [data-theme="light"] .nind-auth-google { border-color: rgba(0,0,0,0.16); color: #111; }
-[data-theme="light"] .nind-auth-input::placeholder, [data-theme="light"] .nind-auth-switch, [data-theme="light"] .nind-auth-back, [data-theme="light"] .nind-auth-legal { color: rgba(0,0,0,0.5); }
-[data-theme="light"] .nind-auth-primary { background: #111; color: #fff; }
-[data-theme="light"] .nind-auth-or { color: rgba(0,0,0,0.4); }
-[data-theme="light"] .nind-auth-or::before, [data-theme="light"] .nind-auth-or::after { background: rgba(0,0,0,0.12); }
+
+
 .nind-video { min-height: 100vh; background: #0c0c0e; color: #fff; }
 .nind-video-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; max-width: 1080px; margin: 0 auto; }
 .nind-video-top-spacer, .nind-video-icon { width: 36px; }
@@ -8356,13 +7848,5 @@ body {
 .nind-video-secondary { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.16); }
 .nind-video-danger { background: transparent; color: #ffb4b4; border: 1px solid rgba(255,180,180,0.35); }
 @media (max-width: 800px) { .nind-video-layout { grid-template-columns: 1fr; gap: 22px; } .nind-video-meta h1 { font-size: 26px; } }
-[data-theme="light"] .nind-video { background: #fff; color: #111; }
-[data-theme="light"] .nind-video-stage { background: #f3f3f4; }
-[data-theme="light"] .nind-video-icon, [data-theme="light"] .nind-video-secondary { color: #111; border-color: rgba(0,0,0,0.14); }
-[data-theme="light"] .nind-video-primary { background: #111; color: #fff; }
-[data-theme="light"] .nind-video-progress p, [data-theme="light"] .nind-video-prompt, [data-theme="light"] .nind-video-kicker, [data-theme="light"] .nind-video-facts dt, [data-theme="light"] .nind-video-status p { color: rgba(0,0,0,0.55); }
-[data-theme="light"] .nind-video-progress-track { background: rgba(0,0,0,0.08); }
-[data-theme="light"] .nind-video-progress-track div { background: #111; }
-[data-theme="light"] .gen-mode-toggle { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
-[data-theme="light"] .gen-mode-toggle button { color: rgba(0,0,0,0.6); }
-[data-theme="light"] .gen-mode-toggle button.active { background: #111; color: #fff; }
+
+

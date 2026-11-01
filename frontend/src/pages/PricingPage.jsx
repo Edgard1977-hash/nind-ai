@@ -45,7 +45,7 @@ const PlanCard = ({ plan, isPopular, onSelect, isLoading }) => {
     >
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-purple-500 rounded-full text-xs font-bold">
-          Популярный
+          Popular
         </div>
       )}
       
@@ -61,7 +61,7 @@ const PlanCard = ({ plan, isPopular, onSelect, isLoading }) => {
       
       <div className="mb-6">
         <span className="text-4xl font-bold">${plan.price}</span>
-        <span className="text-white/50">/месяц</span>
+        <span className="text-white/50">/month</span>
       </div>
       
       <ul className="space-y-3 mb-6">
@@ -82,7 +82,7 @@ const PlanCard = ({ plan, isPopular, onSelect, isLoading }) => {
         {isLoading ? (
           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
         ) : (
-          "Выбрать план"
+          "Choose plan"
         )}
       </button>
     </div>
@@ -112,23 +112,23 @@ export const PricingPage = () => {
         {
           id: "starter",
           name: "Starter",
-          name_ru: "Стартовый",
+          name_ru: "Starter",
           price: 7.99,
-          features: ["10 видео/месяц", "720p качество", "Базовые форматы"]
+          features: ["10 videos/month", "720p", "Basic formats"]
         },
         {
           id: "pro",
           name: "Pro",
-          name_ru: "Про",
+          name_ru: "Pro",
           price: 19.00,
-          features: ["50 видео/месяц", "1080p качество", "Все форматы", "Приоритетная генерация"]
+          features: ["50 videos/month", "1080p", "All formats", "Priority generation"]
         },
         {
           id: "unlimited",
           name: "Unlimited",
-          name_ru: "Безлимит",
+          name_ru: "Unlimited",
           price: 79.00,
-          features: ["Безлимитные видео", "4K качество", "Все форматы", "API доступ", "Приоритетная поддержка"]
+          features: ["Unlimited videos", "4K", "All formats", "API access", "Priority support"]
         }
       ]);
     }
@@ -189,10 +189,10 @@ export const PricingPage = () => {
         {/* Title */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
-            Выберите план
+            Choose a plan
           </h1>
           <p className="text-white/60 text-lg max-w-md mx-auto">
-            Создавайте профессиональные видео с помощью AI без ограничений
+            Make professional videos with AI
           </p>
         </div>
 
@@ -212,7 +212,7 @@ export const PricingPage = () => {
         {/* Features comparison */}
         <div className="mt-16 text-center">
           <p className="text-white/40 text-sm">
-            Все планы включают: Безопасные платежи • Отмена в любое время • 24/7 поддержка
+            Every plan includes secure payments, cancel anytime, and support
           </p>
         </div>
       </main>

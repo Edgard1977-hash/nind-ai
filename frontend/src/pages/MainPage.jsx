@@ -69,7 +69,7 @@ const PersonIconAvatar = ({ className }) => (
 );
 
 // Format categories
-const FORMAT_TABS = ["Все", "Новые", "Видео", "Фото", "Монтаж", "Анимации"];
+const FORMAT_TABS = ["All", "New", "Video", "Photo", "Montage", "Animation"];
 
 // Animated placeholder phrases
 const PLACEHOLDER_PHRASES = [
@@ -116,22 +116,30 @@ const EXAMPLE_VIDEOS = [
 ];
 
 // Smooth progress component
-const SmoothProgressCard = ({ video, onStop }) => {
-  const [displayProgress, setDisplayProgress] = useState(0);
-  const targetProgress = Math.min(Math.floor(video.progress || 0), 99);
+const SmoothProgressCard = ({ video, onStop, onRetry }) => {
+  const failed = video.status === "failed" || video.status === "error";
+  const displayProgress = failed ? (video.progress || 0) : Math.min(Math.floor(video.progress || 0), video.status === "completed" ? 100 : 99);
 
-  useEffect(() => {
-    if (displayProgress < targetProgress) {
-      const diff = targetProgress - displayProgress;
-      const increment = Math.max(1, Math.ceil(diff / 20));
-      const timer = setTimeout(() => {
-        setDisplayProgress(prev => Math.min(prev + increment, targetProgress));
-      }, 50);
-      return () => clearTimeout(timer);
-    } else if (displayProgress > targetProgress) {
-      setDisplayProgress(targetProgress);
-    }
-  }, [displayProgress, targetProgress]);
+  if (failed) {
+    return (
+      <div className="creation-card generating" data-testid={`library-video-${video.id}`}>
+        <div className="creation-generating generation-failed">
+          <p className="generation-failed-text">{video.error || video.progress_message || "Generation failed"}</p>
+          <button
+            type="button"
+            className="generation-retry-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRetry && onRetry(video);
+            }}
+            data-testid={`retry-generation-${video.id}`}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -178,7 +186,7 @@ export const MainPage = () => {
   const [attachments, setAttachments] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState("Все");
+  const [activeTab, setActiveTab] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [headerScrolled, setHeaderScrolled] = useState(false);
   
@@ -244,7 +252,7 @@ export const MainPage = () => {
     const diffYear = Math.floor(diffDay / 365);
 
     // Get language - SAME KEY as ProfilePage uses!
-    const lang = localStorage.getItem('slind_language') || user?.language || 'ru';
+    const lang = localStorage.getItem('slind_language') || user?.language || 'en';
 
     const timeFormats = {
       ru: {
@@ -419,10 +427,39 @@ export const MainPage = () => {
       } catch (err) {
         console.warn('Cancel API failed (non-fatal):', err);
       }
-      toast.success('Генерация остановлена');
+      toast.success('Generation stopped');
     } catch (e) {
       console.error('Stop failed:', e);
-      toast.error('Не удалось остановить');
+      toast.error('Could not stop generation');
+    }
+  };
+
+  const handleRetryGeneration = async (video) => {
+    const retryPrompt = (video.prompt || video.title || "").trim();
+    if (!retryPrompt) {
+      toast.error("Nothing to retry");
+      return;
+    }
+    setGeneratingVideos(prev => prev.filter(v => v.id !== video.id));
+    try {
+      const response = await axios.post(`${API}/video/generate`, {
+        prompt: retryPrompt,
+        format_id: video.format_id || "auto",
+        language: "auto",
+        mode: video.mode || generationMode,
+      });
+      const newVideo = {
+        id: response.data.id,
+        title: retryPrompt,
+        prompt: retryPrompt,
+        status: "processing",
+        progress: response.data.progress || 0,
+        mode: video.mode || generationMode,
+      };
+      setGeneratingVideos(prev => [newVideo, ...prev]);
+      pollVideoProgress(response.data.id);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Could not retry");
     }
   };
 
@@ -440,10 +477,10 @@ export const MainPage = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       setOpenMenu(null);
-      toast.success('Видео скачивается...');
+      toast.success('Download started');
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Ошибка при скачивании');
+      toast.error('Download failed');
     }
   };
 
@@ -454,10 +491,10 @@ export const MainPage = () => {
       setUserVideos(prev => prev.filter(v => v.id !== videoId));
       setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
       setOpenMenu(null);
-      toast.success('Видео удалено');
+      toast.success('Video deleted');
     } catch (error) {
       console.error('Delete error:', error);
-      toast.error('Ошибка при удалении');
+      toast.error('Could not delete the video');
     }
   };
 
@@ -465,7 +502,7 @@ export const MainPage = () => {
   const handleEdit = async (video) => {
     setOpenMenu(null);
     const currentTitle = video.prompt || video.title || '';
-    const newTitle = window.prompt('Новое название видео:', currentTitle);
+    const newTitle = window.prompt('New video title:', currentTitle);
     if (newTitle === null) return;
     const trimmed = newTitle.trim();
     if (!trimmed || trimmed === currentTitle) return;
@@ -473,10 +510,10 @@ export const MainPage = () => {
       await axios.patch(`${API}/videos/${video.id}`, { prompt: trimmed });
       setUserVideos(prev => prev.map(v => v.id === video.id ? { ...v, prompt: trimmed } : v));
       setGeneratingVideos(prev => prev.map(v => v.id === video.id ? { ...v, prompt: trimmed, title: trimmed } : v));
-      toast.success('Название обновлено');
+      toast.success('Title updated');
     } catch (error) {
       console.error('Edit error:', error);
-      toast.error('Ошибка при обновлении');
+      toast.error('Could not update the title');
     }
   };
 
@@ -783,72 +820,56 @@ export const MainPage = () => {
   };
 
   const pollVideoProgress = (videoId) => {
-    let currentProgress = 5;
     let attempts = 0;
-    const maxAttempts = 150;
-    
+    const maxAttempts = 200;
+    const terminal = new Set(["completed", "failed", "error"]);
+
     const pollInterval = setInterval(async () => {
       attempts++;
-      
-      // Increment progress smoothly
-      if (currentProgress < 100) {
-        const increment = currentProgress < 20 ? 3 : currentProgress < 50 ? 4 : currentProgress < 80 ? 3 : 2;
-        currentProgress = Math.min(currentProgress + increment, 100);
-      }
-      
       try {
         const response = await axios.get(`${API}/video/${videoId}`);
         const videoData = response.data;
-        
+        const done = terminal.has(videoData.status);
+
         setGeneratingVideos(prev => prev.map(v => {
           if (v.id !== videoId) return v;
-          
-          const newProgress = videoData.status === 'completed' ? 100 : currentProgress;
-          
           return {
             ...v,
-            ...videoData, // Обновляем ВСЕ данные с сервера (включая created_at)
-            progress: Math.max(v.progress || 0, newProgress),
+            ...videoData,
+            progress: videoData.status === "completed" ? 100 : (videoData.progress || 0),
             status: videoData.status
           };
         }));
-        
-        if (videoData.status === 'completed' || videoData.status === 'failed') {
+
+        if (done) {
           clearInterval(pollInterval);
-          setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
-          if (videoData.status === 'completed') {
-            // Add to userVideos with deduplication
+          if (videoData.status === "completed") {
+            setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
             setUserVideos(prev => {
               const existingIndex = prev.findIndex(v => v.id === videoData.id);
               if (existingIndex >= 0) {
-                // Update existing video
                 const updated = [...prev];
                 updated[existingIndex] = videoData;
                 return updated;
-              } else {
-                // Add new video
-                return [videoData, ...prev];
               }
+              return [videoData, ...prev];
             });
           }
           return;
         }
-        
       } catch (error) {
-        setGeneratingVideos(prev => prev.map(v => {
-          if (v.id !== videoId) return v;
-          return {
-            ...v,
-            progress: Math.max(v.progress || 0, currentProgress)
-          };
-        }));
+        console.error("Progress poll failed:", error);
       }
-      
+
       if (attempts >= maxAttempts) {
         clearInterval(pollInterval);
-        setGeneratingVideos(prev => prev.filter(v => v.id !== videoId));
+        setGeneratingVideos(prev => prev.map(v => (
+          v.id === videoId
+            ? { ...v, status: "failed", error: "Stopped waiting for the server" }
+            : v
+        )));
       }
-    }, 1500); // 1.5 seconds for smoother updates
+    }, 1500);
   };
 
   const handleSubmit = async () => {
@@ -926,7 +947,7 @@ export const MainPage = () => {
             }
           }, 100);
           
-          toast.success("Создаём 3D анимацию...");
+          toast.success("Creating a 3D animation...");
           
           // Poll for progress
           pollVideoProgress(response.data.id);
@@ -968,13 +989,13 @@ export const MainPage = () => {
         }
       }, 100);
       
-      toast.success("Генерация началась!");
+      toast.success("Generation started");
       
       // Poll for progress
       pollVideoProgress(response.data.id);
     } catch (error) {
       console.error("Failed to start generation:", error);
-      toast.error("Ошибка при запуске генерации");
+      toast.error(error.response?.data?.detail || "Could not start generation");
     }
   };
 
@@ -1252,7 +1273,7 @@ export const MainPage = () => {
                     ) : (generatingVideos.length > 0 || userVideos.length > 0) ? (
                       <div className="creations-grid-real">
                         {generatingVideos.map((video) => (
-                          <SmoothProgressCard key={video.id} video={video} onStop={handleStopGeneration} />
+                          <SmoothProgressCard key={video.id} video={video} onStop={handleStopGeneration} onRetry={handleRetryGeneration} />
                         ))}
                         {userVideos.map((video) => (
                           <div 
@@ -1952,7 +1973,7 @@ export const MainPage = () => {
               <Search className="search-icon" />
               <input 
                 type="text"
-                placeholder="Найти формат контента"
+                placeholder="Find a format"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="search-input"
@@ -2000,9 +2021,9 @@ export const MainPage = () => {
             
             {/* Status Text */}
             <div className="voice-status">
-              {isRecording && !voiceTranscript && <p>Слушаю...</p>}
-              {isProcessing && <p>Обрабатываю запрос...</p>}
-              {isAISpeaking && <p>Создаю видео по вашему запросу...</p>}
+              {isRecording && !voiceTranscript && <p>Listening...</p>}
+              {isProcessing && <p>Working on your request...</p>}
+              {isAISpeaking && <p>Creating a video from your request...</p>}
             </div>
             
             {/* Transcript */}

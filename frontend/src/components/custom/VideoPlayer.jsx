@@ -74,7 +74,7 @@ export const VideoPlayer = ({ scenes, audioUrl, title, onReplay }) => {
   if (!scenes || scenes.length === 0) {
     return (
       <div className="video-container max-w-sm mx-auto bg-card rounded-3xl border border-white/10 flex items-center justify-center">
-        <p className="text-muted-foreground">Нет сцен для отображения</p>
+        <p className="text-muted-foreground">No scenes to show</p>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export const VideoPlayer = ({ scenes, audioUrl, title, onReplay }) => {
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-violet-900/50 to-indigo-900/50 flex items-center justify-center">
-            <p className="text-white/50">Изображение загружается...</p>
+            <p className="text-white/50">Loading image...</p>
           </div>
         )}
       </div>

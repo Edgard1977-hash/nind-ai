@@ -42,19 +42,19 @@ export const GenerationProgress = ({ progress, message }) => {
       <div className="flex justify-center gap-8 text-xs text-muted-foreground">
         <div className={`flex flex-col items-center ${progress >= 10 ? 'text-primary' : ''}`}>
           <div className={`w-3 h-3 rounded-full mb-1 ${progress >= 10 ? 'bg-primary' : 'bg-secondary'}`} />
-          <span>Анализ</span>
+          <span>Script</span>
         </div>
         <div className={`flex flex-col items-center ${progress >= 30 ? 'text-primary' : ''}`}>
           <div className={`w-3 h-3 rounded-full mb-1 ${progress >= 30 ? 'bg-primary' : 'bg-secondary'}`} />
-          <span>Изображения</span>
+          <span>Images</span>
         </div>
         <div className={`flex flex-col items-center ${progress >= 80 ? 'text-primary' : ''}`}>
           <div className={`w-3 h-3 rounded-full mb-1 ${progress >= 80 ? 'bg-primary' : 'bg-secondary'}`} />
-          <span>Озвучка</span>
+          <span>Voice</span>
         </div>
         <div className={`flex flex-col items-center ${progress >= 100 ? 'text-primary' : ''}`}>
           <div className={`w-3 h-3 rounded-full mb-1 ${progress >= 100 ? 'bg-primary' : 'bg-secondary'}`} />
-          <span>Готово</span>
+          <span>Done</span>
         </div>
       </div>
     </div>

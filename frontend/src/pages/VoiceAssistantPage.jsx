@@ -207,7 +207,7 @@ const VoiceAssistantPage = () => {
             aspect_ratio: '9:16',
             user_id: user.user_id || user.id,
           });
-          toast.success('Создаём 3D анимацию...');
+          toast.success('Creating a 3D animation...');
           navigate(`/video/${response.data.id}`);
           return;
         }
@@ -217,11 +217,11 @@ const VoiceAssistantPage = () => {
       const response = await axios.post(`${API}/video/generate`, requestData, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      toast.success('Генерация началась!');
+      toast.success('Generation started');
       navigate(`/video/${response.data.id}`);
     } catch (err) {
       console.error('Voice assistant submit failed:', err);
-      toast.error('Ошибка при запуске генерации');
+      toast.error('Could not start generation');
       setIsSubmitting(false);
     }
   };
@@ -235,12 +235,12 @@ const VoiceAssistantPage = () => {
     if (isRecording || isTranscribing || isSubmitting) return;
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      toast.error('Ваш браузер не поддерживает запись. Откройте на HTTPS в новой вкладке.');
+      toast.error('This browser cannot record. Open the page over HTTPS in a new tab.');
       return;
     }
 
     if (!window.isSecureContext) {
-      toast.error('Запись возможна только на HTTPS');
+      toast.error('Recording requires HTTPS');
       return;
     }
 
@@ -283,7 +283,7 @@ const VoiceAssistantPage = () => {
 
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         if (!blob.size) {
-          toast.error('Пустая запись');
+          toast.error('Empty recording');
           return;
         }
         await transcribeAndSubmit(blob);
@@ -305,19 +305,19 @@ const VoiceAssistantPage = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.info('Откройте страницу в новой вкладке, там микрофон будет работать');
+        toast.info('Open this page in a new tab so the microphone can be used');
         return;
       }
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-        toast.error('Доступ к микрофону запрещён. Разрешите его в настройках браузера.');
+        toast.error('Microphone access was blocked. Allow it in the browser settings.');
       } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-        toast.error('Микрофон не найден');
+        toast.error('No microphone found');
       } else if (name === 'NotReadableError') {
-        toast.error('Микрофон уже занят другим приложением');
+        toast.error('The microphone is in use by another app');
       } else if (name === 'SecurityError') {
-        toast.error('Запись возможна только на HTTPS. Откройте страницу в отдельной вкладке.');
+        toast.error('Recording requires HTTPS. Open the page in its own tab.');
       } else {
-        toast.error('Не удалось получить доступ к микрофону: ' + (err?.message || name));
+        toast.error('Could not access the microphone: ' + (err?.message || name));
       }
     }
   };
@@ -332,7 +332,7 @@ const VoiceAssistantPage = () => {
   const transcribeAndSubmit = async (blob) => {
     setIsTranscribing(true);
     try {
-      const lang = localStorage.getItem('slind_language') || 'ru';
+      const lang = localStorage.getItem('slind_language') || 'en';
       const formData = new FormData();
       formData.append('file', blob, 'voice.webm');
       formData.append('language', lang);
@@ -344,15 +344,15 @@ const VoiceAssistantPage = () => {
       setIsTranscribing(false);
 
       if (!text) {
-        toast.error('Не удалось распознать речь');
+        toast.error('Could not recognize speech');
         return;
       }
-      toast.success(`Распознано: "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
+      toast.success(`Heard: "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
       await submitPrompt(text);
     } catch (err) {
       console.error('Transcribe failed:', err);
       setIsTranscribing(false);
-      toast.error('Ошибка транскрипции');
+      toast.error('Transcription failed');
     }
   };
 
@@ -400,9 +400,9 @@ const VoiceAssistantPage = () => {
           </div>
 
           <div className="voice-status-label" data-testid="voice-status-label">
-            {isRecording && 'Слушаю...'}
-            {isTranscribing && 'Распознаю речь...'}
-            {isSubmitting && !isTranscribing && 'Отправляю запрос...'}
+            {isRecording && 'Listening...'}
+            {isTranscribing && 'Transcribing...'}
+            {isSubmitting && !isTranscribing && 'Sending...'}
             {!isRecording && !isTranscribing && !isSubmitting && (
               isInIframe ? (
                 <a
@@ -412,11 +412,11 @@ const VoiceAssistantPage = () => {
                   className="voice-open-newtab"
                   data-testid="voice-open-newtab"
                 >
-                  Открыть в новой вкладке
-                  <span className="voice-open-newtab-hint">для работы микрофона</span>
+                  Open in a new tab
+                  <span className="voice-open-newtab-hint">so the microphone works</span>
                 </a>
               ) : (
-                <>Нажмите <Mic className="w-3.5 h-3.5 inline-block -mt-0.5" /> чтобы говорить</>
+                <>Press <Mic className="w-3.5 h-3.5 inline-block -mt-0.5" /> to talk</>
               )
             )}
           </div>
@@ -468,7 +468,7 @@ const VoiceAssistantPage = () => {
             <input
               type="text"
               className="voice-input-field"
-              placeholder={isRecording ? 'Запись...' : 'Ask anything'}
+              placeholder={isRecording ? 'Recording...' : 'Ask anything'}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => {

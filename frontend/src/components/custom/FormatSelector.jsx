@@ -54,7 +54,7 @@ export const FormatSelector = ({ formats, categories, isOpen, onClose, onSelect,
         {/* Header */}
         <div className="flex items-center justify-between p-4 md:p-6 glass rounded-t-3xl">
           <h2 className="text-2xl md:text-3xl font-bold font-['Chivo']">
-            Выберите формат
+            Choose a format
           </h2>
           <button
             onClick={onClose}
@@ -71,7 +71,7 @@ export const FormatSelector = ({ formats, categories, isOpen, onClose, onSelect,
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Поиск форматов..."
+              placeholder="Search formats..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 bg-black/50 border-white/10 h-12 text-base"
@@ -137,7 +137,7 @@ export const FormatSelector = ({ formats, categories, isOpen, onClose, onSelect,
                       </div>
                       {isSelected && (
                         <span className="px-2 py-1 text-xs bg-primary rounded-full">
-                          Выбрано
+                          Selected
                         </span>
                       )}
                     </div>
@@ -156,7 +156,7 @@ export const FormatSelector = ({ formats, categories, isOpen, onClose, onSelect,
           {filteredFormats.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Search className="w-12 h-12 mb-4 opacity-50" />
-              <p className="text-lg">Форматы не найдены</p>
+              <p className="text-lg">No formats found</p>
             </div>
           )}
         </div>

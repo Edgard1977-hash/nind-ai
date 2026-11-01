@@ -8,7 +8,7 @@ const GenerationModeToggle = ({ mode, onChange }) => (
       onClick={() => onChange("basic")}
       data-testid="mode-basic"
     >
-      Базовая
+      Basic
     </button>
     <button
       type="button"
@@ -18,7 +18,7 @@ const GenerationModeToggle = ({ mode, onChange }) => (
       onClick={() => onChange("enhanced")}
       data-testid="mode-enhanced"
     >
-      Улучшенная
+      Enhanced
     </button>
   </div>
 );

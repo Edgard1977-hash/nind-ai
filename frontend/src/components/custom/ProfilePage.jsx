@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, X, Globe, Bell, HelpCircle, LogOut, Trash2 }
 import { toast } from "sonner";
 import axios from "axios";
 import { translations, getTranslation } from "../../utils/translations";
-import AppearancePopup from "./AppearancePopup";
 import { BACKEND_URL } from "@/lib/backend";
 import { saveUser } from "@/lib/session";
 
@@ -85,7 +84,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
   const [usernameError, setUsernameError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [showLanguagePopup, setShowLanguagePopup] = useState(false);
-  const [showAppearancePopup, setShowAppearancePopup] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(currentLang || localStorage.getItem('slind_language') || 'en');
   const [showConfirmPopup, setShowConfirmPopup] = useState(null);
   const [notifications, setNotifications] = useState([]);
@@ -383,19 +381,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
 
           <button 
             className="settings-menu-item"
-            onClick={() => setShowAppearancePopup(true)}
-            data-testid="appearance-btn"
-          >
-            <svg className="settings-menu-icon" width="22" height="22" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="11" stroke="currentColor" strokeWidth="2" />
-              <path d="M16 5 A11 11 0 0 1 16 27 Z" fill="currentColor" />
-            </svg>
-            <span className="settings-menu-text">{selectedLanguage === 'ru' ? 'Внешний вид' : 'Appearance'}</span>
-            <ChevronIcon className="settings-menu-arrow" />
-          </button>
-
-          <button 
-            className="settings-menu-item"
             onClick={() => setActiveView('notifications')}
             data-testid="notifications-btn"
           >
@@ -440,13 +425,6 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         </div>
 
         {/* Language Popup */}
-        {showAppearancePopup && (
-          <AppearancePopup 
-            onClose={() => setShowAppearancePopup(false)} 
-            lang={selectedLanguage}
-          />
-        )}
-
         {showLanguagePopup && (
           <div
             className="popup-overlay"

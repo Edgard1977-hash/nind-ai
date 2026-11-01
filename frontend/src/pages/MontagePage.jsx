@@ -77,8 +77,8 @@ export const MontagePage = () => {
       setStyles([
         { id: "tiktok", name: "TikTok/Reels", name_ru: "TikTok/Reels" },
         { id: "youtube", name: "YouTube", name_ru: "YouTube" },
-        { id: "meme", name: "Meme/Comedy", name_ru: "Мемы/Комедия" },
-        { id: "cinematic", name: "Cinematic", name_ru: "Кинематографичный" }
+        { id: "meme", name: "Meme/Comedy", name_ru: "Memes" },
+        { id: "cinematic", name: "Cinematic", name_ru: "Cinematic" }
       ]);
     }
   };
@@ -88,7 +88,7 @@ export const MontagePage = () => {
     if (!file) return;
     
     if (!file.type.startsWith("video/")) {
-      toast.error("Пожалуйста, выберите видео файл");
+      toast.error("Please choose a video file");
       return;
     }
     
@@ -102,12 +102,12 @@ export const MontagePage = () => {
     try {
       // Use chunked upload for files > 5MB
       if (fileSizeMB > 5) {
-        setProgressMessage(`Загружаем ${fileSizeMB.toFixed(0)} MB по частям...`);
+        setProgressMessage(`Uploading ${fileSizeMB.toFixed(0)} MB in parts...`);
         const url = await uploadFileChunked(file);
         setVideoUrl(url);
       } else {
         // Small files - direct upload
-        setProgressMessage("Загружаем видео...");
+        setProgressMessage("Uploading video...");
         const formData = new FormData();
         formData.append("file", file);
         
@@ -117,7 +117,7 @@ export const MontagePage = () => {
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             setProgress(percentCompleted);
-            setProgressMessage(`Загружаем видео... ${percentCompleted}%`);
+            setProgressMessage(`Uploading video... ${percentCompleted}%`);
           }
         });
         setVideoUrl(response.data.url);
@@ -125,10 +125,10 @@ export const MontagePage = () => {
       
       setProgress(0);
       setProgressMessage("");
-      toast.success("Видео загружено!");
+      toast.success("Video uploaded");
     } catch (error) {
       console.error("Video upload failed:", error);
-      toast.error(error.message || "Ошибка загрузки видео");
+      toast.error(error.message || "Video upload failed");
       setVideoFile(null);
       setVideoPreview(null);
     } finally {
@@ -170,7 +170,7 @@ export const MontagePage = () => {
       
       const percentCompleted = Math.round(((i + 1) / totalChunks) * 100);
       setProgress(percentCompleted);
-      setProgressMessage(`Загружаем часть ${i + 1}/${totalChunks}... ${percentCompleted}%`);
+      setProgressMessage(`Uploading part ${i + 1}/${totalChunks}... ${percentCompleted}%`);
     }
     
     // Complete upload
@@ -183,7 +183,7 @@ export const MontagePage = () => {
     if (!file) return;
     
     if (!file.type.startsWith("audio/")) {
-      toast.error("Пожалуйста, выберите аудио файл");
+      toast.error("Please choose an audio file");
       return;
     }
     
@@ -198,23 +198,23 @@ export const MontagePage = () => {
         headers: { "Content-Type": "multipart/form-data" }
       });
       setMusicUrl(response.data.url);
-      toast.success("Музыка загружена");
+      toast.success("Music uploaded");
     } catch (error) {
       console.error("Music upload failed:", error);
-      toast.error("Ошибка загрузки музыки");
+      toast.error("Music upload failed");
       setMusicFile(null);
     }
   };
 
   const startMontage = async () => {
     if (!videoUrl) {
-      toast.error("Сначала загрузите видео");
+      toast.error("Upload a video first");
       return;
     }
     
     setIsProcessing(true);
     setProgress(0);
-    setProgressMessage("Запускаем AI монтаж...");
+    setProgressMessage("Starting the edit...");
     
     try {
       const response = await axios.post(`${API}/montage/create`, {
@@ -224,10 +224,10 @@ export const MontagePage = () => {
       });
       
       setMontageId(response.data.id);
-      toast.success("Монтаж запущен! AI анализирует видео...");
+      toast.success("Edit started");
     } catch (error) {
       console.error("Failed to start montage:", error);
-      toast.error("Ошибка запуска монтажа");
+      toast.error("Could not start the edit");
       setIsProcessing(false);
     }
   };
@@ -245,7 +245,7 @@ export const MontagePage = () => {
       if (data.status === "completed") {
         setIsProcessing(false);
         setMontageId(null);
-        toast.success("Монтаж готов!");
+        toast.success("Edit ready");
         // Save result URL for display
         if (data.video_url) {
           setResultVideoUrl(`${BACKEND_URL}${data.video_url}`);
@@ -253,7 +253,7 @@ export const MontagePage = () => {
       } else if (data.status === "error") {
         setIsProcessing(false);
         setMontageId(null);
-        toast.error(`Ошибка: ${data.error}`);
+        toast.error(data.error || "Edit failed");
       }
     } catch (error) {
       console.error("Failed to check progress:", error);
@@ -293,7 +293,7 @@ export const MontagePage = () => {
         </button>
         <div className="flex items-center gap-2">
           <Film className="w-5 h-5 text-purple-400" />
-          <span className="font-semibold">AI Монтаж</span>
+          <span className="font-semibold">AI edit</span>
         </div>
         <div className="w-10" />
       </header>
@@ -302,16 +302,16 @@ export const MontagePage = () => {
       <main className="relative z-10 px-4 pb-24 max-w-2xl mx-auto">
         {/* Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">AI Видеомонтаж</h1>
+          <h1 className="text-3xl font-bold mb-2">AI video edit</h1>
           <p className="text-white/60">
-            Загрузите видео — AI найдёт лучшие моменты и создаст монтаж
+            Upload a video. AI finds the best moments and cuts them together.
           </p>
         </div>
 
         {/* Video Upload */}
         <div className="mb-6">
           <label className="block text-white/80 mb-2 font-medium">
-            1. Загрузите видео
+            1. Upload a video
           </label>
           
           {videoPreview ? (
@@ -344,7 +344,7 @@ export const MontagePage = () => {
               ) : (
                 <>
                   <Upload className="w-10 h-10 text-white/60" />
-                  <span className="text-white/60">Нажмите чтобы загрузить видео</span>
+                  <span className="text-white/60">Click to upload a video</span>
                 </>
               )}
             </button>
@@ -362,7 +362,7 @@ export const MontagePage = () => {
         {/* Style Selection */}
         <div className="mb-6">
           <label className="block text-white/80 mb-2 font-medium">
-            2. Выберите стиль монтажа
+            2. Choose a style
           </label>
           
           <div className="grid grid-cols-2 gap-3">
@@ -393,7 +393,7 @@ export const MontagePage = () => {
         {/* Music Upload (Optional) */}
         <div className="mb-8">
           <label className="block text-white/80 mb-2 font-medium">
-            3. Добавьте музыку (опционально)
+            3. Add music (optional)
           </label>
           
           <button
@@ -404,7 +404,7 @@ export const MontagePage = () => {
             data-testid="upload-music-btn"
           >
             <Music className="w-5 h-5" />
-            <span>{musicFile ? musicFile.name : "Выбрать музыку"}</span>
+            <span>{musicFile ? musicFile.name : "Choose music"}</span>
             {musicFile && <Check className="w-5 h-5 text-green-400" />}
           </button>
           
@@ -444,12 +444,12 @@ export const MontagePage = () => {
           {isProcessing ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              Создаём монтаж...
+              Building the edit...
             </>
           ) : (
             <>
               <Sparkles className="w-5 h-5" />
-              Создать AI монтаж
+              Create an AI edit
             </>
           )}
         </button>
@@ -459,7 +459,7 @@ export const MontagePage = () => {
           <div className="mt-6 glass-ios rounded-2xl p-4" data-testid="result-section">
             <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <Check className="w-5 h-5 text-green-400" />
-              Ваш монтаж готов!
+              Your edit is ready
             </h3>
             <video
               src={resultVideoUrl}
@@ -475,7 +475,7 @@ export const MontagePage = () => {
                 data-testid="download-btn"
               >
                 <Film className="w-5 h-5" />
-                Скачать
+                Download
               </a>
               <button
                 onClick={() => {
@@ -488,7 +488,7 @@ export const MontagePage = () => {
                 data-testid="new-montage-btn"
               >
                 <Sparkles className="w-5 h-5" />
-                Новый монтаж
+                New edit
               </button>
             </div>
           </div>

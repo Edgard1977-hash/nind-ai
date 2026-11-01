@@ -4,7 +4,8 @@ Primary path: Google Gemini image models ("Nano Banana"), currently
 ``gemini-2.5-flash-image``, via the public Gemini REST API.
 
 Fallback: the same model through OpenRouter when ``GEMINI_API_KEY`` is unset
-and ``OPENROUTER_API_KEY`` is present.
+and ``OPENROUTER_API_KEY`` is present. This fallback stays on OpenRouter.
+Do not point it at Gemini's OpenAI-compatible text endpoint.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from typing import Optional
 import httpx
 
 from ai.base import ProviderNotConfigured
+from ai.retry import retry_rate_limits
 
 DEFAULT_GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"
 DEFAULT_OPENROUTER_IMAGE_MODEL = "google/gemini-2.5-flash-image"
@@ -68,19 +70,26 @@ class GeminiImageProvider:
             ],
             "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
         }
-        async with httpx.AsyncClient(timeout=120) as client:
-            response = await client.post(url, params={"key": self.api_key}, json=body)
-        if response.status_code >= 400:
-            raise RuntimeError(
-                f"Gemini image request failed ({response.status_code}): {response.text[:500]}"
-            )
-        payload = response.json()
-        for candidate in payload.get("candidates") or []:
-            for part in (candidate.get("content") or {}).get("parts") or []:
-                inline = part.get("inlineData") or part.get("inline_data")
-                if inline and inline.get("data"):
-                    return base64.b64decode(inline["data"])
-        raise RuntimeError("Gemini image response did not include image bytes")
+        async def _once() -> bytes:
+            async with httpx.AsyncClient(timeout=120) as client:
+                response = await client.post(url, params={"key": self.api_key}, json=body)
+            if response.status_code == 429:
+                limited = RuntimeError("Gemini image rate limit")
+                limited.status_code = 429
+                raise limited
+            if response.status_code >= 400:
+                raise RuntimeError(
+                    f"Gemini image request failed ({response.status_code}): {response.text[:500]}"
+                )
+            payload = response.json()
+            for candidate in payload.get("candidates") or []:
+                for part in (candidate.get("content") or {}).get("parts") or []:
+                    inline = part.get("inlineData") or part.get("inline_data")
+                    if inline and inline.get("data"):
+                        return base64.b64decode(inline["data"])
+            raise RuntimeError("Gemini image response did not include image bytes")
+
+        return await retry_rate_limits(_once, label="Gemini image")
 
 
 class OpenRouterImageProvider:

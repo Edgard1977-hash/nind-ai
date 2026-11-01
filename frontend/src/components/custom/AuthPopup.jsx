@@ -51,7 +51,7 @@ export const AuthPopup = ({ isOpen, onClose, onSuccess }) => {
         <div className="drag-indicator" />
         
         {/* Title */}
-        <h2 className="auth-title">Регистрация или вход</h2>
+        <h2 className="auth-title">Sign in</h2>
         
         {/* Auth buttons */}
         <div className="auth-buttons">
@@ -61,7 +61,7 @@ export const AuthPopup = ({ isOpen, onClose, onSuccess }) => {
             data-testid="google-login-btn"
           >
             <GoogleIcon className="w-5 h-5" />
-            <span>Продолжить с Google</span>
+            <span>Continue with Google</span>
           </button>
         </div>
 

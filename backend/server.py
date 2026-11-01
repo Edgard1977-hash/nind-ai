@@ -84,7 +84,7 @@ from auth import (
     set_auth_cookie,
     upsert_google_user,
 )
-from generation import process_basic_generation, process_enhanced_generation
+from generation import expire_stuck_project, process_basic_generation, process_enhanced_generation, refund_generation_credits
 from ai.base import ProviderNotConfigured
 from ai.factory import get_video_provider
 
@@ -2126,17 +2126,19 @@ async def process_video_generation(project_id: str):
         )
         
     except Exception as e:
-        logger.error(f"Video generation error: {e}")
-        import traceback
-        traceback.print_exc()
-        await db.video_projects.update_one(
-            {"id": project_id},
-            {"$set": {
-                "status": "error",
-                "error": str(e),
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }}
-        )
+        logger.exception("Video generation error")
+        project = await db.video_projects.find_one({"id": project_id}, {"_id": 0})
+        if project and project.get("status") not in ("completed", "failed"):
+            await refund_generation_credits(db, project)
+            await db.video_projects.update_one(
+                {"id": project_id},
+                {"$set": {
+                    "status": "failed",
+                    "error": str(e),
+                    "progress_message": "Generation failed",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
         # Cleanup on error
         cleanup_work_dir(work_dir)
 
@@ -2444,6 +2446,7 @@ async def get_video_project(project_id: str, user: dict = Depends(require_user))
     owner = project.get("user_id")
     if owner and owner != user["user_id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
+    project = await expire_stuck_project(db, project)
     return project
 
 @api_router.get("/videos")
@@ -2461,6 +2464,7 @@ async def get_user_videos(user_id: str, user: dict = Depends(require_user)):
         {"user_id": user_id}, 
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
+    projects = [await expire_stuck_project(db, project) for project in projects]
     return {"projects": projects}
 
 
