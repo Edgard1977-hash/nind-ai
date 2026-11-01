@@ -1,7 +1,7 @@
 """Verify legacy scene types redirect to motion_*."""
 import asyncio, sys, subprocess
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, "/app/backend")
 
 from universal_effects import render_universal_video
 

@@ -6,9 +6,8 @@ import pytest
 import requests
 import os
 import time
-from pathlib import Path
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8000').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ai-format-studio.preview.emergentagent.com').rstrip('/')
 
 
 class TestAppleStyleTextAnimation:
@@ -161,7 +160,7 @@ class TestFileUpload:
     def test_upload_image_file(self):
         """Test uploading an image file"""
         # We need to use a file that exists
-        test_logo_path = str(Path(__file__).resolve().parents[1] / "uploads" / "test_logo.png")
+        test_logo_path = "/app/backend/uploads/test_logo.png"
         
         with open(test_logo_path, "rb") as f:
             files = {"file": ("test_logo.png", f, "image/png")}

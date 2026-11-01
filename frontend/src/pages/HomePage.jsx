@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Video, Image, Home, Compass, User, HelpCircle, Crown, Film } from "lucide-react";
 import axios from "axios";
-import { BACKEND_URL } from "@/lib/backend";
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Hero images for rotation

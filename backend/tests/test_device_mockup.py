@@ -10,13 +10,12 @@ import pytest
 import requests
 import os
 import time
-from pathlib import Path
 
 # Get BASE_URL from environment
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
     # Fallback for testing
-    BASE_URL = "http://localhost:8000"
+    BASE_URL = "https://ai-format-studio.preview.emergentagent.com"
 
 
 class TestDeviceMockupAPI:
@@ -31,7 +30,7 @@ class TestDeviceMockupAPI:
     def test_upload_video_for_mockup(self):
         """Upload a test video to use for device mockup"""
         # Check if test video exists in uploads
-        test_video_path = str(Path(__file__).resolve().parents[1] / "uploads")
+        test_video_path = "/app/backend/uploads"
         
         # List existing videos
         response = requests.get(f"{BASE_URL}/api/")
@@ -248,7 +247,7 @@ class TestIPhoneCompositorV6:
     def test_compositor_module_imports(self):
         """Verify iphone_compositor.py can be imported and has required functions"""
         import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        sys.path.insert(0, '/app/backend')
         
         from iphone_compositor import (
             render_dynamic_phone,
@@ -265,7 +264,7 @@ class TestIPhoneCompositorV6:
     def test_phone_scale_parameter(self):
         """Verify phone_scale=1.05 is used for 100% screen fill"""
         import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        sys.path.insert(0, '/app/backend')
         
         import inspect
         from iphone_compositor import render_dynamic_phone
@@ -282,10 +281,10 @@ class TestIPhoneCompositorV6:
     def test_rotation_range(self):
         """Verify rotation range is -35 to +35 degrees for dynamic animation"""
         import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        sys.path.insert(0, '/app/backend')
         
         # Read source code to verify rotation calculation
-        with open(Path(__file__).resolve().parents[1] / "iphone_compositor.py", "r") as f:
+        with open('/app/backend/iphone_compositor.py', 'r') as f:
             source = f.read()
         
         # Check for rotation = 35 * math.sin pattern
@@ -296,7 +295,7 @@ class TestIPhoneCompositorV6:
     def test_3d_perspective_transform(self):
         """Verify strong 3D perspective transform is implemented"""
         import sys
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        sys.path.insert(0, '/app/backend')
         
         from iphone_compositor import apply_strong_3d_transform
         

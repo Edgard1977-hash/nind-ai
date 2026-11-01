@@ -13,7 +13,7 @@ from datetime import datetime
 class ComprehensiveVideoTester:
     def __init__(self):
         # Use the production URL from frontend/.env
-        self.base_url = "http://localhost:8000"
+        self.base_url = "https://ai-playground-nind.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.user_id = "user_ac6fd6a1d782"  # Specific user ID from requirements
         self.tests_run = 0

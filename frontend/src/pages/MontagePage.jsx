@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { BACKEND_URL } from "@/lib/backend";
 import { 
   ArrowLeft, Upload, Music, Play, Loader2, Sparkles, 
   Film, Zap, Youtube, Laugh, Clapperboard, Check
@@ -8,6 +7,7 @@ import {
 import { toast } from "sonner";
 import axios from "axios";
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Generate random stars
