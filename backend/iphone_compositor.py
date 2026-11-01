@@ -27,8 +27,11 @@ from iphone_compositor_3d import (
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import math
 import numpy as np
+from pathlib import Path
 
-RENDER_DIR = "/app/backend/iphone_16_renders"
+from paths import backend_path
+
+RENDER_DIR = str(backend_path("iphone_16_renders"))
 RENDER_ANGLES = [-40, -30, -20, -10, 0, 10, 20, 30, 40]
 
 

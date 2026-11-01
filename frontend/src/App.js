@@ -10,6 +10,10 @@ import AuthPage from "@/pages/AuthPage";
 import AuthCallback from "@/components/custom/AuthCallback";
 import UpgradePage from "@/pages/UpgradePage";
 import VoiceAssistantPage from "@/pages/VoiceAssistantPage";
+import HomePage from "@/pages/HomePage";
+import MontagePage from "@/pages/MontagePage";
+import PricingPage from "@/pages/PricingPage";
+import SubscriptionSuccessPage from "@/pages/SubscriptionSuccessPage";
 import { initThemeFromStorage } from "@/components/custom/AppearancePopup";
 
 // Initialize theme from localStorage before any render
@@ -35,6 +39,10 @@ function AppRouter() {
       <Route path="/formats" element={<FormatsPage />} />
       <Route path="/upgrade" element={<UpgradePage />} />
       <Route path="/voice" element={<VoiceAssistantPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/montage" element={<MontagePage />} />
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
     </Routes>
   );
 }

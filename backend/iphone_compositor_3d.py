@@ -8,9 +8,11 @@ import numpy as np
 import math
 import os
 
-RENDER_DIR = "/app/backend/iphone_16_renders_final"
-FALLBACK_DIR = "/app/backend/iphone_16_renders_ultra"
-FALLBACK_DIR2 = "/app/backend/iphone_16_renders_hd"
+from paths import backend_path
+
+RENDER_DIR = str(backend_path("iphone_16_renders_final"))
+FALLBACK_DIR = str(backend_path("iphone_16_renders_ultra"))
+FALLBACK_DIR2 = str(backend_path("iphone_16_renders_hd"))
 
 AVAILABLE_ANGLES = list(range(-45, 46, 1))
 

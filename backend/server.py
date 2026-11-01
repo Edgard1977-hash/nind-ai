@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, BackgroundTasks, UploadFile, File, Request, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse, Response
+from pymongo import ReturnDocument
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -19,31 +20,14 @@ import shutil
 
 # AUTO-INSTALL DEPENDENCIES (ffmpeg, fonts)
 def ensure_dependencies():
-    """Install ffmpeg and fonts if missing"""
-    # Check ffmpeg
-    if not shutil.which("ffmpeg"):
-        print("Installing ffmpeg...")
-        subprocess.run(["apt-get", "update"], capture_output=True)
-        subprocess.run(["apt-get", "install", "-y", "ffmpeg"], capture_output=True)
-    
-    # Check fonts
-    font_path = Path("/usr/share/fonts/opentype/inter")
-    if not font_path.exists():
-        print("Installing fonts...")
-        subprocess.run(["apt-get", "install", "-y", "fonts-inter", "fonts-dejavu"], capture_output=True)
-        subprocess.run(["fc-cache", "-f"], capture_output=True)
-    
-    print(f"Dependencies OK: ffmpeg={shutil.which('ffmpeg')}, fonts={font_path.exists()}")
+    """Report ffmpeg. Package installs happen in Docker, not at import time."""
+    if os.getenv("AUTO_INSTALL_DEPS", "").lower() in ("1", "true", "yes"):
+        if not shutil.which("ffmpeg"):
+            subprocess.run(["apt-get", "update"], capture_output=True)
+            subprocess.run(["apt-get", "install", "-y", "ffmpeg", "fonts-dejavu"], capture_output=True)
+    print(f"Dependencies: ffmpeg={shutil.which('ffmpeg')} (set AUTO_INSTALL_DEPS=1 to apt-install)")
 
 ensure_dependencies()
-
-# Stripe integration
-from emergentintegrations.payments.stripe.checkout import (
-    StripeCheckout, 
-    CheckoutSessionResponse, 
-    CheckoutStatusResponse, 
-    CheckoutSessionRequest
-)
 
 # Import video service
 from video_service import (
@@ -86,14 +70,34 @@ from montage_service import (
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+from paths import UPLOADS_DIR, ensure_data_dirs
+from auth import (
+    build_google_authorize_url,
+    build_require_user,
+    clear_auth_cookie,
+    create_access_token,
+    decode_oauth_state,
+    exchange_google_code,
+    login_with_email,
+    public_user,
+    register_with_email,
+    set_auth_cookie,
+    upsert_google_user,
+)
+from generation import process_basic_generation, process_enhanced_generation
+from ai.base import ProviderNotConfigured
+from ai.factory import get_video_provider
 
-# Create uploads directory
-UPLOADS_DIR = ROOT_DIR / "uploads"
-UPLOADS_DIR.mkdir(exist_ok=True)
+ensure_data_dirs()
+
+# MongoDB connection. Motor connects lazily, so import succeeds without a server.
+mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+db_name = os.environ.get("DB_NAME", "nind")
+client = AsyncIOMotorClient(mongo_url)
+db = client[db_name]
+
+require_user = build_require_user(lambda: db)
+CREDIT_COST = int(os.getenv("GENERATION_CREDIT_COST", "10"))
 
 # Create the main app
 app = FastAPI()
@@ -131,7 +135,9 @@ class VideoGenerateRequest(BaseModel):
     product_images: Optional[List[str]] = None  # URLs to uploaded product images
     logo_url: Optional[str] = None  # URL to uploaded logo
     brand_name: Optional[str] = None  # Brand name for logo animation
-    user_id: Optional[str] = None  # User ID from frontend
+    # Ignored. The authenticated user is taken from the session token.
+    user_id: Optional[str] = None
+    mode: str = "basic"  # basic | enhanced
 
 
 class MontageRequest(BaseModel):
@@ -180,6 +186,8 @@ class VideoProject(BaseModel):
     product_images: Optional[List[str]] = None
     logo_url: Optional[str] = None
     brand_name: Optional[str] = None
+    mode: str = "basic"  # basic | enhanced
+    credits_charged: int = 0
     status: str = "pending"
     progress: int = 0
     progress_message: str = "Инициализация..."
@@ -416,6 +424,12 @@ FORMAT_CATEGORIES = {
 
 # ==================== AI SERVICES ====================
 
+async def llm_complete(system: str, user: str) -> str:
+    """Single-turn text completion through the configured LLM provider."""
+    from ai.factory import get_text_provider
+    return await get_text_provider().complete(system=system, user=user)
+
+
 async def detect_video_type(prompt: str) -> dict:
     """DEPRECATED - Always return universal format. AI decides what to render."""
     lang = "ru" if any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя') else "en"
@@ -428,10 +442,8 @@ async def generate_universal_script(prompt: str, language: str, logo_path: str =
     Analyzes any prompt and generates appropriate scene sequence.
     Cal.com style animations with emphasis words.
     """
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     import re
 
-    api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
 
     # ===== Intent detection =====
@@ -472,12 +484,6 @@ async def generate_universal_script(prompt: str, language: str, logo_path: str =
         literal_text = next((g for g in quoted_match.groups() if g), "").strip()
     
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"universal-{uuid.uuid4()}",
-            system_message="You create video animation scripts. Return ONLY valid JSON."
-        )
-        chat.with_model("openai", "gpt-5.2")
         
         system_prompt = f"""Create a video animation script. Return ONLY valid JSON.
 
@@ -567,8 +573,7 @@ OUTPUT JSON SHAPE:
 
 Return ONLY valid JSON, no markdown, no commentary."""
 
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
+        response = await llm_complete("You create video animation scripts. Return ONLY valid JSON.", system_prompt)
 
         logger.info(f"Universal AI response: {response[:500]}")
 
@@ -651,18 +656,10 @@ async def generate_logo_animation_script(prompt: str, brand_name: str, language:
     AI generates logo animation script with custom effects based on user prompt.
     Supports: wink, bounce, pulse, shake, rotate, zoom, and more.
     """
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
     
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"logo-anim-{uuid.uuid4()}",
-            system_message="You create logo animation scripts. Analyze user requests for special effects."
-        )
-        chat.with_model("openai", "gpt-5.2")
         
         system_prompt = f"""Create logo animation script. Return ONLY valid JSON.
 
@@ -705,8 +702,7 @@ User prompt: {prompt}
 
 Return ONLY JSON."""
 
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
+        response = await llm_complete("You create logo animation scripts. Analyze user requests for special effects.", system_prompt)
         
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
@@ -730,18 +726,10 @@ Return ONLY JSON."""
 
 async def generate_chat_animation_script(prompt: str, language: str) -> dict:
     """Generate script for Chat Animation format - animated message dialogs"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
     
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"chat-anim-{uuid.uuid4()}",
-            system_message="You are a creative content writer who creates engaging chat/message animations for viral videos."
-        )
-        chat.with_model("openai", "gpt-5.2")
         
         lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
         
@@ -780,8 +768,7 @@ Return a JSON object:
 
 User prompt: {prompt}"""
         
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
+        response = await llm_complete("You are a creative content writer who creates engaging chat/message animations for viral videos.", system_prompt)
         
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
@@ -827,18 +814,10 @@ User prompt: {prompt}"""
 
 async def generate_apple_text_script(prompt: str, language: str) -> dict:
     """Generate script for Apple-style text animation"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
     
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"apple-text-{uuid.uuid4()}",
-            system_message="You follow user instructions EXACTLY. Never translate, never add extra content. Always return valid JSON."
-        )
-        chat.with_model("openai", "gpt-5.2")
         
         system_prompt = f"""Create Apple-style minimalist text animation.
 
@@ -869,8 +848,7 @@ Return ONLY valid JSON (no markdown, no explanation):
 
 User prompt: {prompt}"""
         
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
+        response = await llm_complete("You follow user instructions EXACTLY. Never translate, never add extra content. Always return valid JSON.", system_prompt)
         
         logger.info(f"Apple text AI response: {response[:500]}")
         
@@ -920,18 +898,10 @@ User prompt: {prompt}"""
 
 async def generate_kinetic_typography_script(prompt: str, language: str) -> dict:
     """Generate script for kinetic typography animation"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
     
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"kinetic-{uuid.uuid4()}",
-            system_message="You create impactful quotes and text for kinetic typography animations."
-        )
-        chat.with_model("openai", "gpt-5.2")
         
         lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
         
@@ -953,8 +923,7 @@ Return JSON:
 
 User prompt: {prompt}"""
         
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
+        response = await llm_complete("You create impactful quotes and text for kinetic typography animations.", system_prompt)
         
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
@@ -994,18 +963,10 @@ async def generate_product_advertisement_script(
     Generate script for Product Advertisement format.
     Like Apple MacBook Neo ads - professional product showcase with hands, angles, brand reveal.
     """
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
     is_russian = language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя'))
     
     try:
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"product-ad-{uuid.uuid4()}",
-            system_message="You create professional product advertisement scripts like Apple commercials."
-        )
-        chat.with_model("openai", "gpt-5.2")
         
         lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
         has_images = product_images and len(product_images) > 0
@@ -1086,8 +1047,7 @@ Important:
 - Keep it minimal and premium like Apple ads
 """
         
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
+        response = await llm_complete("You create professional product advertisement scripts like Apple commercials.", system_prompt)
         
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
@@ -1222,15 +1182,7 @@ async def generate_poster_image(video_path: Path, output_path: Path) -> Optional
 
 async def analyze_prompt_and_generate_script(prompt: str, format_id: str, language: str) -> dict:
     """Use LLM to analyze prompt and generate video script"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
-    chat = LlmChat(
-        api_key=api_key,
-        session_id=f"script-{uuid.uuid4()}",
-        system_message="You are a professional video scriptwriter for short-form vertical video content."
-    )
-    chat.with_model("openai", "gpt-5.2")
     
     format_info = next((f for f in VIDEO_FORMATS if f.id == format_id), VIDEO_FORMATS[0])
     
@@ -1268,8 +1220,7 @@ Return a JSON object with this exact structure:
 Create 4-6 scenes. Each scene's image_prompt should be vivid and detailed for AI image generation.
 Topic: {prompt}"""
 
-    msg = UserMessage(text=system_prompt)
-    response = await chat.send_message(msg)
+    response = await llm_complete("You are a professional video scriptwriter for short-form vertical video content.", system_prompt)
     
     # Parse JSON from response
     try:
@@ -1299,15 +1250,7 @@ Topic: {prompt}"""
 
 async def generate_ai_story_script(prompt: str, language: str) -> dict:
     """Generate script for AI Story format"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
-    chat = LlmChat(
-        api_key=api_key,
-        session_id=f"story-{uuid.uuid4()}",
-        system_message="You are a creative storyteller who creates engaging visual stories for short-form video."
-    )
-    chat.with_model("openai", "gpt-5.2")
     
     lang_instruction = "Respond in Russian." if language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя')) else "Respond in English."
     
@@ -1339,8 +1282,7 @@ Return a JSON object:
 Create 5-8 scenes for a compelling story.
 User prompt: {prompt}"""
 
-    msg = UserMessage(text=system_prompt)
-    response = await chat.send_message(msg)
+    response = await llm_complete("You are a creative storyteller who creates engaging visual stories for short-form video.", system_prompt)
     
     try:
         json_start = response.find('{')
@@ -1359,17 +1301,9 @@ User prompt: {prompt}"""
 
 async def generate_character_explainer_script(prompt: str, character_type: str, language: str) -> dict:
     """Generate script for Character Explainer format"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
     
     character_info = next((c for c in CHARACTER_TYPES if c["id"] == character_type), CHARACTER_TYPES[0])
     
-    api_key = os.getenv("EMERGENT_LLM_KEY")
-    chat = LlmChat(
-        api_key=api_key,
-        session_id=f"char-{uuid.uuid4()}",
-        system_message=f"You are a creative content writer who creates educational content featuring cute {character_info['name_en']} characters."
-    )
-    chat.with_model("openai", "gpt-5.2")
     
     lang_instruction = "Respond in Russian." if language == "ru" or (language == "auto" and any(c in prompt for c in 'абвгдежзийклмнопрстуфхцчшщъыьэюя')) else "Respond in English."
     
@@ -1398,8 +1332,7 @@ Return a JSON object:
 Create 5-7 scenes with the {character_info['name_en']} in different situations related to the topic.
 Topic: {prompt}"""
 
-    msg = UserMessage(text=system_prompt)
-    response = await chat.send_message(msg)
+    response = await llm_complete(f"You are a creative content writer who creates educational content featuring cute {character_info['name_en']} characters.", system_prompt)
     
     try:
         json_start = response.find('{')
@@ -1424,17 +1357,9 @@ async def generate_gameplay_clip_script(prompt: str, youtube_url: str, gameplay_
     
     # Try to use LLM, but have a good fallback
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        
+            
         gameplay_info = next((g for g in GAMEPLAY_TYPES if g["id"] == gameplay_type), GAMEPLAY_TYPES[0])
         
-        api_key = os.getenv("EMERGENT_LLM_KEY")
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"gameplay-{uuid.uuid4()}",
-            system_message="You are a video editor who creates engaging split-screen content with gameplay at the bottom."
-        )
-        chat.with_model("openai", "gpt-5.2")
         
         lang_instruction = "Respond in Russian." if is_russian else "Respond in English."
         
@@ -1469,8 +1394,7 @@ Return a JSON object:
 Create 8-12 subtitle segments for a 30-60 second clip.
 Note: The actual YouTube clip extraction will be handled separately."""
 
-        msg = UserMessage(text=system_prompt)
-        response = await chat.send_message(msg)
+        response = await llm_complete("You are a video editor who creates engaging split-screen content with gameplay at the bottom.", system_prompt)
         
         json_start = response.find('{')
         json_end = response.rfind('}') + 1
@@ -1509,67 +1433,41 @@ Note: The actual YouTube clip extraction will be handled separately."""
     }
 
 async def generate_image(prompt: str) -> Optional[str]:
-    """Generate image using Gemini Nano Banana"""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-    import base64
-    
+    """Generate an image with the configured image provider (Gemini, then OpenRouter)."""
     try:
-        api_key = os.getenv("EMERGENT_LLM_KEY")
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"img-{uuid.uuid4()}",
-            system_message="You are a helpful AI assistant"
+        from ai.factory import get_image_provider
+        image_bytes = await get_image_provider().generate(
+            f"Professional vertical 9:16 image for video content: {prompt}",
+            aspect_ratio="9:16",
         )
-        chat.with_model("gemini", "gemini-3.1-flash-image-preview").with_params(modalities=["image", "text"])
-        
-        msg = UserMessage(text=f"Generate a professional, high-quality vertical image (9:16 aspect ratio) for video content: {prompt}")
-        
-        text, images = await chat.send_message_multimodal_response(msg)
-        
-        if images and len(images) > 0:
-            # Save image to file
-            img_id = str(uuid.uuid4())
-            img_path = UPLOADS_DIR / f"{img_id}.png"
-            image_bytes = base64.b64decode(images[0]['data'])
-            with open(img_path, "wb") as f:
-                f.write(image_bytes)
-            logger.info(f"Generated AI image: {img_id}.png")
-            return f"/api/uploads/{img_id}.png"
+        img_id = str(uuid.uuid4())
+        img_path = UPLOADS_DIR / f"{img_id}.png"
+        img_path.write_bytes(image_bytes)
+        logger.info(f"Generated AI image: {img_id}.png")
+        return f"/api/uploads/{img_id}.png"
     except Exception as e:
         logger.error(f"Image generation error: {e}")
-    
     return None
 
+
 async def generate_tts(text: str) -> Optional[str]:
-    """Generate TTS audio using OpenAI TTS"""
-    from emergentintegrations.llm.openai import OpenAITextToSpeech
-    
+    """Synthesize speech with the configured OpenAI-compatible TTS provider."""
     try:
-        api_key = os.getenv("EMERGENT_LLM_KEY")
-        tts = OpenAITextToSpeech(api_key=api_key)
-        
-        audio_bytes = await tts.generate_speech(
-            text=text,
-            model="tts-1",
-            voice="nova",
-            speed=1.0
-        )
-        
+        from ai.factory import get_tts_provider
+        audio_bytes = await get_tts_provider().synthesize(text)
         audio_id = str(uuid.uuid4())
         audio_path = UPLOADS_DIR / f"{audio_id}.mp3"
-        with open(audio_path, "wb") as f:
-            f.write(audio_bytes)
-        
+        audio_path.write_bytes(audio_bytes)
         return f"/api/uploads/{audio_id}.mp3"
     except Exception as e:
         logger.error(f"TTS error: {e}")
-    
     return None
+
 
 async def process_video_generation(project_id: str):
     """Background task to process video generation with real video assembly"""
     work_dir = WORK_DIR / project_id
-    work_dir.mkdir(exist_ok=True)
+    work_dir.mkdir(parents=True, exist_ok=True)
     
     try:
         # Get project from DB
@@ -1578,7 +1476,21 @@ async def process_video_generation(project_id: str):
             return
         
         format_id = project["format_id"]
-        
+        mode = (project.get("mode") or "basic").lower()
+        explicit_animation = {
+            "chat_animation", "apple_text", "kinetic_typography", "logo_animation",
+            "product_advertisement", "spotify_demo", "saas_demo", "gameplay_clip",
+            "character_explainer",
+        }
+        # Enhanced uses a video model. Basic (the default, including format "auto")
+        # builds the video from generated stills plus ffmpeg.
+        if mode == "enhanced":
+            await process_enhanced_generation(db, project, work_dir, UPLOADS_DIR)
+            return
+        if mode == "basic" and format_id not in explicit_animation:
+            await process_basic_generation(db, project, work_dir, UPLOADS_DIR)
+            return
+
         # Update status
         await db.video_projects.update_one(
             {"id": project_id},
@@ -2232,287 +2144,83 @@ async def process_video_generation(project_id: str):
 
 @api_router.get("/")
 async def root():
-    return {"message": "Slind AI API"}
+    return {"message": "nind API"}
+
+
+@api_router.get("/health")
+async def health():
+    from ai.factory import provider_status
+    return {"status": "ok", "service": "nind", "providers": provider_status()}
 
 
 # ==================== AUTH ROUTES ====================
-
-from fastapi.responses import RedirectResponse, Response
-
-# REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-
-@api_router.post("/auth/session")
-async def exchange_session(request: SessionRequest, response: Response):
-    """Exchange session_id for session_token and user data"""
-    try:
-        # Call Emergent Auth to get user data
-        async with httpx.AsyncClient() as client:
-            auth_response = await client.get(
-                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-                headers={"X-Session-ID": request.session_id}
-            )
-            
-            if auth_response.status_code != 200:
-                raise HTTPException(status_code=401, detail="Invalid session")
-            
-            auth_data = auth_response.json()
-        
-        email = auth_data["email"]
-        session_token = auth_data["session_token"]
-        
-        # Check if user exists
-        existing_user = await db.users.find_one({"email": email}, {"_id": 0})
-        
-        if existing_user:
-            user_id = existing_user["user_id"]
-            # Update user data if needed
-            await db.users.update_one(
-                {"user_id": user_id},
-                {"$set": {
-                    "name": auth_data["name"],
-                    "picture": auth_data.get("picture"),
-                    "updated_at": datetime.now(timezone.utc)
-                }}
-            )
-        else:
-            # Create new user
-            user_id = f"user_{uuid.uuid4().hex[:12]}"
-            username = f"@{auth_data['name'].lower().replace(' ', '')}{uuid.uuid4().hex[:4]}"
-            
-            new_user = {
-                "user_id": user_id,
-                "email": email,
-                "name": auth_data["name"],
-                "picture": auth_data.get("picture"),
-                "username": username,
-                "plan": "free",
-                "credits": 100,
-                "created_at": datetime.now(timezone.utc)
-            }
-            await db.users.insert_one(new_user)
-        
-        # Create session
-        expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-        session_doc = {
-            "user_id": user_id,
-            "session_token": session_token,
-            "expires_at": expires_at,
-            "created_at": datetime.now(timezone.utc)
-        }
-        
-        # Delete old sessions for this user
-        await db.user_sessions.delete_many({"user_id": user_id})
-        await db.user_sessions.insert_one(session_doc)
-        
-        # Get updated user
-        user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-        
-        # Set cookie
-        response.set_cookie(
-            key="session_token",
-            value=session_token,
-            httponly=True,
-            secure=True,
-            samesite="none",
-            path="/",
-            max_age=7 * 24 * 60 * 60
-        )
-        
-        return user
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Auth error: {e}")
-        raise HTTPException(status_code=500, detail="Authentication failed")
-
-
-@api_router.get("/auth/me")
-async def get_current_user(request: Request):
-    """Get current authenticated user"""
-    # Get session token from cookie or header
-    session_token = request.cookies.get("session_token")
-    
-    if not session_token:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            session_token = auth_header[7:]
-    
-    if not session_token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    # Find session
-    session_doc = await db.user_sessions.find_one(
-        {"session_token": session_token}, 
-        {"_id": 0}
-    )
-    
-    if not session_doc:
-        raise HTTPException(status_code=401, detail="Invalid session")
-    
-    # Check expiry
-    expires_at = session_doc["expires_at"]
-    if isinstance(expires_at, str):
-        expires_at = datetime.fromisoformat(expires_at)
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=401, detail="Session expired")
-    
-    # Get user
-    user = await db.users.find_one(
-        {"user_id": session_doc["user_id"]}, 
-        {"_id": 0}
-    )
-    
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    return user
-
-
-@api_router.post("/auth/logout")
-async def logout(request: Request, response: Response):
-    """Logout user"""
-    session_token = request.cookies.get("session_token")
-    
-    if session_token:
-        await db.user_sessions.delete_many({"session_token": session_token})
-    
-    response.delete_cookie(key="session_token", path="/")
-    return {"message": "Logged out"}
-
-
-# ==================== EMAIL AUTH ROUTES ====================
 
 class EmailAuthRequest(BaseModel):
     email: str
     password: str
 
 
+def _same_user(path_user_id: str, user: dict) -> None:
+    if path_user_id != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+async def _charge_credits(user_id: str) -> dict:
+    updated = await db.users.find_one_and_update(
+        {"user_id": user_id, "credits": {"$gte": CREDIT_COST}},
+        {"$inc": {"credits": -CREDIT_COST}},
+        projection={"_id": 0, "password_hash": 0},
+        return_document=ReturnDocument.AFTER,
+    )
+    if not updated:
+        raise HTTPException(status_code=402, detail="Not enough credits")
+    return updated
+
+
+@api_router.get("/auth/google")
+async def google_login(next: Optional[str] = None):
+    """Start Google's authorization-code flow. The backend holds the client secret."""
+    return RedirectResponse(build_google_authorize_url(next))
+
+
+@api_router.get("/auth/google/callback")
+async def google_callback(code: str, state: str):
+    destination = decode_oauth_state(state)
+    profile = await exchange_google_code(code)
+    user = await upsert_google_user(db, profile)
+    token = create_access_token(user["user_id"], user["email"])
+    redirect = RedirectResponse(url=f"{destination}/auth/callback?token={token}")
+    set_auth_cookie(redirect, token)
+    return redirect
+
+
+@api_router.get("/auth/me")
+async def get_current_user(user: dict = Depends(require_user)):
+    return public_user(user)
+
+
+@api_router.post("/auth/logout")
+async def logout(response: Response, user: dict = Depends(require_user)):
+    clear_auth_cookie(response)
+    return {"message": "Logged out"}
+
+
 @api_router.post("/auth/register")
-async def register_with_email(request: EmailAuthRequest):
-    """Register new user with email and password"""
-    import hashlib
-    
-    email = request.email.strip().lower()
-    password = request.password
-    
-    # Validate email format
-    if "@" not in email or "." not in email:
-        raise HTTPException(status_code=400, detail="Invalid email format")
-    
-    # Check if user already exists
-    existing_user = await db.users.find_one({"email": email}, {"_id": 0})
-    if existing_user:
-        raise HTTPException(status_code=400, detail="User with this email already exists")
-    
-    # Hash password
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-    
-    # Create user
-    user_id = f"user_{uuid.uuid4().hex[:12]}"
-    name = email.split("@")[0]
-    username = f"@{name}{uuid.uuid4().hex[:4]}"
-    
-    new_user = {
-        "user_id": user_id,
-        "email": email,
-        "name": name,
-        "password_hash": password_hash,
-        "picture": None,
-        "username": username,
-        "plan": "free",
-        "credits": 100,
-        "auth_type": "email",
-        "created_at": datetime.now(timezone.utc)
-    }
-    await db.users.insert_one(new_user)
-    
-    # Create session
-    session_token = str(uuid.uuid4())
-    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-    
-    session_doc = {
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": expires_at,
-        "created_at": datetime.now(timezone.utc)
-    }
-    await db.user_sessions.insert_one(session_doc)
-    
-    # Return user data (without password_hash)
-    return {
-        "user_id": user_id,
-        "email": email,
-        "name": name,
-        "username": username,
-        "picture": None,
-        "plan": "free",
-        "credits": 100,
-        "session_token": session_token
-    }
+async def register_with_email_route(request: EmailAuthRequest, response: Response):
+    user, token = await register_with_email(db, request.email, request.password)
+    set_auth_cookie(response, token)
+    return public_user(user, token)
 
 
 @api_router.post("/auth/login")
-async def login_with_email(request: EmailAuthRequest):
-    """Login user with email and password"""
-    import hashlib
-    
-    email = request.email.strip().lower()
-    password = request.password
-    
-    logger.info(f"[LOGIN] Attempting login for email: {email}")
-    
-    # Find user
-    user = await db.users.find_one({"email": email}, {"_id": 0})
-    if not user:
-        logger.warning(f"[LOGIN] User not found: {email}")
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    
-    logger.info(f"[LOGIN] User found: {user.get('user_id')}, has_password_hash: {'password_hash' in user}")
-    
-    # Check if user has password (email auth)
-    if "password_hash" not in user:
-        logger.warning(f"[LOGIN] User {email} has no password_hash")
-        raise HTTPException(status_code=401, detail="This account uses Google login")
-    
-    # Verify password
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-    logger.info(f"[LOGIN] Computed hash: {password_hash[:20]}..., Stored hash: {user['password_hash'][:20]}...")
-    if user["password_hash"] != password_hash:
-        logger.warning(f"[LOGIN] Password mismatch for {email}")
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    
-    # Create new session
-    session_token = str(uuid.uuid4())
-    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-    
-    # Delete old sessions
-    await db.user_sessions.delete_many({"user_id": user["user_id"]})
-    
-    session_doc = {
-        "user_id": user["user_id"],
-        "session_token": session_token,
-        "expires_at": expires_at,
-        "created_at": datetime.now(timezone.utc)
-    }
-    await db.user_sessions.insert_one(session_doc)
-    
-    # Return user data (without password_hash)
-    return {
-        "user_id": user["user_id"],
-        "email": user["email"],
-        "name": user["name"],
-        "username": user.get("username"),
-        "picture": user.get("picture"),
-        "plan": user.get("plan", "free"),
-        "credits": user.get("credits", 100),
-        "session_token": session_token
-    }
+async def login_with_email_route(request: EmailAuthRequest, response: Response):
+    user, token = await login_with_email(db, request.email, request.password)
+    set_auth_cookie(response, token)
+    return public_user(user, token)
 
 
 # ==================== FORMAT ROUTES ====================
+@api_router.get("/formats")
 async def get_formats():
     """Get all video formats"""
     return {
@@ -2523,10 +2231,24 @@ async def get_formats():
     }
 
 @api_router.post("/video/generate")
-async def generate_video(request: VideoGenerateRequest, background_tasks: BackgroundTasks):
-    """Start video generation"""
-    print(f"[VIDEO/GENERATE] prompt={request.prompt}, user_id={request.user_id}")
-    
+async def generate_video(
+    request: VideoGenerateRequest,
+    background_tasks: BackgroundTasks,
+    user: dict = Depends(require_user),
+):
+    """Start video generation for the authenticated user."""
+    mode = (request.mode or "basic").strip().lower()
+    if mode not in ("basic", "enhanced"):
+        raise HTTPException(status_code=400, detail="mode must be 'basic' or 'enhanced'")
+    if mode == "enhanced" and not getattr(get_video_provider(), "configured", False):
+        try:
+            await get_video_provider().generate(prompt=request.prompt or "")
+        except ProviderNotConfigured as exc:
+            raise HTTPException(status_code=501, detail=str(exc)) from exc
+
+    charged = await _charge_credits(user["user_id"])
+    logger.info("[VIDEO/GENERATE] prompt=%s user=%s mode=%s", request.prompt, user["user_id"], mode)
+
     project = VideoProject(
         prompt=request.prompt,
         format_id=request.format_id,
@@ -2537,7 +2259,9 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
         product_images=request.product_images,
         logo_url=request.logo_url,
         brand_name=request.brand_name,
-        user_id=request.user_id
+        user_id=user["user_id"],
+        mode=mode,
+        credits_charged=CREDIT_COST,
     )
     
     # Save to DB
@@ -2548,14 +2272,21 @@ async def generate_video(request: VideoGenerateRequest, background_tasks: Backgr
     result = await db.video_projects.insert_one(doc)
     print(f"[VIDEO/GENERATE] Saved to DB: {result.inserted_id}")
     
-    # Start background processing
-    background_tasks.add_task(process_video_generation, project.id)
-    
-    return {"id": project.id, "status": "pending"}
+    if os.getenv("NIND_SYNC_GENERATION") == "1":
+        await process_video_generation(project.id)
+    else:
+        background_tasks.add_task(process_video_generation, project.id)
+
+    return {
+        "id": project.id,
+        "status": "pending",
+        "mode": mode,
+        "credits": charged.get("credits"),
+    }
 
 
 @api_router.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), user: dict = Depends(require_user)):
     """Upload a file (product image, logo, video, audio)"""
     # Validate file type - allow images, videos, and audio
     allowed_image_types = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"]
@@ -2611,7 +2342,7 @@ class ChunkUploadData(BaseModel):
 
 
 @api_router.post("/upload/init")
-async def init_chunked_upload(request: ChunkUploadInit):
+async def init_chunked_upload(request: ChunkUploadInit, user: dict = Depends(require_user)):
     """Initialize a chunked upload session"""
     upload_id = str(uuid.uuid4())
     ext = request.filename.split(".")[-1].lower() if "." in request.filename else "mp4"
@@ -2636,7 +2367,7 @@ async def init_chunked_upload(request: ChunkUploadInit):
 
 
 @api_router.post("/upload/chunk")
-async def upload_chunk(request: ChunkUploadData):
+async def upload_chunk(request: ChunkUploadData, user: dict = Depends(require_user)):
     """Upload a single chunk"""
     session = await db.upload_sessions.find_one({"upload_id": request.upload_id})
     if not session:
@@ -2666,7 +2397,7 @@ async def upload_chunk(request: ChunkUploadData):
 
 
 @api_router.post("/upload/complete")
-async def complete_chunked_upload(upload_id: str):
+async def complete_chunked_upload(upload_id: str, user: dict = Depends(require_user)):
     """Complete chunked upload by merging all chunks"""
     session = await db.upload_sessions.find_one({"upload_id": upload_id})
     if not session:
@@ -2705,23 +2436,27 @@ async def complete_chunked_upload(upload_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/video/{project_id}")
-async def get_video_project(project_id: str):
+async def get_video_project(project_id: str, user: dict = Depends(require_user)):
     """Get video project status and data"""
     project = await db.video_projects.find_one({"id": project_id}, {"_id": 0})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+    owner = project.get("user_id")
+    if owner and owner != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
     return project
 
 @api_router.get("/videos")
-async def get_all_videos():
+async def get_all_videos(user: dict = Depends(require_user)):
     """Get all video projects"""
-    projects = await db.video_projects.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    projects = await db.video_projects.find({"user_id": user["user_id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
     return {"projects": projects}
 
 
 @api_router.get("/videos/user/{user_id}")
-async def get_user_videos(user_id: str):
+async def get_user_videos(user_id: str, user: dict = Depends(require_user)):
     """Get video projects for a specific user"""
+    _same_user(user_id, user)
     projects = await db.video_projects.find(
         {"user_id": user_id}, 
         {"_id": 0}
@@ -2735,8 +2470,13 @@ class UpdateVideoRequest(BaseModel):
 
 
 @api_router.patch("/videos/{video_id}")
-async def update_video(video_id: str, request: UpdateVideoRequest):
+async def update_video(video_id: str, request: UpdateVideoRequest, user: dict = Depends(require_user)):
     """Rename/update a video project"""
+    existing = await db.video_projects.find_one({"id": video_id}, {"_id": 0, "user_id": 1})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if existing.get("user_id") and existing["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
     update_data = {}
     if request.prompt is not None:
         update_data["prompt"] = request.prompt.strip()
@@ -2756,8 +2496,13 @@ async def update_video(video_id: str, request: UpdateVideoRequest):
 
 
 @api_router.delete("/videos/{video_id}")
-async def delete_video(video_id: str):
+async def delete_video(video_id: str, user: dict = Depends(require_user)):
     """Delete a video project"""
+    existing = await db.video_projects.find_one({"id": video_id}, {"_id": 0, "user_id": 1})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Video not found")
+    if existing.get("user_id") and existing["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
     result = await db.video_projects.delete_one({"id": video_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Video not found")
@@ -2765,16 +2510,10 @@ async def delete_video(video_id: str):
 
 
 @api_router.post("/voice/transcribe")
-async def transcribe_voice(file: UploadFile = File(...), language: Optional[str] = None):
-    """Transcribe voice recording to text via OpenAI Whisper (Emergent LLM Key)"""
-    from emergentintegrations.llm.openai import OpenAISpeechToText
+async def transcribe_voice(file: UploadFile = File(...), language: Optional[str] = None, user: dict = Depends(require_user)):
+    """Transcribe voice recording with the configured Whisper-compatible provider."""
     import tempfile
 
-    emergent_key = os.environ.get("EMERGENT_LLM_KEY")
-    if not emergent_key:
-        raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
-
-    # Persist upload to a temp file with correct extension so Whisper accepts it
     content = await file.read()
     if not content:
         raise HTTPException(status_code=400, detail="Empty audio file")
@@ -2791,20 +2530,13 @@ async def transcribe_voice(file: UploadFile = File(...), language: Optional[str]
         tmp.write(content)
         tmp.flush()
         tmp.close()
-
-        stt = OpenAISpeechToText(api_key=emergent_key)
-        with open(tmp.name, "rb") as audio_file:
-            kwargs = {"file": audio_file, "model": "whisper-1", "response_format": "json"}
-            if language:
-                kwargs["language"] = language
-            response = await stt.transcribe(**kwargs)
-
-        text = getattr(response, "text", "") or ""
-        return {"text": text.strip()}
+        from ai.factory import get_speech_provider
+        text_out = await get_speech_provider().transcribe(tmp.name, language=language)
+        return {"text": text_out}
     except HTTPException:
         raise
     except Exception as e:
-        logging.exception("Whisper transcription failed")
+        logging.exception("Speech transcription failed")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
     finally:
         try:
@@ -2820,8 +2552,9 @@ class UpdateUserRequest(BaseModel):
 
 
 @api_router.put("/users/{user_id}")
-async def update_user(user_id: str, request: UpdateUserRequest):
+async def update_user(user_id: str, request: UpdateUserRequest, user: dict = Depends(require_user)):
     """Update user profile"""
+    _same_user(user_id, user)
     update_data = {}
     
     if request.name is not None:
@@ -2859,7 +2592,7 @@ async def update_user(user_id: str, request: UpdateUserRequest):
 # ==================== USERNAME CHECK ====================
 
 @api_router.get("/users/check-username/{username}")
-async def check_username(username: str, exclude_user_id: Optional[str] = None):
+async def check_username(username: str, exclude_user_id: Optional[str] = None, user: dict = Depends(require_user)):
     """Check if a username is available"""
     username = username.strip().lower()
     if len(username) < 3:
@@ -2880,8 +2613,9 @@ class TeamInviteRequest(BaseModel):
 
 
 @api_router.get("/users/{user_id}/team")
-async def get_user_team(user_id: str):
+async def get_user_team(user_id: str, user: dict = Depends(require_user)):
     """Get user's team members"""
+    _same_user(user_id, user)
     team_members = await db.team_members.find(
         {"owner_id": user_id},
         {"_id": 0}
@@ -2904,8 +2638,9 @@ async def get_user_team(user_id: str):
 
 
 @api_router.post("/users/{user_id}/team/invite")
-async def invite_to_team(user_id: str, request: TeamInviteRequest):
+async def invite_to_team(user_id: str, request: TeamInviteRequest, user: dict = Depends(require_user)):
     """Send team invitation to a user by username"""
+    _same_user(user_id, user)
     target_username = request.username.strip().lower()
     
     if len(target_username) < 3:
@@ -2972,11 +2707,13 @@ async def invite_to_team(user_id: str, request: TeamInviteRequest):
 
 
 @api_router.post("/team/invites/{invite_id}/accept")
-async def accept_team_invite(invite_id: str):
+async def accept_team_invite(invite_id: str, user: dict = Depends(require_user)):
     """Accept a team invitation"""
     invite = await db.team_invites.find_one({"id": invite_id}, {"_id": 0})
     if not invite:
         raise HTTPException(status_code=404, detail="Invitation not found")
+    if invite.get("to_user_id") != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
     
     if invite["status"] != "pending":
         raise HTTPException(status_code=400, detail="Invitation is no longer pending")
@@ -3000,8 +2737,11 @@ async def accept_team_invite(invite_id: str):
 
 
 @api_router.post("/team/invites/{invite_id}/decline")
-async def decline_team_invite(invite_id: str):
+async def decline_team_invite(invite_id: str, user: dict = Depends(require_user)):
     """Decline a team invitation"""
+    invite = await db.team_invites.find_one({"id": invite_id}, {"_id": 0})
+    if not invite or invite.get("to_user_id") != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
     result = await db.team_invites.update_one(
         {"id": invite_id, "status": "pending"},
         {"$set": {"status": "declined"}}
@@ -3014,8 +2754,9 @@ async def decline_team_invite(invite_id: str):
 
 
 @api_router.delete("/users/{user_id}/team/{member_id}")
-async def remove_team_member(user_id: str, member_id: str):
+async def remove_team_member(user_id: str, member_id: str, user: dict = Depends(require_user)):
     """Remove a member from team"""
+    _same_user(user_id, user)
     result = await db.team_members.delete_one({
         "owner_id": user_id,
         "member_id": member_id
@@ -3029,9 +2770,16 @@ async def remove_team_member(user_id: str, member_id: str):
 
 # ==================== NOTIFICATIONS ====================
 
+@api_router.get("/user/notifications")
+async def get_my_notifications(user: dict = Depends(require_user), limit: int = 50):
+    """Notifications for the authenticated user. Profile UI calls this path."""
+    return await get_user_notifications(user["user_id"], user, limit)
+
+
 @api_router.get("/users/{user_id}/notifications")
-async def get_user_notifications(user_id: str, limit: int = 50):
+async def get_user_notifications(user_id: str, user: dict = Depends(require_user), limit: int = 50):
     """Get user's notifications"""
+    _same_user(user_id, user)
     notifications = await db.notifications.find(
         {"user_id": user_id},
         {"_id": 0}
@@ -3046,8 +2794,11 @@ async def get_user_notifications(user_id: str, limit: int = 50):
 
 
 @api_router.put("/notifications/{notification_id}/read")
-async def mark_notification_read(notification_id: str):
+async def mark_notification_read(notification_id: str, user: dict = Depends(require_user)):
     """Mark a notification as read"""
+    note = await db.notifications.find_one({"id": notification_id}, {"_id": 0})
+    if not note or note.get("user_id") != user["user_id"]:
+        raise HTTPException(status_code=404, detail="Notification not found")
     result = await db.notifications.update_one(
         {"id": notification_id},
         {"$set": {"read": True}}
@@ -3060,8 +2811,9 @@ async def mark_notification_read(notification_id: str):
 
 
 @api_router.put("/users/{user_id}/notifications/read-all")
-async def mark_all_notifications_read(user_id: str):
+async def mark_all_notifications_read(user_id: str, user: dict = Depends(require_user)):
     """Mark all user's notifications as read"""
+    _same_user(user_id, user)
     await db.notifications.update_many(
         {"user_id": user_id, "read": False},
         {"$set": {"read": True}}
@@ -3148,142 +2900,22 @@ async def get_subscription_plans():
 
 
 @api_router.post("/subscription/checkout")
-async def create_subscription_checkout(request: SubscriptionRequest, http_request: Request):
-    """Create a Stripe checkout session for subscription"""
-    plan_id = request.plan_id
-    origin_url = request.origin_url.rstrip('/')
-    
-    if plan_id not in SUBSCRIPTION_PLANS:
-        raise HTTPException(status_code=400, detail="Invalid subscription plan")
-    
-    plan = SUBSCRIPTION_PLANS[plan_id]
-    
-    # Initialize Stripe
-    stripe_api_key = os.getenv("STRIPE_API_KEY")
-    if not stripe_api_key:
-        raise HTTPException(status_code=500, detail="Stripe not configured")
-    
-    host_url = str(http_request.base_url).rstrip('/')
-    webhook_url = f"{host_url}api/webhook/stripe"
-    
-    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
-    
-    # Build URLs
-    success_url = f"{origin_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{origin_url}/pricing"
-    
-    # Create checkout session
-    checkout_request = CheckoutSessionRequest(
-        amount=float(plan["price"]),
-        currency=plan["currency"],
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={
-            "plan_id": plan_id,
-            "plan_name": plan["name"],
-            "videos_per_month": str(plan["videos_per_month"])
-        }
+async def create_subscription_checkout(request: SubscriptionRequest, user: dict = Depends(require_user)):
+    """Payments move to Whop in a later release. Stripe is not wired."""
+    del request, user
+    raise HTTPException(
+        status_code=501,
+        detail="Payments are disabled. Checkout will use Whop in a later release.",
     )
-    
-    try:
-        session: CheckoutSessionResponse = await stripe_checkout.create_checkout_session(checkout_request)
-        
-        # Create payment transaction record
-        transaction = {
-            "id": str(uuid.uuid4()),
-            "session_id": session.session_id,
-            "plan_id": plan_id,
-            "amount": plan["price"],
-            "currency": plan["currency"],
-            "payment_status": "pending",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.payment_transactions.insert_one(transaction)
-        
-        return {
-            "url": session.url,
-            "session_id": session.session_id
-        }
-    except Exception as e:
-        logger.error(f"Stripe checkout error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @api_router.get("/subscription/status/{session_id}")
-async def get_subscription_status(session_id: str, http_request: Request):
-    """Check subscription payment status"""
-    stripe_api_key = os.getenv("STRIPE_API_KEY")
-    if not stripe_api_key:
-        raise HTTPException(status_code=500, detail="Stripe not configured")
-    
-    host_url = str(http_request.base_url).rstrip('/')
-    webhook_url = f"{host_url}api/webhook/stripe"
-    
-    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
-    
-    try:
-        status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
-        
-        # Update transaction in database
-        if status.payment_status == "paid":
-            await db.payment_transactions.update_one(
-                {"session_id": session_id},
-                {
-                    "$set": {
-                        "payment_status": "paid",
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }
-                }
-            )
-        
-        return {
-            "status": status.status,
-            "payment_status": status.payment_status,
-            "amount_total": status.amount_total,
-            "currency": status.currency,
-            "metadata": status.metadata
-        }
-    except Exception as e:
-        logger.error(f"Stripe status check error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@api_router.post("/webhook/stripe")
-async def stripe_webhook(request: Request):
-    """Handle Stripe webhooks"""
-    stripe_api_key = os.getenv("STRIPE_API_KEY")
-    if not stripe_api_key:
-        raise HTTPException(status_code=500, detail="Stripe not configured")
-    
-    host_url = str(request.base_url).rstrip('/')
-    webhook_url = f"{host_url}api/webhook/stripe"
-    
-    stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
-    
-    try:
-        body = await request.body()
-        signature = request.headers.get("Stripe-Signature")
-        
-        webhook_response = await stripe_checkout.handle_webhook(body, signature)
-        
-        # Update transaction based on webhook event
-        if webhook_response.payment_status == "paid":
-            await db.payment_transactions.update_one(
-                {"session_id": webhook_response.session_id},
-                {
-                    "$set": {
-                        "payment_status": "paid",
-                        "event_type": webhook_response.event_type,
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }
-                }
-            )
-        
-        return {"status": "success"}
-    except Exception as e:
-        logger.error(f"Stripe webhook error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+async def get_subscription_status(session_id: str, user: dict = Depends(require_user)):
+    del session_id, user
+    raise HTTPException(
+        status_code=501,
+        detail="Payments are disabled. Checkout will use Whop in a later release.",
+    )
 
 
 # ==================== MONTAGE ENDPOINTS ====================
@@ -3321,7 +2953,7 @@ class DeviceMockupRequest(BaseModel):
     user_id: Optional[str] = None  # User ID for saving video to user account
 
 @api_router.post("/device-mockup/create")
-async def create_device_mockup(request: DeviceMockupRequest, background_tasks: BackgroundTasks):
+async def create_device_mockup(request: DeviceMockupRequest, background_tasks: BackgroundTasks, user: dict = Depends(require_user)):
     """
     Create video showing uploaded content on a 3D device (phone/tablet/laptop).
     Phone is ALWAYS FULLY VISIBLE - no cropping.
@@ -3361,7 +2993,7 @@ async def create_device_mockup(request: DeviceMockupRequest, background_tasks: B
         "id": project_id,
         "prompt": style_desc,
         "format_id": "device_mockup",
-        "user_id": request.user_id,
+        "user_id": user["user_id"],
         "status": "processing",
         "progress": 10,
         "progress_message": "Создаём 3D анимацию...",
@@ -3447,7 +3079,7 @@ async def process_device_mockup(
 
 
 @api_router.post("/montage/create")
-async def create_montage_project(request: MontageRequest, background_tasks: BackgroundTasks):
+async def create_montage_project(request: MontageRequest, background_tasks: BackgroundTasks, user: dict = Depends(require_user)):
     """Start montage creation from uploaded video with AI prompt analysis"""
     
     # Validate video exists
@@ -3478,11 +3110,12 @@ async def create_montage_project(request: MontageRequest, background_tasks: Back
         source_video_url=video_url,
         prompt=request.prompt,
         style=style,
-        music_url=request.music_url
+        music_url=request.music_url,
     )
     
     # Save to DB
     doc = project.model_dump()
+    doc["user_id"] = user["user_id"]
     doc['created_at'] = doc['created_at'].isoformat()
     doc['updated_at'] = doc['updated_at'].isoformat()
     await db.montage_projects.insert_one(doc)
@@ -3494,13 +3127,15 @@ async def create_montage_project(request: MontageRequest, background_tasks: Back
 
 
 @api_router.get("/montage/{montage_id}")
-async def get_montage_status(montage_id: str):
+async def get_montage_status(montage_id: str, user: dict = Depends(require_user)):
     """Get montage project status"""
     project = await db.montage_projects.find_one({"id": montage_id}, {"_id": 0})
     
     if not project:
         raise HTTPException(status_code=404, detail="Montage project not found")
-    
+    owner = project.get("user_id")
+    if owner and owner != user["user_id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
     return project
 
 
@@ -3633,10 +3268,18 @@ async def process_montage(project_id: str, prompt: Optional[str] = None, text_ov
 # Include the router in the main app
 app.include_router(api_router)
 
+_cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip() and origin.strip() != "*"
+]
+if not _cors_origins:
+    _cors_origins = ["http://localhost:3000"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=_cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

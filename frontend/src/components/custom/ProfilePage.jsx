@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import axios from "axios";
 import { translations, getTranslation } from "../../utils/translations";
 import AppearancePopup from "./AppearancePopup";
+import { BACKEND_URL } from "@/lib/backend";
+import { saveUser } from "@/lib/session";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const CHECK_ICON = "/assets/check-icon.png";
@@ -215,7 +216,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
         username: editUsername.trim(), 
         name: editName.trim() 
       };
-      localStorage.setItem("slind_user", JSON.stringify(updatedUser));
+      saveUser(updatedUser);
       if (onUpdateUser) onUpdateUser(updatedUser);
       
       showSuccessToast(t('savedChanges'));
@@ -251,7 +252,7 @@ export const ProfilePage = ({ user, onBack, onLogout, onUpdateUser, currentLang,
       });
       
       const updatedUser = { ...user, picture: avatarUrl };
-      localStorage.setItem("slind_user", JSON.stringify(updatedUser));
+      saveUser(updatedUser);
       if (onUpdateUser) onUpdateUser(updatedUser);
       
       showSuccessToast(t('avatarUpdated'));

@@ -1,11 +1,13 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 import bpy
 import os
 import sys
 import math
 
 # Configuration
-MODEL_PATH = "/app/backend/iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb"
-OUTPUT_DIR = "/app/backend/iphone_15_renders"
+MODEL_PATH = str(_BACKEND / "iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb")
+OUTPUT_DIR = str(_BACKEND / "iphone_15_renders")
 RESOLUTION_X = 1080
 RESOLUTION_Y = 2160  # Taller to capture full phone
 

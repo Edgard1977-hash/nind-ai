@@ -1,11 +1,13 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 import bpy
 import os
 import sys
 import math
 
 # Paths
-MODEL_PATH = "/app/backend/iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb"
-OUTPUT_DIR = "/app/backend/iphone_3d_renders"
+MODEL_PATH = str(_BACKEND / "iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb")
+OUTPUT_DIR = str(_BACKEND / "iphone_3d_renders")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Resolution

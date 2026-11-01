@@ -13,6 +13,8 @@ FIXES:
 import math
 import uuid
 from pathlib import Path
+
+from paths import UPLOADS_DIR, backend_path
 from typing import Dict, List, Tuple, Optional
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import subprocess
@@ -785,7 +787,7 @@ async def render_video_on_device(
         return ""
     
     # Check if 3D iPhone 16 renders exist (from Blender)
-    iphone_16_renders_exist = Path("/app/backend/iphone_16_renders/iphone16_angle_0.png").exists()
+    iphone_16_renders_exist = (backend_path("iphone_16_renders") / "iphone16_angle_0.png").exists()
     
     if use_3d_model and device_type == "phone" and iphone_16_renders_exist:
         logger.info(f"Creating {total_frames} frames with 3D iPhone 16 ({animation_style} animation, {aspect_ratio})...")
@@ -2845,7 +2847,7 @@ def draw_logo_reveal_frame(
     if logo_path:
         try:
             from pathlib import Path
-            p = Path(logo_path) if not logo_path.startswith("/api") else Path(f"/app/backend/uploads/{logo_path.split('/')[-1]}")
+            p = Path(logo_path) if not str(logo_path).startswith("/api") else UPLOADS_DIR / str(logo_path).split("/")[-1]
             if p.exists():
                 logo = Image.open(p).convert("RGBA")
                 ratio = logo_size / max(logo.width, logo.height)

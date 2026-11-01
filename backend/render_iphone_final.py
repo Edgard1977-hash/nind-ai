@@ -1,3 +1,5 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 """
 Blender script to render iPhone 16 3D model with custom screen content
 Supports: rotation animation, floating animation, screen replacement
@@ -122,7 +124,7 @@ def render_frame(output_path, rotation_y=12, float_offset=0, screen_image=None):
     """Render a single frame of the iPhone"""
     clear_scene()
     
-    gltf_path = "/app/backend/iphone_model/source/iphone_simple.gltf"
+    gltf_path = str(_BACKEND / "iphone_model/source/iphone_simple.gltf")
     
     try:
         bpy.ops.import_scene.gltf(filepath=gltf_path)

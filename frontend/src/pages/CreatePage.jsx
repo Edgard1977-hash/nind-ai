@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Image, Video, Send, X, Sparkles, Plus, Package, Tag, Film, Music, Loader2, Check, Download } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
+import GenerationModeToggle from "@/components/custom/GenerationModeToggle";
+import { BACKEND_URL } from "@/lib/backend";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Generate random stars
@@ -25,6 +26,7 @@ export const CreatePage = () => {
   const type = searchParams.get("type") || "video";
   
   const [prompt, setPrompt] = useState("");
+  const [generationMode, setGenerationMode] = useState("basic");
   const [mediaFiles, setMediaFiles] = useState([]); // Product images
   const [videoFile, setVideoFile] = useState(null); // Video for montage
   const [videoUrl, setVideoUrl] = useState(null); // Uploaded video URL
@@ -333,7 +335,8 @@ export const CreatePage = () => {
       const requestData = {
         prompt: prompt.trim(),
         format_id: "auto",
-        language: "auto"
+        language: "auto",
+        mode: generationMode,
       };
       
       if (mediaFiles.length > 0) {
@@ -352,7 +355,7 @@ export const CreatePage = () => {
       navigate(`/video/${response.data.id}`);
     } catch (error) {
       console.error("Failed to start generation:", error);
-      toast.error("Ошибка при запуске генерации");
+      toast.error(error.response?.data?.detail || "Ошибка при запуске генерации");
     } finally {
       if (!videoUrl) setIsLoading(false);
     }
@@ -408,6 +411,10 @@ export const CreatePage = () => {
         </h1>
         <div className="w-10" /> {/* Spacer */}
       </header>
+
+      <div className="relative z-10 flex justify-center px-4 pt-2">
+        <GenerationModeToggle mode={generationMode} onChange={setGenerationMode} />
+      </div>
 
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center min-h-[60vh] px-4">

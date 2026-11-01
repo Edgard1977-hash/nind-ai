@@ -1,3 +1,5 @@
+from pathlib import Path
+_BACKEND = Path(__file__).resolve().parent
 """
 Quick test render of iPhone 15 Pro FRONT view (screen side)
 Low samples for fast testing
@@ -7,8 +9,8 @@ import bpy
 import os
 import math
 
-MODEL_PATH = "/app/backend/iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb"
-OUTPUT_PATH = "/app/backend/uploads/iphone_front_test.png"
+MODEL_PATH = str(_BACKEND / "iphone_15_model/source/apple_iphone_15_pro_max_black(2).glb")
+OUTPUT_PATH = str(_BACKEND / "uploads/iphone_front_test.png")
 
 def clear_scene():
     bpy.ops.object.select_all(action='SELECT')

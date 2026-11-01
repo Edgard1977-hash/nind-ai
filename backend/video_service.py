@@ -2,6 +2,7 @@
 Video Assembly Service - Creates real video files using ffmpeg
 """
 import os
+import shutil
 import subprocess
 import asyncio
 import logging
@@ -10,11 +11,11 @@ import httpx
 from pathlib import Path
 from typing import Optional, List
 
+from paths import UPLOADS_DIR, WORK_DIR, ensure_data_dirs
+
 logger = logging.getLogger(__name__)
 
-# Directory for video processing
-WORK_DIR = Path("/app/backend/video_work")
-WORK_DIR.mkdir(exist_ok=True)
+ensure_data_dirs()
 
 # Gameplay video URLs (stock footage or generated)
 GAMEPLAY_VIDEOS = {
@@ -83,8 +84,13 @@ async def download_youtube_clip(youtube_url: str, output_path: Path, duration: i
 
 
 async def download_file(url: str, output_path: Path) -> Optional[Path]:
-    """Download a file from URL"""
+    """Copy a local upload or download a remote file."""
     try:
+        local = _local_media_path(url)
+        if local is not None and local.exists():
+            if local.resolve() != output_path.resolve():
+                shutil.copyfile(local, output_path)
+            return output_path
         async with httpx.AsyncClient(follow_redirects=True, timeout=60) as client:
             response = await client.get(url)
             if response.status_code == 200:
@@ -93,6 +99,17 @@ async def download_file(url: str, output_path: Path) -> Optional[Path]:
                 return output_path
     except Exception as e:
         logger.error(f"Download error: {e}")
+    return None
+
+
+def _local_media_path(url: str) -> Optional[Path]:
+    if not url:
+        return None
+    if url.startswith("/api/uploads/"):
+        return UPLOADS_DIR / url.rsplit("/", 1)[-1]
+    candidate = Path(url)
+    if candidate.is_file():
+        return candidate
     return None
 
 
