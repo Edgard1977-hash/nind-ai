@@ -87,6 +87,7 @@ from auth import (
 from generation import process_basic_generation, process_enhanced_generation
 from ai.base import ProviderNotConfigured
 from ai.factory import get_video_provider
+from ai.voices import list_voices, resolve_voice
 
 ensure_data_dirs()
 
@@ -138,6 +139,7 @@ class VideoGenerateRequest(BaseModel):
     # Ignored. The authenticated user is taken from the session token.
     user_id: Optional[str] = None
     mode: str = "basic"  # basic | enhanced
+    voice: Optional[str] = None  # Basic narration voice id, e.g. marin, nova, echo
 
 
 class MontageRequest(BaseModel):
@@ -187,6 +189,7 @@ class VideoProject(BaseModel):
     logo_url: Optional[str] = None
     brand_name: Optional[str] = None
     mode: str = "basic"  # basic | enhanced
+    voice: Optional[str] = None
     credits_charged: int = 0
     status: str = "pending"
     progress: int = 0
@@ -196,6 +199,7 @@ class VideoProject(BaseModel):
     video_url: Optional[str] = None  # Final video URL
     poster_url: Optional[str] = None  # Poster image for preview
     script: Optional[str] = None
+    captions: List[dict] = []
     title: Optional[str] = None
     error: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -2220,6 +2224,12 @@ async def login_with_email_route(request: EmailAuthRequest, response: Response):
 
 
 # ==================== FORMAT ROUTES ====================
+@api_router.get("/voices")
+async def get_voices():
+    """Narration voices for Basic mode. Marin is the default natural voice."""
+    return {"voices": list_voices(), "default": resolve_voice(None)}
+
+
 @api_router.get("/formats")
 async def get_formats():
     """Get all video formats"""
@@ -2240,6 +2250,7 @@ async def generate_video(
     mode = (request.mode or "basic").strip().lower()
     if mode not in ("basic", "enhanced"):
         raise HTTPException(status_code=400, detail="mode must be 'basic' or 'enhanced'")
+    voice = resolve_voice(request.voice) if mode == "basic" else None
     if mode == "enhanced" and not getattr(get_video_provider(), "configured", False):
         try:
             await get_video_provider().generate(prompt=request.prompt or "")
@@ -2261,6 +2272,7 @@ async def generate_video(
         brand_name=request.brand_name,
         user_id=user["user_id"],
         mode=mode,
+        voice=voice,
         credits_charged=CREDIT_COST,
     )
     

@@ -184,20 +184,31 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(server, "WORK_DIR", tmp_path / "work")
     text = FakeText()
     image = FakeImage()
-    set_provider_overrides(text=text, image=image, video=FakeVideo())
 
-    async def fake_clip(image_url, output_path, duration=4.0, animation="zoom_in"):
+    class SilentTTS:
+        name = "unconfigured"
+
+        async def synthesize(self, text, *, voice=None):
+            raise ProviderNotConfigured("TTS provider is not configured")
+
+        async def synthesize_detailed(self, text, *, voice=None):
+            raise ProviderNotConfigured("TTS provider is not configured")
+
+    set_provider_overrides(text=text, image=image, video=FakeVideo(), tts=SilentTTS())
+
+    async def fake_clip(image_url, output_path, duration=4.0, animation="zoom_in", **kwargs):
+        del image_url, duration, animation, kwargs
         output_path.mkdir(parents=True, exist_ok=True)
         clip = output_path / "clip.mp4"
         clip.write_bytes(b"fake-mp4")
         return clip
 
     async def fake_concat(paths, output_path):
+        del output_path
         return paths[0]
 
     monkeypatch.setattr("generation.create_image_video", fake_clip)
     monkeypatch.setattr("generation.concatenate_videos", fake_concat)
-    monkeypatch.setattr("generation.add_audio_to_video", fake_concat)
 
     with TestClient(server.app) as test_client:
         yield test_client, fake, text, image
@@ -306,3 +317,72 @@ def test_formats_route_exists(client):
     response = http.get("/api/formats")
     assert response.status_code == 200
     assert response.json()["formats"]
+
+
+def test_voices_include_female_and_male_options(client):
+    http, _db, _text, _image = client
+    response = http.get("/api/voices")
+    assert response.status_code == 200
+    voices = response.json()["voices"]
+    genders = {item["gender"] for item in voices}
+    assert "female" in genders
+    assert "male" in genders
+    assert response.json()["default"] == "marin"
+
+
+def test_basic_generation_times_scenes_to_the_voiceover(client, monkeypatch):
+    http, db, _text, _image = client
+    from ai.base import SpeechSynthesis
+
+    seen = {}
+
+    class Speaking:
+        name = "fake-tts"
+
+        async def synthesize(self, text, *, voice=None):
+            return b"audio"
+
+        async def synthesize_detailed(self, narration, *, voice=None):
+            seen["voice"] = voice
+            seen["narration"] = narration
+            return SpeechSynthesis(audio=b"RIFFxxxx", transcript=narration, audio_format="wav", voice=voice or "")
+
+    set_provider_overrides(tts=Speaking())
+    durations = []
+
+    async def fake_clip(image_url, output_path, duration=4.0, animation="zoom_in", **kwargs):
+        del image_url, animation, kwargs
+        durations.append(duration)
+        output_path.mkdir(parents=True, exist_ok=True)
+        clip = output_path / "clip.mp4"
+        clip.write_bytes(b"fake-mp4")
+        return clip
+
+    async def fake_compose(video_path, work_dir, voice_path=None, captions=None, ambient_bed=None):
+        del work_dir, ambient_bed
+        seen["captions"] = captions
+        seen["voice_path"] = voice_path
+        return video_path
+
+    monkeypatch.setattr("generation.create_image_video", fake_clip)
+    monkeypatch.setattr("generation.compose_basic_master", fake_compose)
+    monkeypatch.setattr("generation.wav_duration", lambda _audio: 6.0)
+
+    registered = http.post("/api/auth/register", json={"email": "ada@example.com", "password": "correct-horse"})
+    token = registered.json()["token"]
+    response = http.post(
+        "/api/video/generate",
+        json={"prompt": "night market in the rain", "mode": "basic", "voice": "echo"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200, response.text
+    project = db.video_projects.docs[0]
+    assert project["status"] == "completed", project.get("error")
+    assert project["voice"] == "echo"
+    assert seen["voice"] == "echo"
+    assert "night market" in seen["narration"].lower()
+    assert durations == [6.0]
+    assert seen["captions"] and len(seen["captions"]) >= 2
+    assert seen["captions"][0]["timestamp_start"] == 0
+    assert seen["captions"][-1]["timestamp_end"] == 6.0
+    assert project["audio_url"].endswith(".wav")

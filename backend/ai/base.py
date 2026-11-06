@@ -24,11 +24,27 @@ class ImageProvider(Protocol):
         """Return encoded image bytes (PNG or JPEG)."""
 
 
+@dataclass
+class SpeechSynthesis:
+    """Spoken audio plus the timing hints needed for on-screen captions.
+
+    ``snapshots`` are ``(decoded_byte_offset, transcript_so_far)`` pairs taken
+    while a streaming audio model was speaking. Empty snapshots mean the
+    caller should spread ``transcript`` evenly across the file.
+    """
+
+    audio: bytes
+    transcript: str = ""
+    snapshots: list = field(default_factory=list)
+    audio_format: str = "wav"
+    voice: str = ""
+
+
 class TextToSpeechProvider(Protocol):
     name: str
 
     async def synthesize(self, text: str, *, voice: Optional[str] = None) -> bytes:
-        """Return encoded audio bytes (typically MP3)."""
+        """Return encoded audio bytes (WAV or MP3)."""
 
 
 class SpeechToTextProvider(Protocol):

@@ -36,7 +36,7 @@ const formatDuration = (project) => {
   return minutes ? `${minutes}m ${rest}s` : `${rest}s`;
 };
 
-const modeLabel = (mode) => (mode === "enhanced" ? "Улучшенная" : "Базовая");
+const modeLabel = (mode) => (mode === "enhanced" ? "Enhanced" : "Basic");
 
 export const VideoPage = () => {
   const { id } = useParams();
@@ -210,6 +210,12 @@ export const VideoPage = () => {
               <dt>Mode</dt>
               <dd>{project.mode === "enhanced" ? "Enhanced" : "Basic"}</dd>
             </div>
+            {project.voice && (
+              <div>
+                <dt>Voice</dt>
+                <dd>{project.voice}</dd>
+              </div>
+            )}
             <div>
               <dt>Format</dt>
               <dd>{formatName}</dd>
