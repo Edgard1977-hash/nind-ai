@@ -73,11 +73,21 @@ See `backend/.env.example` and `frontend/.env.example` for the full list and com
 | `JWT_SECRET` | `openssl rand -hex 32` |
 | `CORS_ORIGINS`, `PUBLIC_BACKEND_URL`, `FRONTEND_URL` | The real browser origin and the public API origin |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web). Authorized redirect URI: `{PUBLIC_BACKEND_URL}/api/auth/google/callback` |
-| `OPENROUTER_API_KEY` | https://openrouter.ai/keys — text scripts, and image fallback |
+| `OPENROUTER_API_KEY` | https://openrouter.ai/keys — Basic script, image fallback, and voiceover |
 | `OPENROUTER_MODEL` | Any OpenRouter model id, default `openai/gpt-4o-mini` |
 | `GEMINI_API_KEY` | https://aistudio.google.com/apikey — image generation with `gemini-2.5-flash-image` |
 | `STT_API_KEY`, `STT_BASE_URL`, `STT_MODEL` | OpenAI (`https://api.openai.com/v1`, `whisper-1`) or Groq (`https://api.groq.com/openai/v1`, `whisper-large-v3`, key at https://console.groq.com/keys) |
-| `TTS_API_KEY`, `TTS_BASE_URL`, `TTS_MODEL`, `TTS_VOICE` | An OpenAI-compatible speech endpoint. `OPENAI_API_KEY` is used when `TTS_API_KEY` is empty |
+| `TTS_PROVIDER`, `TTS_BASE_URL`, `TTS_MODEL`, `TTS_VOICE`, `TTS_AUDIO_FORMAT` | Basic voiceover. Default is OpenRouter chat-audio: `TTS_PROVIDER=openrouter`, `TTS_BASE_URL=https://openrouter.ai/api/v1`, `TTS_MODEL=openai/gpt-audio-mini`, `TTS_VOICE=marin`. `openai/gpt-audio-mini` is not served by `/audio/speech`, so the app streams `POST /chat/completions` with `modalities: ["text","audio"]`. `OPENROUTER_API_KEY` alone is enough. Set `TTS_PROVIDER=speech` plus `TTS_API_KEY` (or `OPENAI_API_KEY`) and `TTS_MODEL=tts-1` to use a classic speech endpoint instead |
+
+## Basic video
+
+With `OPENROUTER_API_KEY` set (and no Gemini key), Basic mode writes a narration, speaks the full script, generates photoreal 9:16 stills, then builds an ffmpeg montage:
+
+1. The script model (`OPENROUTER_MODEL`) returns a narration split across 6–8 scenes.
+2. Voiceover uses `openai/gpt-audio-mini` on OpenRouter. The picker offers female, male, and neutral voices; Marin is the default.
+3. Scene lengths follow the voiceover. Each still gets a slow Ken Burns move (zoom in, zoom out, pan left, pan right, pan up) and a hard cut.
+4. Captions are short spoken phrases, bold white with a black stroke, in the lower middle of the frame.
+5. A quiet bed is mixed under the voice. It is synthesized with ffmpeg (brown noise and two soft tones), not a licensed music catalog. Set `BASIC_AMBIENT_BED=0` to leave it out. There is no separate music API key.
 
 `VIDEO_PROVIDER` stays empty until a video-model adapter is added.
 

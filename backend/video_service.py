@@ -150,62 +150,114 @@ async def create_gameplay_clip(gameplay_type: str, output_path: Path, duration: 
     return None
 
 
-async def create_image_video(image_url: str, output_path: Path, duration: float = 4.0, animation: str = "zoom_in") -> Optional[Path]:
-    """Create a video from an image with Ken Burns effect"""
+def _ken_burns_filter(animation: str, frames: int, width: int, height: int, fps: int) -> str:
+    """Slow linear Ken Burns. z=1 shows the whole still; higher values crop in."""
+    steps = max(frames - 1, 1)
+    if animation == "zoom_in":
+        z, x, y = f"min(1+0.12*on/{steps},1.12)", "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
+    elif animation == "zoom_out":
+        z, x, y = f"max(1.12-0.12*on/{steps},1)", "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
+    elif animation == "pan_left":
+        z, x, y = "1.12", f"(iw-iw/zoom)*(1-on/{steps})", "(ih-ih/zoom)/2"
+    elif animation == "pan_up":
+        z, x, y = "1.12", "(iw-iw/zoom)/2", f"(ih-ih/zoom)*(1-on/{steps})"
+    else:
+        z, x, y = "1.12", f"(iw-iw/zoom)*(on/{steps})", "(ih-ih/zoom)/2"
+    source_w, source_h = width * 2, height * 2
+    return (
+        f"scale={source_w}:{source_h}:force_original_aspect_ratio=increase,"
+        f"crop={source_w}:{source_h},"
+        f"zoompan=z='{z}':x='{x}':y='{y}':d={frames}:s={width}x{height}:fps={fps},"
+        f"vignette=angle=PI/6,setsar=1"
+    )
+
+
+async def create_image_video(
+    image_url: str,
+    output_path: Path,
+    duration: float = 4.0,
+    animation: str = "zoom_in",
+    *,
+    width: int = 720,
+    height: int = 1280,
+    fps: int = 30,
+) -> Optional[Path]:
+    """Create a video from an image with a Ken Burns move and a hard cut length."""
     video_path = output_path / f"scene_{uuid.uuid4().hex[:8]}.mp4"
-    
-    # Download image first
+    duration = max(0.4, float(duration))
+    frames = max(1, int(round(duration * fps)))
+
     image_path = output_path / f"img_{uuid.uuid4().hex[:8]}.png"
     downloaded = await download_file(image_url, image_path)
-    
+
     if not downloaded or not image_path.exists():
-        # Create a placeholder colored frame
         cmd = [
             "ffmpeg", "-y",
             "-f", "lavfi",
-            "-i", f"color=c=0x1a1a2e:s=720x1280:d={duration}",
+            "-i", f"color=c=0x1a1a2e:s={width}x{height}:d={duration}",
+            "-r", str(fps),
             "-c:v", "libx264",
             "-preset", "ultrafast",
-            str(video_path)
+            "-pix_fmt", "yuv420p",
+            str(video_path),
         ]
-    else:
-        # Ken Burns effect based on animation type
-        if animation == "zoom_in":
-            zoompan = f"zoompan=z='min(zoom+0.001,1.2)':d={int(duration*25)}:s=720x1280:fps=25"
-        elif animation == "zoom_out":
-            zoompan = f"zoompan=z='if(lte(zoom,1.0),1.2,max(1.001,zoom-0.001))':d={int(duration*25)}:s=720x1280:fps=25"
-        elif animation == "pan_left":
-            zoompan = f"zoompan=z='1.1':x='iw/2-(iw/zoom/2)+on/({duration}*25)*(iw/zoom/10)':d={int(duration*25)}:s=720x1280:fps=25"
-        else:  # pan_right
-            zoompan = f"zoompan=z='1.1':x='iw/2-(iw/zoom/2)-on/({duration}*25)*(iw/zoom/10)':d={int(duration*25)}:s=720x1280:fps=25"
-        
+    elif width >= 1000:
         cmd = [
             "ffmpeg", "-y",
             "-loop", "1",
             "-i", str(image_path),
-            "-vf", f"scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,{zoompan}",
+            "-vf", _ken_burns_filter(animation, frames, width, height, fps),
+            "-frames:v", str(frames),
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-pix_fmt", "yuv420p",
+            "-an",
+            str(video_path),
+        ]
+    else:
+        if animation == "zoom_in":
+            zoompan = f"zoompan=z='min(zoom+0.001,1.2)':d={frames}:s={width}x{height}:fps={fps}"
+        elif animation == "zoom_out":
+            zoompan = (
+                f"zoompan=z='if(lte(zoom,1.0),1.2,max(1.001,zoom-0.001))':"
+                f"d={frames}:s={width}x{height}:fps={fps}"
+            )
+        elif animation == "pan_left":
+            zoompan = (
+                f"zoompan=z='1.1':x='iw/2-(iw/zoom/2)+on/{frames}*(iw/zoom/10)':"
+                f"d={frames}:s={width}x{height}:fps={fps}"
+            )
+        else:
+            zoompan = (
+                f"zoompan=z='1.1':x='iw/2-(iw/zoom/2)-on/{frames}*(iw/zoom/10)':"
+                f"d={frames}:s={width}x{height}:fps={fps}"
+            )
+        cmd = [
+            "ffmpeg", "-y",
+            "-loop", "1",
+            "-i", str(image_path),
+            "-vf", f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},{zoompan}",
+            "-frames:v", str(frames),
             "-c:v", "libx264",
             "-preset", "ultrafast",
-            "-t", str(duration),
             "-pix_fmt", "yuv420p",
-            str(video_path)
+            str(video_path),
         ]
-    
+
     process = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE
+        stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=60)
-    
-    # Cleanup
+    _stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=180)
+
     if image_path.exists():
         image_path.unlink()
-    
-    if video_path.exists():
+
+    if video_path.exists() and video_path.stat().st_size > 1000:
         return video_path
-    
-    logger.error(f"Failed to create image video: {stderr.decode()}")
+
+    logger.error("Failed to create image video: %s", stderr.decode(errors="replace")[-1500:])
     return None
 
 
@@ -399,6 +451,222 @@ async def add_audio_to_video(video_path: Path, audio_path: Path, output_path: Pa
     
     if output_file.exists():
         return output_file
+    return None
+
+
+async def probe_duration(path: Path) -> float:
+    """Return the container duration in seconds, or 0 when ffprobe cannot read it."""
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        str(path),
+    ]
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _stderr = await process.communicate()
+    try:
+        return float(stdout.decode().strip())
+    except ValueError:
+        return 0.0
+
+
+def _ass_time(seconds: float) -> str:
+    seconds = max(0.0, float(seconds))
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    rest = seconds % 60
+    return f"{hours}:{minutes:02d}:{rest:05.2f}"
+
+
+def _ass_text(value: str) -> str:
+    cleaned = " ".join(str(value).split())
+    return cleaned.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
+
+
+def _caption_font() -> tuple[str, str]:
+    candidates = (
+        ("/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf", "Noto Sans", "/usr/share/fonts/truetype/noto"),
+        ("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", "Liberation Sans", "/usr/share/fonts/truetype/liberation"),
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVu Sans", "/usr/share/fonts/truetype/dejavu"),
+    )
+    for file_path, family, directory in candidates:
+        if os.path.isfile(file_path):
+            return family, directory
+    return "Sans", "/usr/share/fonts"
+
+
+def write_phrase_captions(captions: List[dict], ass_path: Path, *, width: int = 1080, height: int = 1920) -> None:
+    """Bold white phrases with a hard black stroke, sitting in the lower middle."""
+    family, _directory = _caption_font()
+    margin_v = max(120, int(height * 0.22))
+    fontsize = max(42, int(width * 0.078))
+    lines = [
+        "[Script Info]",
+        "Title: Captions",
+        "ScriptType: v4.00+",
+        f"PlayResX: {width}",
+        f"PlayResY: {height}",
+        "WrapStyle: 2",
+        "",
+        "[V4+ Styles]",
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+        "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+        (
+            f"Style: Phrase,{family},{fontsize},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,"
+            f"-1,0,0,0,100,100,0,0,1,6,0,2,48,48,{margin_v},1"
+        ),
+        "",
+        "[Events]",
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
+    ]
+    for cue in captions:
+        text = _ass_text(cue.get("text") or "")
+        if not text:
+            continue
+        start = _ass_time(cue.get("timestamp_start") or 0)
+        end = _ass_time(cue.get("timestamp_end") or 0)
+        lines.append(f"Dialogue: 0,{start},{end},Phrase,,0,0,0,,{text}")
+    ass_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _ambient_bed_enabled() -> bool:
+    return os.getenv("BASIC_AMBIENT_BED", "1").strip().lower() not in {"0", "false", "no", "off"}
+
+
+async def _ffmpeg(cmd: list, timeout: float) -> tuple[bool, str]:
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        _stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+    except asyncio.TimeoutError:
+        process.kill()
+        return False, "ffmpeg timed out"
+    return process.returncode == 0, stderr.decode(errors="replace")[-1800:]
+
+
+async def render_ambient_bed(output: Path, duration: float) -> Optional[Path]:
+    """Quiet original pad (filtered noise plus two soft tones). No music vendor."""
+    duration = max(1.0, float(duration))
+    fade_out = max(0.0, duration - 0.8)
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-t", f"{duration:.3f}", "-i", "anoisesrc=color=brown:amplitude=0.25:sample_rate=44100",
+        "-f", "lavfi", "-t", f"{duration:.3f}", "-i", "sine=frequency=174.6:sample_rate=44100",
+        "-f", "lavfi", "-t", f"{duration:.3f}", "-i", "sine=frequency=220:sample_rate=44100",
+        "-filter_complex",
+        (
+            "[0:a]lowpass=f=420,highpass=f=70,volume=0.35[n];"
+            "[1:a]volume=0.045[a];"
+            "[2:a]volume=0.03[b];"
+            "[n][a][b]amix=inputs=3:duration=first:normalize=0,"
+            f"afade=t=in:st=0:d=0.8,afade=t=out:st={fade_out:.3f}:d=0.8[out]"
+        ),
+        "-map", "[out]",
+        "-c:a", "aac",
+        str(output),
+    ]
+    ok, err = await _ffmpeg(cmd, timeout=60)
+    if ok and output.exists() and output.stat().st_size > 500:
+        return output
+    logger.warning("Ambient bed was not created: %s", err)
+    return None
+
+
+async def compose_basic_master(
+    video_path: Path,
+    work_dir: Path,
+    *,
+    voice_path: Optional[Path] = None,
+    captions: Optional[List[dict]] = None,
+    ambient_bed: Optional[bool] = None,
+) -> Optional[Path]:
+    """Burn phrase captions, fade out, and mix the voiceover with a quiet bed."""
+    output = work_dir / f"master_{uuid.uuid4().hex[:8]}.mp4"
+    video_duration = await probe_duration(video_path)
+    voice_duration = await probe_duration(voice_path) if voice_path else 0.0
+    master_duration = voice_duration or video_duration
+    if master_duration <= 0:
+        return None
+    pad = max(0.0, master_duration - video_duration) if voice_path else 0.0
+    fade_start = max(0.0, master_duration - 0.45)
+
+    filters = []
+    ass_path = None
+    if captions:
+        ass_path = work_dir / f"captions_{uuid.uuid4().hex[:8]}.ass"
+        write_phrase_captions(captions, ass_path)
+        _family, fonts = _caption_font()
+        filters.append(f"ass={ass_path}:fontsdir={fonts}")
+    filters.append(f"fade=t=out:st={fade_start:.3f}:d=0.45")
+    filters.append("setsar=1")
+    if pad > 0.04:
+        filters.append(f"tpad=stop_mode=clone:stop_duration={pad:.3f}")
+    filters.append(f"trim=duration={master_duration:.3f},setpts=PTS-STARTPTS")
+    video_chain = ",".join(filters)
+
+    bed_path = None
+    use_bed = _ambient_bed_enabled() if ambient_bed is None else ambient_bed
+    if voice_path and use_bed:
+        bed_path = await render_ambient_bed(work_dir / f"bed_{uuid.uuid4().hex[:8]}.m4a", master_duration)
+
+    if voice_path and bed_path:
+        filter_complex = (
+            f"[0:v]{video_chain}[v];"
+            "[1:a]volume=1.0[voice];"
+            "[2:a]volume=0.16[bed];"
+            "[voice][bed]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[a]"
+        )
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(voice_path),
+            "-i", str(bed_path),
+            "-filter_complex", filter_complex,
+            "-map", "[v]", "-map", "[a]",
+            "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-t", f"{master_duration:.3f}",
+            str(output),
+        ]
+    elif voice_path:
+        filter_complex = f"[0:v]{video_chain}[v];[1:a]anull[a]"
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-i", str(voice_path),
+            "-filter_complex", filter_complex,
+            "-map", "[v]", "-map", "[a]",
+            "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-t", f"{master_duration:.3f}",
+            str(output),
+        ]
+    else:
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-vf", video_chain,
+            "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+            "-an",
+            str(output),
+        ]
+
+    ok, err = await _ffmpeg(cmd, timeout=180)
+    if ass_path is not None:
+        ass_path.unlink(missing_ok=True)
+    if bed_path is not None:
+        bed_path.unlink(missing_ok=True)
+    if ok and output.exists() and output.stat().st_size > 1000:
+        return output
+    logger.error("Basic master compose failed: %s", err)
     return None
 
 

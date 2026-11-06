@@ -8306,6 +8306,12 @@ body {
 .gen-mode-toggle { display: flex; gap: 4px; width: fit-content; margin: 0 auto 14px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); }
 .gen-mode-toggle button { border: 0; background: transparent; color: rgba(255,255,255,0.62); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .gen-mode-toggle button.active { background: #fff; color: #111; }
+.voice-picker { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; width: min(680px, 100%); margin: 0 auto 16px; }
+.voice-picker-label { flex: 1 0 100%; text-align: center; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.42); }
+.voice-picker button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.82); border-radius: 999px; padding: 6px 10px 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.voice-picker button.active { background: #fff; color: #111; border-color: #fff; }
+.voice-picker-gender { font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255,255,255,0.42); }
+.voice-picker button.active .voice-picker-gender { color: rgba(0,0,0,0.45); }
 .nind-auth { min-height: 100vh; min-height: 100dvh; background: #0c0c0e; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px 24px; gap: 28px; }
 .nind-auth-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: stretch; }
 .nind-auth-logo { height: 36px; margin: 0 auto 28px; }
@@ -8366,3 +8372,8 @@ body {
 [data-theme="light"] .gen-mode-toggle { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
 [data-theme="light"] .gen-mode-toggle button { color: rgba(0,0,0,0.6); }
 [data-theme="light"] .gen-mode-toggle button.active { background: #111; color: #fff; }
+[data-theme="light"] .voice-picker-label { color: rgba(0,0,0,0.45); }
+[data-theme="light"] .voice-picker button { border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.03); color: rgba(0,0,0,0.82); }
+[data-theme="light"] .voice-picker button.active { background: #111; color: #fff; border-color: #111; }
+[data-theme="light"] .voice-picker-gender { color: rgba(0,0,0,0.45); }
+[data-theme="light"] .voice-picker button.active .voice-picker-gender { color: rgba(255,255,255,0.72); }

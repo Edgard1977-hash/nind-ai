@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { Plus, ArrowUp, ArrowLeft, X, Mic, Square, Loader2 } from 'lucide-react';
 import { BACKEND_URL } from "@/lib/backend";
+import VoicePicker from "@/components/custom/VoicePicker";
 import { loadUser } from "@/lib/session";
 
 const API = `${BACKEND_URL}/api`;
@@ -21,6 +22,7 @@ const VoiceAssistantPage = () => {
 
   const [user, setUser] = useState(null);
   const [prompt, setPrompt] = useState('');
+  const [voice, setVoice] = useState('marin');
   const [attachments, setAttachments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -181,6 +183,7 @@ const VoiceAssistantPage = () => {
         format_id: 'auto',
         language: 'auto',
         mode: 'basic',
+        voice,
       };
 
       if (currentAttachments.length > 0) {
@@ -445,6 +448,7 @@ const VoiceAssistantPage = () => {
           </div>
         )}
 
+        <VoicePicker voice={voice} onChange={setVoice} />
         <div className="voice-input-container">
           <button
             className="voice-plus-btn"

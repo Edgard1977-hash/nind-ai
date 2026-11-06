@@ -6,6 +6,7 @@ import axios from "axios";
 import ProfilePage from "../components/custom/ProfilePage";
 import Logo from "../components/custom/Logo";
 import GenerationModeToggle from "../components/custom/GenerationModeToggle";
+import VoicePicker from "../components/custom/VoicePicker";
 import { getTranslation } from "../utils/translations";
 import { API, BACKEND_URL } from "../lib/backend";
 import { clearUser, loadUser } from "../lib/session";
@@ -186,6 +187,7 @@ export const MainPage = () => {
   const [activeMainTab, setActiveMainTab] = useState("Creations");
   const [selectedFormat, setSelectedFormat] = useState(null);
   const [generationMode, setGenerationMode] = useState("basic");
+  const [voice, setVoice] = useState("marin");
   const [showFormatPopup, setShowFormatPopup] = useState(false);
   const [showFormatsListPopup, setShowFormatsListPopup] = useState(false);
   const [generatePrompt, setGeneratePrompt] = useState(true);
@@ -875,6 +877,9 @@ export const MainPage = () => {
         language: "auto",
         mode: generationMode,
       };
+      if (generationMode === "basic") {
+        requestData.voice = voice;
+      }
       
       if (currentAttachments.length > 0) {
         const uploadedUrls = [];
@@ -1148,6 +1153,9 @@ export const MainPage = () => {
               {/* Input area */}
               <div className="create-input-area">
                 <GenerationModeToggle mode={generationMode} onChange={setGenerationMode} />
+                {generationMode === "basic" && (
+                  <VoicePicker voice={voice} onChange={setVoice} />
+                )}
                 <div className={`input-outer ${isUploading ? "uploading" : ""}`}>
                   {attachments.length > 0 && (
                     <div className="attachments-row">

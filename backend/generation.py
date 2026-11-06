@@ -17,14 +17,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from ai.base import ProviderNotConfigured
+from ai.base import ProviderNotConfigured, SpeechSynthesis
 from ai.factory import get_image_provider, get_text_provider, get_tts_provider, get_video_provider
-from video_service import add_audio_to_video, concatenate_videos, create_image_video
+from ai.voices import resolve_voice
+from captions import allocate_durations, cues_for_narration, normalize_plan, wav_duration
+from video_service import compose_basic_master, concatenate_videos, create_image_video, probe_duration
 
 logger = logging.getLogger(__name__)
 
+BASIC_WIDTH = 1080
+BASIC_HEIGHT = 1920
+BASIC_FPS = 30
+
 BASIC_SYSTEM = (
-    "You plan short vertical social videos made from still images. "
+    "You plan short vertical social videos made from photoreal still photographs. "
+    "A voice reads the narration while each photo moves slowly (Ken Burns) and cuts hard to the next. "
     "Return ONLY valid JSON, no markdown."
 )
 
@@ -118,55 +125,136 @@ async def process_enhanced_generation(db, project: dict, work_dir: Path, uploads
     )
 
 
+def _script_request(prompt: str) -> str:
+    return (
+        f"User prompt: {prompt}\n"
+        "Write the narration in the same language as the user prompt.\n"
+        "The narration is 45 to 70 spoken words, about 18 to 24 seconds at a natural pace.\n"
+        "Return JSON with title, narration, and 6 to 8 scenes.\n"
+        "Each scene has spoken (the exact words said during that photo), "
+        "image_prompt (one photoreal vertical photograph, no text, no logos, no collage), "
+        "and animation (zoom_in, zoom_out, pan_left, pan_right, or pan_up).\n"
+        "Joining the spoken fields with single spaces must recreate the narration.\n"
+        "Vary the animations and do not repeat the same animation twice in a row."
+    )
+
+
+async def _write_plan(prompt: str) -> dict:
+    plan = None
+    try:
+        raw = await get_text_provider().complete(system=BASIC_SYSTEM, user=_script_request(prompt))
+        plan = _parse_json(raw)
+    except ProviderNotConfigured:
+        logger.info("Text provider is not configured; using the prompt as the narration")
+    except Exception as exc:
+        logger.warning("Basic script generation failed, using fallback: %s", exc)
+    if not plan or not plan.get("scenes"):
+        plan = _fallback_plan(prompt)
+    return normalize_plan(plan, prompt)
+
+
+async def _speak(narration: str, voice: str) -> SpeechSynthesis:
+    provider = get_tts_provider()
+    detailed = getattr(provider, "synthesize_detailed", None)
+    if detailed is not None:
+        return await detailed(narration, voice=voice)
+    audio = await provider.synthesize(narration, voice=voice)
+    return SpeechSynthesis(audio=audio, transcript=narration, audio_format="mp3", voice=voice)
+
+
 async def process_basic_generation(db, project: dict, work_dir: Path, uploads_dir: Path) -> None:
-    """Image-base generation: LLM scene plan, image provider, ffmpeg montage."""
+    """Script, full voiceover, photoreal stills, then a Ken Burns montage timed to the speech."""
     project_id = project["id"]
     prompt = project.get("prompt") or ""
+    voice = resolve_voice(project.get("voice"))
     work_dir.mkdir(parents=True, exist_ok=True)
     uploads_dir.mkdir(parents=True, exist_ok=True)
 
     await _mark(db, project_id, status="processing", progress=8, progress_message="Пишем сценарий...")
+    plan = await _write_plan(prompt)
+    narration = (plan.get("narration") or "").strip()
+    scenes = list(plan.get("scenes") or [])
+    if not narration or not scenes:
+        plan = normalize_plan(_fallback_plan(prompt), prompt)
+        narration = plan["narration"]
+        scenes = plan["scenes"]
 
-    plan = None
-    try:
-        raw = await get_text_provider().complete(
-            system=BASIC_SYSTEM,
-            user=(
-                f"User prompt: {prompt}\n"
-                "Language should follow the prompt.\n"
-                "Return JSON with title, narration, and 3 scenes. "
-                'Each scene has image_prompt (a detailed visual description), '
-                'animation (zoom_in, zoom_out, pan_left, or pan_right), and duration (3 to 5).'
-            ),
+    speech: Optional[SpeechSynthesis] = None
+    if narration:
+        await _mark(db, project_id, progress=18, progress_message="Записываем голос...")
+        try:
+            speech = await _speak(narration, voice)
+        except ProviderNotConfigured:
+            logger.info("TTS is not configured; finishing Basic video without narration audio")
+        except Exception as exc:
+            logger.error("Voiceover failed: %s", exc)
+            await refund_generation_credits(db, project)
+            await _mark(
+                db,
+                project_id,
+                status="error",
+                error=f"Voiceover failed: {exc}",
+                progress_message="Не удалось записать голос",
+            )
+            return
+
+    audio_url = None
+    audio_path: Optional[Path] = None
+    captions: list[dict] = []
+    spoken_duration = 0.0
+    if speech is not None and speech.audio:
+        extension = speech.audio_format if speech.audio_format in {"wav", "mp3", "flac", "opus"} else "wav"
+        audio_name = f"{uuid.uuid4().hex}.{extension}"
+        audio_path = uploads_dir / audio_name
+        audio_path.write_bytes(speech.audio)
+        audio_url = f"/api/uploads/{audio_name}"
+        spoken_duration = wav_duration(speech.audio) or 0.0
+        if spoken_duration <= 0:
+            spoken_duration = await probe_duration(audio_path)
+        if spoken_duration <= 0:
+            await refund_generation_credits(db, project)
+            await _mark(
+                db,
+                project_id,
+                status="error",
+                error="Voiceover audio has no duration",
+                progress_message="Не удалось записать голос",
+            )
+            return
+        captions = cues_for_narration(
+            audio=speech.audio,
+            snapshots=speech.snapshots,
+            transcript=speech.transcript,
+            script=narration,
+            duration=spoken_duration,
         )
-        plan = _parse_json(raw)
-    except ProviderNotConfigured:
-        logger.info("Text provider is not configured; using the prompt as the image description")
-    except Exception as exc:
-        logger.warning("Basic script generation failed, using fallback: %s", exc)
-
-    if not plan or not plan.get("scenes"):
-        plan = _fallback_plan(prompt)
+        weights = [max(1, len((scene.get("spoken") or "").split())) for scene in scenes]
+        durations = allocate_durations(weights, spoken_duration, minimum=1.5)
+    else:
+        durations = []
+        for scene in scenes:
+            try:
+                duration = float(scene.get("duration") or 4)
+            except (TypeError, ValueError):
+                duration = 4.0
+            durations.append(min(8.0, max(2.0, duration)))
 
     scenes_out = []
     clip_paths: list[Path] = []
     image_provider = get_image_provider()
-    scenes = list(plan.get("scenes") or [])[:6]
-    await _mark(db, project_id, progress=25, progress_message="Генерируем изображения...")
+    await _mark(db, project_id, progress=30, progress_message="Генерируем изображения...")
 
     for index, scene in enumerate(scenes):
         image_prompt = (scene.get("image_prompt") or prompt or "cinematic still").strip()
+        visual_prompt = (
+            "Photorealistic vertical photograph, natural light, sharp detail, "
+            "no text, no watermark, no collage, no border. "
+            f"{image_prompt}"
+        )
         animation = scene.get("animation") or "zoom_in"
-        if animation not in ("zoom_in", "zoom_out", "pan_left", "pan_right"):
-            animation = "zoom_in"
+        duration = durations[index] if index < len(durations) else 4.0
         try:
-            duration = float(scene.get("duration") or 4)
-        except (TypeError, ValueError):
-            duration = 4
-        duration = min(8.0, max(2.0, duration))
-
-        try:
-            image_bytes = await image_provider.generate(image_prompt, aspect_ratio="9:16")
+            image_bytes = await image_provider.generate(visual_prompt, aspect_ratio="9:16")
         except ProviderNotConfigured as exc:
             await refund_generation_credits(db, project)
             await _mark(
@@ -193,9 +281,11 @@ async def process_basic_generation(db, project: dict, work_dir: Path, uploads_di
         image_path = uploads_dir / image_name
         image_path.write_bytes(image_bytes)
         image_url = f"/api/uploads/{image_name}"
+        spoken = scene.get("spoken") or scene.get("text") or ""
         scenes_out.append(
             {
-                "text": scene.get("text") or "",
+                "text": spoken,
+                "spoken": spoken,
                 "image_prompt": image_prompt,
                 "image_url": image_url,
                 "animation": animation,
@@ -207,10 +297,13 @@ async def process_basic_generation(db, project: dict, work_dir: Path, uploads_di
             work_dir,
             duration=duration,
             animation=animation,
+            width=BASIC_WIDTH,
+            height=BASIC_HEIGHT,
+            fps=BASIC_FPS,
         )
         if clip:
             clip_paths.append(clip)
-        progress = 25 + int(50 * (index + 1) / max(1, len(scenes)))
+        progress = 30 + int(45 * (index + 1) / max(1, len(scenes)))
         await _mark(db, project_id, progress=progress, progress_message=f"Сцена {index + 1}/{len(scenes)}")
 
     if not clip_paths:
@@ -224,28 +317,30 @@ async def process_basic_generation(db, project: dict, work_dir: Path, uploads_di
         )
         return
 
-    await _mark(db, project_id, progress=80, progress_message="Собираем видео...")
+    await _mark(db, project_id, progress=82, progress_message="Собираем видео...")
     if len(clip_paths) == 1:
         final_video = clip_paths[0]
     else:
         final_video = await concatenate_videos(clip_paths, work_dir)
 
-    audio_url = None
-    narration = (plan.get("narration") or "").strip()
-    if final_video and narration:
-        try:
-            audio_bytes = await get_tts_provider().synthesize(narration)
-            audio_name = f"{uuid.uuid4().hex}.mp3"
-            audio_path = uploads_dir / audio_name
-            audio_path.write_bytes(audio_bytes)
-            audio_url = f"/api/uploads/{audio_name}"
-            mixed = await add_audio_to_video(final_video, audio_path, work_dir)
-            if mixed:
-                final_video = mixed
-        except ProviderNotConfigured:
-            logger.info("TTS is not configured; finishing Basic video without narration audio")
-        except Exception as exc:
-            logger.warning("TTS failed, continuing without audio: %s", exc)
+    if final_video and audio_path is not None:
+        master = await compose_basic_master(
+            Path(final_video),
+            work_dir,
+            voice_path=audio_path,
+            captions=captions,
+        )
+        if not master:
+            await refund_generation_credits(db, project)
+            await _mark(
+                db,
+                project_id,
+                status="error",
+                error="ffmpeg could not mix the voiceover into the montage",
+                progress_message="Сборка видео не удалась",
+            )
+            return
+        final_video = master
 
     if not final_video or not Path(final_video).exists():
         await refund_generation_credits(db, project)
@@ -268,9 +363,11 @@ async def process_basic_generation(db, project: dict, work_dir: Path, uploads_di
         progress=100,
         progress_message="Готово!",
         mode="basic",
+        voice=voice,
         title=plan.get("title") or prompt[:80],
         script=narration,
         scenes=scenes_out,
+        captions=captions,
         audio_url=audio_url,
         video_url=f"/api/uploads/{final_name}",
         poster_url=scenes_out[0]["image_url"] if scenes_out else None,

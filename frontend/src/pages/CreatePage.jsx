@@ -4,6 +4,7 @@ import { ArrowLeft, Image, Video, Send, X, Sparkles, Plus, Package, Tag, Film, M
 import { toast } from "sonner";
 import axios from "axios";
 import GenerationModeToggle from "@/components/custom/GenerationModeToggle";
+import VoicePicker from "@/components/custom/VoicePicker";
 import { BACKEND_URL } from "@/lib/backend";
 
 const API = `${BACKEND_URL}/api`;
@@ -27,6 +28,7 @@ export const CreatePage = () => {
   
   const [prompt, setPrompt] = useState("");
   const [generationMode, setGenerationMode] = useState("basic");
+  const [voice, setVoice] = useState("marin");
   const [mediaFiles, setMediaFiles] = useState([]); // Product images
   const [videoFile, setVideoFile] = useState(null); // Video for montage
   const [videoUrl, setVideoUrl] = useState(null); // Uploaded video URL
@@ -338,6 +340,9 @@ export const CreatePage = () => {
         language: "auto",
         mode: generationMode,
       };
+      if (generationMode === "basic") {
+        requestData.voice = voice;
+      }
       
       if (mediaFiles.length > 0) {
         requestData.product_images = mediaFiles.map(f => f.url);
@@ -412,8 +417,11 @@ export const CreatePage = () => {
         <div className="w-10" /> {/* Spacer */}
       </header>
 
-      <div className="relative z-10 flex justify-center px-4 pt-2">
+      <div className="relative z-10 flex flex-col items-center px-4 pt-2">
         <GenerationModeToggle mode={generationMode} onChange={setGenerationMode} />
+        {type === "video" && generationMode === "basic" && (
+          <VoicePicker voice={voice} onChange={setVoice} />
+        )}
       </div>
 
       {/* Main Content Area */}
